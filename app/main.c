@@ -139,10 +139,10 @@ int main(void)
 	dev_dacsound_init();
 	dev_spiflash_init();
 	dev_wm8978_init();
-
+	dev_lcd_init();
 	//dev_dacsound_open();
 	dev_key_open();
-	dev_wm8978_open();
+	//dev_wm8978_open();
 	//dev_tea5767_open();
 	//dev_tea5767_setfre(105700);
 	
@@ -164,7 +164,8 @@ int main(void)
 				//dev_dacsound_play();
 				//dev_spiflash_test();
 				//dev_sdio_test();
-				dev_wm8978_test();
+				//dev_wm8978_test();
+				dev_lcd_test();
 				GPIO_ResetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);	
 				//dev_tea5767_search(1);
 			}
