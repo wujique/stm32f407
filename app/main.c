@@ -39,6 +39,8 @@
 #include "dev_tea5767.h"
 #include "dev_dacsound.h"
 #include "dev_spiflash.h"
+#include "dev_wm8978.h"
+
 /** @addtogroup Template_Project
   * @{
   */ 
@@ -136,10 +138,11 @@ int main(void)
 	dev_tea5767_init();
 	dev_dacsound_init();
 	dev_spiflash_init();
-	
-	
-	dev_key_open();
+	dev_wm8978_init();
+
 	//dev_dacsound_open();
+	dev_key_open();
+	dev_wm8978_open();
 	//dev_tea5767_open();
 	//dev_tea5767_setfre(105700);
 	
@@ -160,8 +163,8 @@ int main(void)
 				//dev_buzzer_open();
 				//dev_dacsound_play();
 				//dev_spiflash_test();
-				dev_sdio_test();
-				
+				//dev_sdio_test();
+				dev_wm8978_test();
 				GPIO_ResetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);	
 				//dev_tea5767_search(1);
 			}

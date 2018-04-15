@@ -48,6 +48,9 @@ extern void mcu_tim3_IRQhandler(void);
 #include "stm324xg_eval_sdio_sd.h"
 extern SD_Error SD_ProcessIRQSrc(void);
 extern void SD_ProcessDMAIRQ(void);
+
+extern void mcu_i2s_dma_process(void);
+
 /******************************************************************************/
 /*            Cortex-M4 Processor Exceptions Handlers                         */
 /******************************************************************************/
@@ -206,6 +209,16 @@ void DMA2_Stream3_IRQHandler(void)
 {
   /* Process DMA2 Stream3 or DMA2 Stream6 Interrupt Sources */
   SD_ProcessDMAIRQ();
+}
+
+void DMA1_Stream4_IRQHandler(void)
+{
+	if(DMA_GetITStatus(DMA1_Stream4,DMA_IT_TCIF4)==SET)		// 判断是否完成传输
+	{ 
+		DMA_ClearITPendingBit(DMA1_Stream4,DMA_IT_TCIF4);	//	清除相应的标志位
+		mcu_i2s_dma_process();		
+	} 
+
 }
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
