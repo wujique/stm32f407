@@ -44,6 +44,10 @@
 extern void mcu_uart3_IRQhandler(void);
 extern void mcu_tim5_IRQhandler(void);
 extern void mcu_tim3_IRQhandler(void);
+
+#include "stm324xg_eval_sdio_sd.h"
+extern SD_Error SD_ProcessIRQSrc(void);
+extern void SD_ProcessDMAIRQ(void);
 /******************************************************************************/
 /*            Cortex-M4 Processor Exceptions Handlers                         */
 /******************************************************************************/
@@ -180,6 +184,28 @@ void TIM3_IRQHandler(void)
     mcu_tim3_IRQhandler();
 }
 
+/**
+  * @brief  This function handles SDIO global interrupt request.
+  * @param  None
+  * @retval None
+  */
+void SDIO_IRQHandler(void)
+{
+  /* Process All SDIO Interrupt Sources */
+  SD_ProcessIRQSrc();
+}
 
+/**
+  * @brief  This function handles DMA2 Stream3 or DMA2 Stream6 global interrupts
+  *         requests.
+  * @param  None
+  * @retval None
+  */
+//void SD_SDIO_DMA_IRQHANDLER(void)
+void DMA2_Stream3_IRQHandler(void)
+{
+  /* Process DMA2 Stream3 or DMA2 Stream6 Interrupt Sources */
+  SD_ProcessDMAIRQ();
+}
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

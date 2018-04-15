@@ -42,7 +42,7 @@
 /** @addtogroup Template_Project
   * @{
   */ 
-
+extern int dev_sdio_test(void);
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -69,6 +69,10 @@ int main(void)
        files before to branch to application main.
        To reconfigure the default setting of SystemInit() function, 
        refer to system_stm32f4xx.c file */
+
+	  /* Configure the NVIC Preemption Priority Bits */
+  NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
+
 
   /* SysTick end of count event each 10ms */
   RCC_GetClocksFreq(&RCC_Clocks);
@@ -155,7 +159,9 @@ int main(void)
 			{
 				//dev_buzzer_open();
 				//dev_dacsound_play();
-				dev_spiflash_test();
+				//dev_spiflash_test();
+				dev_sdio_test();
+				
 				GPIO_ResetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);	
 				//dev_tea5767_search(1);
 			}
