@@ -200,16 +200,7 @@ static s32 dev_touchkey_scan(u32 cap)
 
 	if(cap_cnt >= DEV_TOUCHKEY_DATA_NUM)
 	{
-		#if 0
-		if(DEV_TOUCHKEY_RELEASE == last_dire)
-		{
-			uart_printf("\r\n-----------------------rel\r\n");
-		}
-		else if(DEV_TOUCHKEY_TOUCH == last_dire)
-		{
-			uart_printf("\r\n-----------------------touch\r\n");
-		}
-		#endif
+
 		if(TouchKeyLastCap == 0)
 		{
 			TOUCHKEY_DEBUG(LOG_DEBUG, "\r\n-------------------init\r\n");	

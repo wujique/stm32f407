@@ -150,7 +150,7 @@
             <RestoreSysVw>1</RestoreSysVw>
           </Target>
           <RunDebugAfterBuild>0</RunDebugAfterBuild>
-          <TargetSelection>1</TargetSelection>
+          <TargetSelection>12</TargetSelection>
           <SimDlls>
             <CpuDll></CpuDll>
             <CpuDllArguments></CpuDllArguments>
@@ -164,7 +164,7 @@
             <PeripheralDll></PeripheralDll>
             <PeripheralDllArguments></PeripheralDllArguments>
             <InitializationFile></InitializationFile>
-            <Driver>BIN\UL2CM3.DLL</Driver>
+            <Driver>BIN\CMSIS_AGDI.dll</Driver>
           </TargetDlls>
         </DebugOption>
         <Utilities>
@@ -706,6 +706,11 @@
               <FileType>1</FileType>
               <FilePath>..\mcu_dev\mcu_adc.c</FilePath>
             </File>
+            <File>
+              <FileName>mcu_dcmi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mcu_dev\mcu_dcmi.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -760,6 +765,26 @@
               <FileName>dev_touchscreen.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\board_dev\dev_touchscreen.c</FilePath>
+            </File>
+            <File>
+              <FileName>dev_xpt2046.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\board_dev\dev_xpt2046.c</FilePath>
+            </File>
+            <File>
+              <FileName>camera_api.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\board_dev\camera_api.c</FilePath>
+            </File>
+            <File>
+              <FileName>dcmi_ov2640.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\board_dev\dcmi_ov2640.c</FilePath>
+            </File>
+            <File>
+              <FileName>dcmi_ov9655.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\board_dev\dcmi_ov9655.c</FilePath>
             </File>
           </Files>
         </Group>

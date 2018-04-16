@@ -133,6 +133,8 @@ int main(void)
 	ts_calibrate_test();
 	#endif
 	camera_test();
+
+	usb_main();
 	
 	while (1)
 	{

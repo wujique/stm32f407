@@ -2979,6 +2979,147 @@ SD_Error SD_HighSpeed (void)
   return(errorstatus);
 }
 
+
+/*
+
+
+*/
+#include "diskio.h"
+
+/*-----------------------------------------------------------------------*/
+/* Initialize Disk Drive                                                 */
+/*-----------------------------------------------------------------------*/
+
+DSTATUS SD_disk_initialize (
+                         BYTE drv		/* Physical drive number (0) */
+                           )
+{
+  	SD_Error result;
+
+  	result = SD_Init();
+	
+  	if(SD_OK == result)
+  		return RES_OK;
+	else
+		return RES_ERROR;
+}
+
+
+/*-----------------------------------------------------------------------*/
+/* Get Disk Status                                                       */
+/*-----------------------------------------------------------------------*/
+
+DSTATUS SD_disk_status (
+                     BYTE drv		/* Physical drive number (0) */
+                       )
+{
+  //if (drv) return STA_NOINIT;		/* Supports only single drive */
+  return RES_OK;
+}
+
+
+
+/*-----------------------------------------------------------------------*/
+/* Read Sector(s)                                                        */
+/*-----------------------------------------------------------------------*/
+DRESULT SD_disk_read (
+                   BYTE pdrv,			/* Physical drive number (0) */
+                   BYTE *buff,			/* Pointer to the data buffer to store read data */
+                   DWORD sector,		/* Start sector number (LBA) */
+                   UINT count			/* Sector count (1..255) */
+                     )
+{
+	SD_Error result;
+
+	//uart_printf("SD_disk_read: %08x, sector:%d, count:%d\r\n", buff, sector, count);
+	result = SD_ReadMultiBlocks(buff, sector*512, 512, count);
+	if(result == SD_OK)
+	{
+		result = SD_WaitReadOperation();
+		/* Wait until end of DMA transfer */
+		while(SD_GetStatus() != SD_TRANSFER_OK);
+	}
+	
+	// translate the reslut code here
+	if(SD_OK == result)
+		return RES_OK;
+	else
+		return RES_ERROR;
+}
+
+
+
+/*-----------------------------------------------------------------------*/
+/* Write Sector(s)                                                       */
+/*-----------------------------------------------------------------------*/
+
+#if _READONLY == 0
+DRESULT SD_disk_write (
+                    BYTE pdrv,			/* Physical drive number (0) */
+                    const BYTE *buff,	/* Pointer to the data to be written */
+                    DWORD sector,		/* Start sector number (LBA) */
+                    UINT count			/* Sector count (1..255) */
+                      )
+{
+	SD_Error result;
+	result = SD_WriteMultiBlocks((uint8_t *)buff, sector*512, 512, count);
+	if(result == SD_OK)
+	{
+		/* Check if the Transfer is finished */
+    	result = SD_WaitWriteOperation();
+    	while(SD_GetStatus() != SD_TRANSFER_OK);
+	}
+	
+	if(SD_OK == result)
+  		return RES_OK;
+	else
+		return RES_ERROR;
+}
+#endif /* _READONLY == 0 */
+
+DRESULT SD_disk_ioctl (
+                    BYTE drv,		/* Physical drive number (0) */
+                    BYTE ctrl,		/* Control code */
+                    void *buff		/* Buffer to send/receive control data */
+                      )
+{
+  DRESULT res = RES_OK;
+  
+  //if (drv) return RES_PARERR;
+  
+  res = RES_ERROR;
+  
+  //if (Stat & STA_NOINIT) return RES_NOTRDY;
+  
+  switch (ctrl) {
+  case CTRL_SYNC :		/* Make sure that no pending write process */
+    
+    res = RES_OK;
+    break;
+    
+  case GET_SECTOR_COUNT :	/* Get number of sectors on the disk (DWORD) */
+    
+    *(DWORD*)buff = (DWORD) SDCardInfo.CardCapacity/512;;
+    res = RES_OK;
+    break;
+  case GET_SECTOR_SIZE :	/* Get R/W sector size (WORD) */
+    *(WORD*)buff = 512;
+    res = RES_OK;
+    break;
+    
+  case GET_BLOCK_SIZE :	/* Get erase block size in unit of sector (DWORD) */
+    
+    *(DWORD*)buff = SDCardInfo.CardBlockSize;;
+    res = RES_OK;
+    break;
+    
+    
+  default:
+    res = RES_PARERR;
+  }
+  
+  return res;
+}
 /**
   * @}
   */
@@ -3005,7 +3146,7 @@ SD_Error SD_HighSpeed (void)
 /** @addtogroup SDIO_uSDCard
   * @{
   */
-
+#if 0
 /* Private typedef -----------------------------------------------------------*/
 typedef enum {FAILED = 0, PASSED = !FAILED} TestStatus;
 
@@ -3340,6 +3481,140 @@ void assert_failed(uint8_t* file, uint32_t line)
 }
 #endif
 
+#endif
 
+#include "ff.h"
+#include "string.h"
+
+uint8_t vfs_explore_disk (char* path , uint8_t recu_level)
+{
+
+	FRESULT res;
+	FILINFO fno;
+	DIR dir;
+	char *fn;
+	char path_tmp[64];
+	char tmp[14];
+	
+	res = f_opendir(&dir, path);
+	if (res == FR_OK) 
+	{
+		wjq_log(LOG_INFO, "open dir ok\r\n");
+		while(1)//这里可能要判断硬件是否断开
+		{
+			res = f_readdir(&dir, &fno);
+			if (res != FR_OK || fno.fname[0] == 0) 
+			{
+				break;
+			}
+			if (fno.fname[0] == '.')//隐藏文件
+			{
+				continue;
+			}
+
+			fn = fno.fname;
+			strcpy(tmp, fn); 
+ 
+
+			if(recu_level == 1)
+			{
+				wjq_log(LOG_FUN, "   |__");
+			}
+			else if(recu_level == 2)
+			{
+				wjq_log(LOG_FUN, "   |   |__");
+			}
+			else if(recu_level == 3)
+			{
+				wjq_log(LOG_FUN, "   |   |   |__");
+			}
+			
+			if((fno.fattrib & AM_MASK) == AM_DIR)
+			{
+				strcat(tmp, "\n"); 
+				wjq_log(LOG_INFO, "%s\r\n",(void *)tmp);
+			}
+			else
+			{
+				strcat(tmp, "\n"); 
+				wjq_log(LOG_INFO, "%s\r\n",(void *)tmp);
+			}
+
+			if(((fno.fattrib & AM_MASK) == AM_DIR))
+			{
+				strcpy(path_tmp, path);
+				strcat(path_tmp, fn);
+				wjq_log(LOG_INFO, "explore dir:%s\r\n", path_tmp);
+				//vfs_explore_disk(path_tmp, recu_level+1);
+			}
+			
+		}
+	}
+	else
+	{
+
+		wjq_log(LOG_FUN, "open dir err:%d\r\n", res);
+	}
+	return res;
+}
+FATFS Sdfatfs;
+FIL Sdfile;
+
+s32 fun_mount_sd(void)
+{
+	FRESULT res;
+
+	/* Initialises the File System*/
+	res = f_mount(&Sdfatfs, "1:/", 1);
+	
+	if ( res != FR_OK ) 
+	{
+	  /* efs initialisation fails*/
+	  wjq_log(LOG_FUN, "> sd Cannot initialize File System:%d\r\n", res);
+	  return -1;
+	}
+	
+	//vfs_explore_disk("1:/", 1);
+	
+	wjq_log(LOG_FUN, "> sd File System initialized.\n");
+	return 0;
+}
+
+/**
+ *@brief:      tf_file_test
+ *@details:    测试SD卡文件系统，进行测试前需要挂载TF卡
+                  
+ *@param[in]   void  
+ *@param[out]  无
+ *@retval:     
+ */
+FIL TfCardTestFile;
+
+s32 tf_file_test(void)
+{
+	FRESULT fres;
+	u32 len;
+	
+	fres=f_open(&TfCardTestFile,(const TCHAR*)"1:tfcard_test.txt", FA_OPEN_ALWAYS | FA_WRITE); 
+	if(fres != FR_OK)			//文件创建失败
+	{
+		wjq_log(LOG_FUN, "create rec file err:%d!\r\n", fres);
+		
+	}
+	fres = f_write(&TfCardTestFile,(const void*)"this is a tf card test file!",29, &len);
+	if(fres != FR_OK
+		|| len != 29)
+	{
+		wjq_log(LOG_FUN, "write err\r\n");
+	}
+
+	f_close(&TfCardTestFile);
+	wjq_log(LOG_FUN, "tf card file sys test finish!\r\n");
+	
+	while(1)
+	{
+		
+	}
+}
 
 
