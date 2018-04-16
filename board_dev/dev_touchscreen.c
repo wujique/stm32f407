@@ -25,6 +25,7 @@
 #include "mcu_timer.h"
 #include "tslib.h"
 #include "dev_touchscreen.h"
+#include "dev_xpt2046.h"
 
 
 #define DEV_TS_DEBUG
@@ -38,9 +39,6 @@
 
 s32 dev_ts_adc_init(void);
 s32 dev_ts_adc_open(void);
-
-
-
 
 /*  触摸屏接口：
 	对不同的触摸检测方案封装为统一接口。
@@ -66,7 +64,13 @@ s32 dev_touchscreen_init(void)
 {
 	TpSgd = -1;
 
+	#ifdef SYS_USE_TS_ADC_CASE
 	return dev_ts_adc_init();
+	#endif
+
+	#ifdef SYS_USE_TS_IC_CASE
+	return dev_xpt2046_init();
+	#endif	
 }
 /**
  *@brief:      dev_touchscreen_open
@@ -83,16 +87,25 @@ s32 dev_touchscreen_open(void)
 	
 	TpQueWindex = TpQueWindex;
 	
-	dev_ts_adc_open();
 
-	return 0;
+	#ifdef SYS_USE_TS_ADC_CASE
+	return dev_ts_adc_open();
+	#endif
+
+	#ifdef SYS_USE_TS_IC_CASE
+	return dev_xpt2046_open();
+	#endif	
+
 }
 
 s32 dev_touchscreen_close(void)
 {
 	TpSgd = -1;
-
-	return 0;
+	
+	#ifdef SYS_USE_TS_IC_CASE
+	return dev_xpt2046_close();
+	#endif	
+	
 }
 /**
  *@brief:      dev_touchscreen_read
@@ -299,7 +312,7 @@ s32 dev_ts_adc_task(u16 dac_value)
 		{
 			TouchScreenStep	= 2;
 			DEV_TP_SCAN_X;
-			mcu_tim7_start(2);
+			mcu_tim7_start(2, dev_ts_adc_tr, 1);
 		}
 		else if(pre_x + DEV_TP_PENUP_GATE < pre_y)//没压力，不进行XY轴检测
 		{
@@ -317,7 +330,7 @@ s32 dev_ts_adc_task(u16 dac_value)
 
 			DEV_TP_PRESS_SCAN;
 			//打开一个定时器，定时时间到了才进行压力检测
-			mcu_tim7_start(100);
+			mcu_tim7_start(100, dev_ts_adc_tr, 1);
 		}
 		else
 		{
@@ -326,7 +339,7 @@ s32 dev_ts_adc_task(u16 dac_value)
 
 			DEV_TP_PRESS_SCAN;
 
-			mcu_tim7_start(20);
+			mcu_tim7_start(20, dev_ts_adc_tr, 1);
 		}
 	}
 	else if(TouchScreenStep == 2)
@@ -335,7 +348,7 @@ s32 dev_ts_adc_task(u16 dac_value)
 		
 		TouchScreenStep	= 3;
 		DEV_TP_SCAN_Y;
-		mcu_tim7_start(2);
+		mcu_tim7_start(2, dev_ts_adc_tr, 1);
 	}
 	else if(TouchScreenStep == 3)//一轮结束，重启启动压力检测
 	{
@@ -348,13 +361,13 @@ s32 dev_ts_adc_task(u16 dac_value)
 		
 		TouchScreenStep	= 0;
 		DEV_TP_PRESS_SCAN;
-		mcu_tim7_start(2);
+		mcu_tim7_start(2, dev_ts_adc_tr, 1);
 	}
 	else//异常，启动压力检测
 	{
 		TouchScreenStep	= 0;
 		DEV_TP_PRESS_SCAN;
-		mcu_tim7_start(100);
+		mcu_tim7_start(100, dev_ts_adc_tr, 1);
 	}
 
 	return 0;

@@ -1,7 +1,11 @@
 #ifndef __DEV_TOUCHSCREEN_H__
 #define __DEV_TOUCHSCREEN_H__
 
-#define SYS_USE_TS_ADC_CASE
+/*
+	´¥ÃþÆÁ·½°¸Ñ¡Ôñ
+*/
+//#define SYS_USE_TS_ADC_CASE
+#define SYS_USE_TS_IC_CASE
 
 
 extern s32 dev_touchscreen_init(void);

@@ -11,7 +11,7 @@ extern s32 mcu_tim3_start(void);
 extern s32 mcu_tim3_stop(void);
 
 extern void mcu_timer7_init(void);
-extern s32 mcu_tim7_start(u32 Delay_10us);
+extern s32 mcu_tim7_start(u32 Delay_10us, void (*callback)(void), u8 type);
 
 
 #endif

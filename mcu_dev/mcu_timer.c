@@ -317,7 +317,8 @@ void mcu_tim3_IRQhandler(void)
 	用定时器做精确延时
 
 */
-extern void dev_ts_adc_tr(void);
+void (*Tim7Callback)(void);
+u8 Tim7Type = 1;//1，执行一次，不重复，0重复
 
 #define TpTim TIM7
 #define TIM7_CLK_PRESCALER    840 //预分频,840个时钟才触发一次定时器计数 
@@ -351,13 +352,15 @@ void mcu_timer7_init(void)
     TIM_ITConfig(TpTim, TIM_IT_Update, ENABLE);//打开定时器中断
     
     //TIM_Cmd(TpTim, ENABLE);//使能定时器(启动)
-
+	Tim7Callback = NULL;
 }  
 
-s32 mcu_tim7_start(u32 Delay_10us)
+s32 mcu_tim7_start(u32 Delay_10us, void (*callback)(void), u8 type)
 {
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStruct;
 
+	Tim7Callback = callback;
+	Tim7Type = type;
 	//复位定时器
     TIM_Cmd(TpTim, DISABLE);
     TIM_SetCounter(TpTim, 0);
@@ -389,8 +392,11 @@ void mcu_tim7_IRQhandler(void)
     if(TIM_GetITStatus(TpTim, TIM_FLAG_Update) == SET)
     {                                       
         TIM_ClearFlag(TpTim, TIM_FLAG_Update);
-		TIM_Cmd(TpTim, DISABLE);//停止定时器
-		dev_ts_adc_tr();
+		if(Tim7Type == 1)
+			TIM_Cmd(TpTim, DISABLE);//停止定时器
+			
+		Tim7Callback();
+		
     }
 }
 

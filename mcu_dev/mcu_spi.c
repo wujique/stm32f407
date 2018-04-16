@@ -23,7 +23,7 @@
 #include "wujique_log.h"
 #include "mcu_spi.h"
 
-//#define MCU_SPI_DEBUG
+#define MCU_SPI_DEBUG
 
 #ifdef MCU_SPI_DEBUG
 #define SPI_DEBUG	wjq_log 
@@ -64,7 +64,7 @@ s32 DevSpi3Gd = -2;
  *@param[out]  无
  *@retval:     
  */
-s32 mcu_spi_init(void)
+static s32 mcu_hspi_init(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
     SPI_InitTypeDef SPI_InitStruct;
@@ -139,7 +139,7 @@ s32 mcu_spi_init(void)
  *@param[out]  无
  *@retval:     
  */
-s32 mcu_spi_open(SPI_DEV dev, SPI_MODE mode, u16 pre)
+static s32 mcu_hspi_open(SPI_DEV dev, SPI_MODE mode, u16 pre)
 {
 	SPI_InitTypeDef SPI_InitStruct;
 
@@ -199,7 +199,7 @@ s32 mcu_spi_open(SPI_DEV dev, SPI_MODE mode, u16 pre)
  *@param[out]  无
  *@retval:     
  */
-s32 mcu_spi_close(SPI_DEV dev)
+static s32 mcu_hspi_close(SPI_DEV dev)
 {
 	if(DevSpi3Gd != dev)
 	{
@@ -237,7 +237,7 @@ s32 mcu_spi_close(SPI_DEV dev)
  *@param[out]  无
  *@retval:     
  */
-s32 mcu_spi_transfer(SPI_DEV dev, u8 *snd, u8 *rsv, s32 len)
+static s32 mcu_hspi_transfer(SPI_DEV dev, u8 *snd, u8 *rsv, s32 len)
 {
     s32 i = 0;
     s32 pos = 0;
@@ -325,7 +325,7 @@ s32 mcu_spi_transfer(SPI_DEV dev, u8 *snd, u8 *rsv, s32 len)
  *@param[out]  无
  *@retval:     
  */
-s32 mcu_spi_cs(SPI_DEV dev, u8 sta)
+static s32 mcu_hspi_cs(SPI_DEV dev, u8 sta)
 {
 	if(DevSpi3Gd != dev)
 	{
@@ -370,4 +370,490 @@ s32 mcu_spi_cs(SPI_DEV dev, u8 sta)
 	
 	return 0;
 }
+
+
+/*
+	VSPI1，使用触摸屏四线接口模拟SPI，用于XPT2046方案触摸处理，可读可写。
+*/
+
+/*
+
+	对虚拟SPI的硬件操作抽象对象
+	（注意，不是对SPI接口的抽象）
+	*
+	直接传入IO口还是传入函数？
+	传入函数，1 不同的IC函数可能不一样。
+			2 同一个IC，不同的IO，说不定IO口的配置也不一样。
+	传入IO口配置：简单，容易改动
+	*
+*/
+typedef struct
+{
+	char *name;
+	SPI_DEV dev;
+	s32 gd;
+	
+	u32 clkrcc;
+	GPIO_TypeDef *clkport;
+	u16 clkpin;
+
+	u32 mosircc;
+	GPIO_TypeDef *mosiport;
+	u16 mosipin;
+
+	u32 misorcc;
+	GPIO_TypeDef *misoport;
+	u16 misopin;
+
+	u32 csrcc;
+	GPIO_TypeDef *csport;
+	u16 cspin;
+}DevVspiIO;
+
+#define VSPI1_CS_PORT GPIOB
+#define VSPI1_CS_PIN GPIO_Pin_1
+	
+#define VSPI1_CLK_PORT GPIOB
+#define VSPI1_CLK_PIN GPIO_Pin_0
+	
+#define VSPI1_MOSI_PORT GPIOD
+#define VSPI1_MOSI_PIN GPIO_Pin_11
+	
+#define VSPI1_MISO_PORT GPIOD
+#define VSPI1_MISO_PIN GPIO_Pin_12
+	
+#define VSPI1_RCC RCC_AHB1Periph_GPIOB
+#define VSPI1_RCC2 RCC_AHB1Periph_GPIOD	
+
+DevVspiIO DevVspi1IO={
+		"VSPI1",
+		DEV_VSPI_1,
+		-2,//未初始化
+		
+		VSPI1_RCC,
+		VSPI1_CLK_PORT,
+		VSPI1_CLK_PIN,
+		
+		VSPI1_RCC2,
+		VSPI1_MOSI_PORT,
+		VSPI1_MOSI_PIN,
+
+		VSPI1_RCC2,
+		VSPI1_MISO_PORT,
+		VSPI1_MISO_PIN,
+
+		VSPI1_RCC,
+		VSPI1_CS_PORT,
+		VSPI1_CS_PIN,
+	};
+
+/*无用的虚拟SPI设备，占位用*/		
+DevVspiIO DevVspiNULL={
+		"VSPI0",
+		DEV_VSPI_0,
+		-2,//未初始化;
+		};
+
+DevVspiIO *DevVspiIOList[]={
+	&DevVspiNULL,
+	
+	#ifdef SYS_USE_VSPI1
+	&DevVspi1IO,
+	#endif
+
+	};
+
+/**
+ *@brief:      mcu_vspi_init
+ *@details:       初始化虚拟SPI
+ *@param[in]  void  
+ *@param[out]  无
+ *@retval:     
+ */
+static s32 mcu_vspi_init(void)
+{
+	GPIO_InitTypeDef  GPIO_InitStructure;
+	u8 i;
+	/* 根据传入的dev找到IO口配置*/
+	DevVspiIO *vspi;
+
+	i = 1;
+	while(1)
+	{
+		if(i >= sizeof(DevVspiIOList)/sizeof(DevVspiIO *))
+			break;
+		
+		vspi = DevVspiIOList[i];
+		
+		wjq_log(LOG_INFO, "bus_vspi_init %s\r\n", vspi->name);
+
+		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+		GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+	    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+		GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+
+		RCC_AHB1PeriphClockCmd(vspi->csrcc, ENABLE);
+		GPIO_InitStructure.GPIO_Pin = vspi->cspin;
+		GPIO_Init(vspi->csport, &GPIO_InitStructure);
+		GPIO_SetBits(vspi->csport, vspi->cspin);
+
+		RCC_AHB1PeriphClockCmd(vspi->clkrcc, ENABLE);
+		GPIO_InitStructure.GPIO_Pin = vspi->clkpin;	
+		GPIO_Init(vspi->clkport, &GPIO_InitStructure);
+		GPIO_SetBits(vspi->clkport,vspi->clkpin);
+
+		RCC_AHB1PeriphClockCmd(vspi->mosircc, ENABLE);
+		GPIO_InitStructure.GPIO_Pin = vspi->mosipin;
+		GPIO_Init(vspi->mosiport, &GPIO_InitStructure);
+		GPIO_SetBits(vspi->mosiport, vspi->mosipin);
+
+		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
+	    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+		GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+
+		RCC_AHB1PeriphClockCmd(vspi->misorcc, ENABLE);
+		GPIO_InitStructure.GPIO_Pin = vspi->misopin;
+		GPIO_Init(vspi->misoport, &GPIO_InitStructure);
+		GPIO_SetBits(vspi->misoport, vspi->misopin);
+
+		vspi->gd = -1;
+
+		i++;
+			
+	}
+	wjq_log(LOG_INFO, "vspi init finish!\r\n");
+	
+	return 0;
+}
+
+
+static DevVspiIO *mcu_vspi_find_io(SPI_DEV dev)
+{
+	u8 i;
+	/* 根据传入的dev找到IO口配置*/
+	DevVspiIO *vspi;
+
+	i = 0;
+	while(1)
+	{
+		if(i >= sizeof(DevVspiIOList)/sizeof(DevVspiIO *))
+			break;
+		
+		vspi = DevVspiIOList[i];
+		if(vspi->dev == dev)
+		{
+			//uart_printf("vspi find io\r\n");
+			return vspi;
+		}
+		i++;
+	}
+	
+	return NULL;
+	
+}
+/**
+ *@brief:      vspi_delay
+ *@details:    虚拟SPI时钟延时
+ *@param[in]   u32 delay  
+ *@param[out]  无
+ *@retval:     
+ */
+void vspi_delay(u32 delay)
+{
+	volatile u32 i=delay;
+
+	while(i>0)
+	{
+		i--;	
+	}
+
+}
+/**
+ *@brief:      mcu_vspi_open
+ *@details:    打开虚拟SPI
+ *@param[in]   SPI_DEV dev    
+               SPI_MODE mode  
+               u16 pre        
+ *@param[out]  无
+ *@retval:     
+ */
+static s32 mcu_vspi_open(SPI_DEV dev, SPI_MODE mode, u16 pre)
+{
+	DevVspiIO *vspi;
+
+	vspi = mcu_vspi_find_io(dev);
+
+	if(vspi == NULL)
+		return -1;
+	
+	if(vspi->gd != -1)
+		return -1;
+
+	GPIO_ResetBits(vspi->csport, vspi->cspin);	
+
+	vspi->gd = dev;
+		
+    return 0;
+}
+/**
+ *@brief:      mcu_vspi_close
+ *@details:       关闭虚拟SPI
+ *@param[in]  SPI_DEV dev  
+ *@param[out]  无
+ *@retval:     
+ */
+static s32 mcu_vspi_close(SPI_DEV dev)
+{
+	DevVspiIO *vspi;
+
+	vspi = mcu_vspi_find_io(dev);
+
+	if(vspi == NULL)
+		return -1;
+	
+	if(vspi->gd != dev)
+	{
+		SPI_DEBUG(LOG_DEBUG, "vspi dev err\r\n");
+		return -1;
+	}
+	
+	GPIO_SetBits(vspi->csport, vspi->cspin);	
+
+	vspi->gd = -1;
+    return 0;
+}
+/**
+ *@brief:      mcu_vspi_transfer
+ *@details:       虚拟SPI通信
+ *@param[in]   SPI_DEV dev  
+               u8 *snd      
+               u8 *rsv      
+               s32 len      
+ *@param[out]  无
+ *@retval:     
+ */
+static s32 mcu_vspi_transfer(SPI_DEV dev, u8 *snd, u8 *rsv, s32 len)
+{
+	u8 i;
+	u8 data;
+	s32 slen;
+	u8 misosta;
+	DevVspiIO *vspi;
+
+	vspi = mcu_vspi_find_io(dev);
+
+	if(vspi == NULL)
+		return -1;
+
+	if(dev != vspi->gd)
+	{
+		SPI_DEBUG(LOG_DEBUG, "vspi dev err\r\n");
+		return -1;
+	}
+	
+    if( ((snd == NULL) && (rsv == NULL)) || (len < 0) )
+    {
+        return -1;
+    }
+
+	slen = 0;
+
+	while(1)
+	{
+		if(slen >= len)
+			break;
+
+		if(snd == NULL)
+			data = 0xff;
+		else
+			data = *(snd+slen);
+		
+		for(i=0; i<8; i++)
+		{
+			GPIO_ResetBits(vspi->clkport, vspi->clkpin);
+			vspi_delay(10);
+			
+			if(data&0x80)
+				GPIO_SetBits(vspi->mosiport, vspi->mosipin);
+			else
+				GPIO_ResetBits(vspi->mosiport, vspi->mosipin);
+			
+			vspi_delay(10);
+			data<<=1;
+			GPIO_SetBits(vspi->clkport, vspi->clkpin);
+			
+			misosta = GPIO_ReadInputDataBit(vspi->misoport, vspi->misopin);
+			if(misosta == Bit_SET)
+			{
+				data |=0x01;
+			}
+			else
+			{
+				data &=0xfe;
+			}
+			vspi_delay(10);
+			
+		}
+
+		if(rsv != NULL)
+			*(rsv+slen) = data;
+		
+		slen++;
+	}
+
+	return slen;
+}
+/**
+ *@brief:      mcu_vspi_cs
+ *@details:    控制虚拟SPI的使能脚
+ *@param[in]   SPI_DEV dev  
+               u8 sta       
+ *@param[out]  无
+ *@retval:     
+ */
+static s32 mcu_vspi_cs(SPI_DEV dev, u8 sta)
+{
+	DevVspiIO *vspi;
+
+	vspi = mcu_vspi_find_io(dev);
+
+	if(vspi == NULL)
+		return -1;
+
+	if(dev != vspi->gd)
+	{
+		SPI_DEBUG(LOG_DEBUG, "vspi dev err\r\n");
+		return -1;
+	}
+
+	if(sta == 1)
+	{
+		GPIO_SetBits(vspi->csport, vspi->cspin);
+	}
+	else
+	{
+		GPIO_ResetBits(vspi->csport, vspi->cspin);
+	}
+	
+	return 0;
+}
+
+/*
+
+
+	所有SPI统一对外接口
+
+
+*/
+s32 mcu_spi_init(void)
+{
+	mcu_hspi_init();
+	mcu_vspi_init();
+	return 0;
+}
+
+/**
+ *@brief:      mcu_spi_open
+ *@details:       打开SPI
+ *@param[in]   SPI_DEV dev  ：SPI号
+               u8 mode      模式
+               u16 pre      预分频
+ *@param[out]  无
+ *@retval:     
+ */
+s32 mcu_spi_open(SPI_DEV dev, SPI_MODE mode, u16 pre)
+{
+	switch(dev)
+	{
+		case DEV_SPI_3_1:
+		case DEV_SPI_3_2:
+		case DEV_SPI_3_3:
+			return mcu_hspi_open(dev, mode, pre);
+
+		case DEV_VSPI_1:
+			return mcu_vspi_open(dev, mode, pre);
+		
+		default:
+			return -1;
+		
+	}
+
+}
+/**
+ *@brief:      mcu_spi_close
+ *@details:    关闭SPI 控制器
+ *@param[in]   void  
+ *@param[out]  无
+ *@retval:     
+ */
+s32 mcu_spi_close(SPI_DEV dev)
+{
+	switch(dev)
+	{
+		case DEV_SPI_3_1:
+		case DEV_SPI_3_2:
+		case DEV_SPI_3_3:
+			return mcu_hspi_close(dev);
+
+		case DEV_VSPI_1:
+			return mcu_vspi_close(dev);
+
+		default:
+			return -1;
+	}
+
+}
+/**
+ *@brief:      mcu_spi_transfer
+ *@details:    SPI 传输
+ *@param[in]   u8 *snd  
+               u8 *rsv  
+               s32 len  
+ *@param[out]  无
+ *@retval:     
+ */
+s32 mcu_spi_transfer(SPI_DEV dev, u8 *snd, u8 *rsv, s32 len)
+{
+	switch(dev)
+	{
+		case DEV_SPI_3_1:
+		case DEV_SPI_3_2:
+		case DEV_SPI_3_3:
+			return mcu_hspi_transfer(dev, snd, rsv, len);
+		
+		case DEV_VSPI_1:
+			return mcu_vspi_transfer(dev, snd, rsv, len);
+
+		default:
+			return -1;
+	}   
+}
+/**
+ *@brief:      mcu_spi_cs
+ *@details:    操控对应SPI的CS
+ *@param[in]   SPI_DEV dev  
+               u8 sta       
+ *@param[out]  无
+ *@retval:     
+ */
+s32 mcu_spi_cs(SPI_DEV dev, u8 sta)
+{
+	switch(dev)
+	{
+		case DEV_SPI_3_1:
+		case DEV_SPI_3_2:
+		case DEV_SPI_3_3:
+			return mcu_hspi_cs(dev, sta);
+
+		case DEV_VSPI_1:
+			return mcu_vspi_cs( dev, sta);
+		
+		default:
+			return -1;
+
+	}
+	
+}
+
+
 
