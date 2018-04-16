@@ -13,6 +13,8 @@
 #ifndef _WUJIQUE_LOG_H_
 #define _WUJIQUE_LOG_H_
 
+#include "stm32f4xx.h"
+
 typedef enum
 {
 	LOG_DISABLE = 0,

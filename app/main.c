@@ -40,6 +40,7 @@
 #include "dev_dacsound.h"
 #include "dev_spiflash.h"
 #include "dev_wm8978.h"
+#include "dev_touchscreen.h"
 
 /** @addtogroup Template_Project
   * @{
@@ -75,45 +76,13 @@ int main(void)
 	  /* Configure the NVIC Preemption Priority Bits */
   NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
 
-
   /* SysTick end of count event each 10ms */
   RCC_GetClocksFreq(&RCC_Clocks);
-  SysTick_Config(RCC_Clocks.HCLK_Frequency / 100);
+  SysTick_Config(RCC_Clocks.HCLK_Frequency / 1000);
   
   /* Add your application code here */
-  /* Insert 50 ms delay */
+  /* Insert 5 ms delay */
   Delay(5);
-  
-  /* Output HSE clock on MCO1 pin(PA8) ****************************************/ 
-  /* Enable the GPIOA peripheral */ 
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
-  
-  /* Configure MCO1 pin(PA8) in alternate function */
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;  
-  GPIO_Init(GPIOA, &GPIO_InitStructure);
-    
-  /* HSE clock selected to output on MCO1 pin(PA8)*/
-  RCC_MCO1Config(RCC_MCO1Source_HSE, RCC_MCO1Div_1);
-  
-  
-  /* Output SYSCLK/4 clock on MCO2 pin(PC9) ***********************************/ 
-  /* Enable the GPIOACperipheral */ 
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
-  
-  /* Configure MCO2 pin(PC9) in alternate function */
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;  
-  GPIO_Init(GPIOC, &GPIO_InitStructure);
-    
-  /* SYSCLK/4 clock selected to output on MCO2 pin(PC9)*/
-  RCC_MCO2Config(RCC_MCO2Source_SYSCLK, RCC_MCO2Div_4);
 
 	/*初始化LED IO口*/
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOG, ENABLE);
@@ -140,12 +109,27 @@ int main(void)
 	dev_spiflash_init();
 	dev_wm8978_init();
 	dev_lcd_init();
+	
 	//dev_dacsound_open();
 	dev_key_open();
 	//dev_wm8978_open();
 	//dev_tea5767_open();
 	//dev_tea5767_setfre(105700);
+
+	#if 0
+	mcu_adc_test();
+	#endif
 	
+	#if 0
+	dev_touchscreen_test();
+	#endif
+
+	#if 1
+	dev_touchscreen_init();
+	dev_touchscreen_open();
+	ts_calibrate();
+	ts_calibrate_test();
+	#endif
 	while (1)
 	{
 		/*驱动轮询*/
@@ -165,7 +149,7 @@ int main(void)
 				//dev_spiflash_test();
 				//dev_sdio_test();
 				//dev_wm8978_test();
-				dev_lcd_test();
+				//dev_lcd_test();
 				GPIO_ResetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);	
 				//dev_tea5767_search(1);
 			}

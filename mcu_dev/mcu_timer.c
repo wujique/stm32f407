@@ -311,4 +311,86 @@ void mcu_tim3_IRQhandler(void)
     }
 }
 
+/*
+
+	使用内部ADC转换检测触摸屏，
+	用定时器做精确延时
+
+*/
+extern void dev_ts_adc_tr(void);
+
+#define TpTim TIM7
+#define TIM7_CLK_PRESCALER    840 //预分频,840个时钟才触发一次定时器计数 
+                                    //一个定时器计数的时间就是(1/84M)*840 = 10us                       
+#define TIM7_CLK_PERIOD       100//定时周期 1毫秒
+
+/**
+ *@brief:      mcu_timer_init
+ *@details:    定时器初始化
+ *@param[in]   void  
+ *@param[out]  无
+ *@retval:     
+ */
+void mcu_timer7_init(void)
+{
+    NVIC_InitTypeDef NVIC_InitStructure;
+    
+    //打开定时器时钟
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM7, ENABLE);
+    //复位定时器
+    TIM_Cmd(TpTim, DISABLE);
+    TIM_SetCounter(TpTim, 0);
+    
+    //设定TIM7中断优先级
+	NVIC_InitStructure.NVIC_IRQChannel = TIM7_IRQn;	
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;//抢占优先级
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;      //响应优先级
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
+	
+    TIM_ITConfig(TpTim, TIM_IT_Update, ENABLE);//打开定时器中断
+    
+    //TIM_Cmd(TpTim, ENABLE);//使能定时器(启动)
+
+}  
+
+s32 mcu_tim7_start(u32 Delay_10us)
+{
+	TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStruct;
+
+	//复位定时器
+    TIM_Cmd(TpTim, DISABLE);
+    TIM_SetCounter(TpTim, 0);
+
+	TIM_TimeBaseInitStruct.TIM_ClockDivision = TIM_CKD_DIV1;
+    TIM_TimeBaseInitStruct.TIM_CounterMode = TIM_CounterMode_Up;//向上计数
+    TIM_TimeBaseInitStruct.TIM_Period = Delay_10us - 1;  //周期
+    TIM_TimeBaseInitStruct.TIM_Prescaler = TIM7_CLK_PRESCALER-1;//分频
+    TIM_TimeBaseInitStruct.TIM_RepetitionCounter = 1;
+    TIM_TimeBaseInit(TpTim, &TIM_TimeBaseInitStruct);
+
+	TIM_ClearFlag(TpTim, TIM_FLAG_Update);
+	
+	TIM_ITConfig(TpTim, TIM_IT_Update, ENABLE);//打开定时器中断
+
+	TIM_Cmd(TpTim, ENABLE);//使能定时器(启动)	
+	
+	return 0;
+}
+/**
+ *@brief:      mcu_tim6_IRQhandler
+ *@details:    定时器中断处理函数
+ *@param[in]   void  
+ *@param[out]  无
+ *@retval:     
+ */
+void mcu_tim7_IRQhandler(void)
+{
+    if(TIM_GetITStatus(TpTim, TIM_FLAG_Update) == SET)
+    {                                       
+        TIM_ClearFlag(TpTim, TIM_FLAG_Update);
+		TIM_Cmd(TpTim, DISABLE);//停止定时器
+		dev_ts_adc_tr();
+    }
+}
 

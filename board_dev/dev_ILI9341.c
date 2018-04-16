@@ -85,13 +85,13 @@ s32 bus_8080interface_init()
 
 	GPIO_ResetBits(DEV_TFTLCD_BL_CTL_PORT, DEV_TFTLCD_BL_CTL);
 	
-	Delay(5);
+	Delay(50);
 	ILI9341_DEBUG(LOG_DEBUG, "LCD RESET LOW!\r\n");
 	GPIO_ResetBits(DEV_TFTLCD_RESET_PORT, DEV_TFTLCD_RESET);
-	Delay(5);
+	Delay(50);
 	ILI9341_DEBUG(LOG_DEBUG, "LCD RESET HIGH!\r\n");
 	GPIO_SetBits(DEV_TFTLCD_RESET_PORT, DEV_TFTLCD_RESET);
-	Delay(5);
+	Delay(50);
 	
 	//≥ı ºFSMC
 	mcu_fsmc_lcd_Init();	
@@ -402,7 +402,7 @@ s32 drv_ILI9341_init(void)
 	*LcdData = 0x33;*LcdData = 0x39;*LcdData = 0x0F;
 
 	*LcdReg = 0x11; // Sleep out
-	Delay(12);
+	Delay(120);
 
 	return 0;
 }

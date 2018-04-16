@@ -13,16 +13,16 @@
       <pCCUsed>5060061::V5.06 update 1 (build 61)::ARMCC</pCCUsed>
       <TargetOption>
         <TargetCommonOption>
-          <Device>STM32F407ZETx</Device>
+          <Device>STM32F407ZGTx</Device>
           <Vendor>STMicroelectronics</Vendor>
           <PackID>Keil.STM32F4xx_DFP.2.11.0</PackID>
           <PackURL>http://www.keil.com/pack</PackURL>
-          <Cpu>IROM(0x08000000,0x80000) IRAM(0x20000000,0x20000) IRAM2(0x10000000,0x10000) CPUTYPE("Cortex-M4") FPU2 CLOCK(12000000) ELITTLE</Cpu>
+          <Cpu>IROM(0x08000000,0x100000) IRAM(0x20000000,0x20000) IRAM2(0x10000000,0x10000) CPUTYPE("Cortex-M4") FPU2 CLOCK(12000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile></StartupFile>
-          <FlashDriverDll>UL2CM3(-S0 -C0 -P0 -FD20000000 -FC1000 -FN1 -FF0STM32F4xx_512 -FS08000000 -FL080000 -FP0($$Device:STM32F407ZETx$CMSIS\Flash\STM32F4xx_512.FLM))</FlashDriverDll>
+          <FlashDriverDll>UL2CM3(-S0 -C0 -P0 -FD20000000 -FC1000 -FN1 -FF0STM32F4xx_1024 -FS08000000 -FL0100000 -FP0($$Device:STM32F407ZGTx$CMSIS\Flash\STM32F4xx_1024.FLM))</FlashDriverDll>
           <DeviceId>0</DeviceId>
-          <RegisterFile>$$Device:STM32F407ZETx$Drivers\CMSIS\Device\ST\STM32F4xx\Include\stm32f4xx.h</RegisterFile>
+          <RegisterFile>$$Device:STM32F407ZGTx$Drivers\CMSIS\Device\ST\STM32F4xx\Include\stm32f4xx.h</RegisterFile>
           <MemoryEnv></MemoryEnv>
           <Cmp></Cmp>
           <Asm></Asm>
@@ -32,7 +32,7 @@
           <SLE66CMisc></SLE66CMisc>
           <SLE66AMisc></SLE66AMisc>
           <SLE66LinkerMisc></SLE66LinkerMisc>
-          <SFDFile>$$Device:STM32F407ZETx$CMSIS\SVD\STM32F40x.svd</SFDFile>
+          <SFDFile>$$Device:STM32F407ZGTx$CMSIS\SVD\STM32F40x.svd</SFDFile>
           <bCustSvd>0</bCustSvd>
           <UseEnv>0</UseEnv>
           <BinPath></BinPath>
@@ -150,7 +150,7 @@
             <RestoreSysVw>1</RestoreSysVw>
           </Target>
           <RunDebugAfterBuild>0</RunDebugAfterBuild>
-          <TargetSelection>12</TargetSelection>
+          <TargetSelection>1</TargetSelection>
           <SimDlls>
             <CpuDll></CpuDll>
             <CpuDllArguments></CpuDllArguments>
@@ -164,7 +164,7 @@
             <PeripheralDll></PeripheralDll>
             <PeripheralDllArguments></PeripheralDllArguments>
             <InitializationFile></InitializationFile>
-            <Driver>BIN\CMSIS_AGDI.dll</Driver>
+            <Driver>BIN\UL2CM3.DLL</Driver>
           </TargetDlls>
         </DebugOption>
         <Utilities>
@@ -227,7 +227,7 @@
             <hadIRAM2>1</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
-            <useUlib>0</useUlib>
+            <useUlib>1</useUlib>
             <EndSel>0</EndSel>
             <uLtcg>0</uLtcg>
             <nSecure>0</nSecure>
@@ -289,7 +289,7 @@
               <IROM>
                 <Type>1</Type>
                 <StartAddress>0x8000000</StartAddress>
-                <Size>0x80000</Size>
+                <Size>0x100000</Size>
               </IROM>
               <XRAM>
                 <Type>0</Type>
@@ -314,7 +314,7 @@
               <OCR_RVCT4>
                 <Type>1</Type>
                 <StartAddress>0x8000000</StartAddress>
-                <Size>0x80000</Size>
+                <Size>0x100000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
@@ -373,7 +373,7 @@
               <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>..\app;..\StLib\core;..\StLib\STM32F4xx_StdPeriph_Driver\inc;..\mcu_dev;..\board_dev</IncludePath>
+              <IncludePath>..\app;..\StLib\core;..\StLib\STM32F4xx_StdPeriph_Driver\inc;..\mcu_dev;..\board_dev;..\Utilities\font;..\Utilities\tslib\src;..\Utilities\tslib\tests</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -672,6 +672,11 @@
               <FilePath>..\mcu_dev\mcu_timer.c</FilePath>
             </File>
             <File>
+              <FileName>stm324xg_eval_fsmc_sram.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mcu_dev\stm324xg_eval_fsmc_sram.c</FilePath>
+            </File>
+            <File>
               <FileName>mcu_i2c.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\mcu_dev\mcu_i2c.c</FilePath>
@@ -685,6 +690,21 @@
               <FileName>mcu_spi.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\mcu_dev\mcu_spi.c</FilePath>
+            </File>
+            <File>
+              <FileName>mcu_sdio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mcu_dev\mcu_sdio.c</FilePath>
+            </File>
+            <File>
+              <FileName>mcu_i2s.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mcu_dev\mcu_i2s.c</FilePath>
+            </File>
+            <File>
+              <FileName>mcu_adc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mcu_dev\mcu_adc.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -720,6 +740,131 @@
               <FileName>dev_spiflash.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\board_dev\dev_spiflash.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm324xg_eval_sdio_sd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\board_dev\stm324xg_eval_sdio_sd.c</FilePath>
+            </File>
+            <File>
+              <FileName>dev_wm8978.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\board_dev\dev_wm8978.c</FilePath>
+            </File>
+            <File>
+              <FileName>dev_ILI9341.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\board_dev\dev_ILI9341.c</FilePath>
+            </File>
+            <File>
+              <FileName>dev_touchscreen.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\board_dev\dev_touchscreen.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>other</GroupName>
+          <Files>
+            <File>
+              <FileName>audio_sample.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\audio_sample.c</FilePath>
+            </File>
+            <File>
+              <FileName>font_8x8.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\font\font_8x8.c</FilePath>
+            </File>
+            <File>
+              <FileName>font_8x16.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\font\font_8x16.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>tslib</GroupName>
+          <Files>
+            <File>
+              <FileName>ts_attach.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\tslib\src\ts_attach.c</FilePath>
+            </File>
+            <File>
+              <FileName>ts_close.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\tslib\src\ts_close.c</FilePath>
+            </File>
+            <File>
+              <FileName>ts_config.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\tslib\src\ts_config.c</FilePath>
+            </File>
+            <File>
+              <FileName>ts_fd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\tslib\src\ts_fd.c</FilePath>
+            </File>
+            <File>
+              <FileName>ts_load_module.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\tslib\src\ts_load_module.c</FilePath>
+            </File>
+            <File>
+              <FileName>ts_open.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\tslib\src\ts_open.c</FilePath>
+            </File>
+            <File>
+              <FileName>ts_parse_vars.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\tslib\src\ts_parse_vars.c</FilePath>
+            </File>
+            <File>
+              <FileName>ts_read.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\tslib\src\ts_read.c</FilePath>
+            </File>
+            <File>
+              <FileName>ts_read_raw.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\tslib\src\ts_read_raw.c</FilePath>
+            </File>
+            <File>
+              <FileName>dejitter.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\tslib\plugins\dejitter.c</FilePath>
+            </File>
+            <File>
+              <FileName>linear.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\tslib\plugins\linear.c</FilePath>
+            </File>
+            <File>
+              <FileName>pthres.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\tslib\plugins\pthres.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32-raw.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\tslib\plugins\stm32-raw.c</FilePath>
+            </File>
+            <File>
+              <FileName>variance.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\tslib\plugins\variance.c</FilePath>
+            </File>
+            <File>
+              <FileName>testutils.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\tslib\tests\testutils.c</FilePath>
+            </File>
+            <File>
+              <FileName>ts_calibrate.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\tslib\tests\ts_calibrate.c</FilePath>
             </File>
           </Files>
         </Group>

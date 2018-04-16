@@ -50,6 +50,8 @@ extern SD_Error SD_ProcessIRQSrc(void);
 extern void SD_ProcessDMAIRQ(void);
 
 extern void mcu_i2s_dma_process(void);
+extern void mcu_tim7_IRQhandler(void);
+extern void mcu_adc_IRQhandler(void);
 
 /******************************************************************************/
 /*            Cortex-M4 Processor Exceptions Handlers                         */
@@ -187,6 +189,11 @@ void TIM3_IRQHandler(void)
     mcu_tim3_IRQhandler();
 }
 
+void TIM7_IRQHandler(void)
+{
+    mcu_tim7_IRQhandler();
+}
+
 /**
   * @brief  This function handles SDIO global interrupt request.
   * @param  None
@@ -219,6 +226,11 @@ void DMA1_Stream4_IRQHandler(void)
 		mcu_i2s_dma_process();		
 	} 
 
+}
+
+void ADC_IRQHandler(void)
+{
+	mcu_adc_IRQhandler();
 }
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
