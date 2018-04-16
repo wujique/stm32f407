@@ -1226,7 +1226,7 @@ s32 dev_lcd_init(void)
 	}
 	#endif
 	/*设置屏幕方向，扫描方向*/
-	dev_lcd_setdir(H_LCD, L2R_U2D);
+	dev_lcd_setdir(H_LCD, U2D_L2R);
 	LCD.drv->onoff(1);//打开显示
 	bus_8080_lcd_bl(1);//打开背光	
 	LCD.drv->color_fill(0, LCD.width, 0, LCD.height, YELLOW);
@@ -1238,6 +1238,11 @@ s32 dev_lcd_init(void)
 s32 dev_lcd_drawpoint(u16 x, u16 y, u16 color)
 {
 	return LCD.drv->draw_point(x, y, color);
+}
+
+s32 dev_lcd_prepare_display(u16 sx, u16 ex, u16 sy, u16 ey)
+{
+	return LCD.drv->prepare_display(sx, ex, sy, ey);
 }
 
 /* 

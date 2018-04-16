@@ -41,6 +41,7 @@
 #include "dev_spiflash.h"
 #include "dev_wm8978.h"
 #include "dev_touchscreen.h"
+#include "camera_api.h"
 
 /** @addtogroup Template_Project
   * @{
@@ -109,13 +110,14 @@ int main(void)
 	dev_spiflash_init();
 	dev_wm8978_init();
 	dev_lcd_init();
-	
+	dev_touchscreen_init();
+	dev_camera_init();
 	//dev_dacsound_open();
 	dev_key_open();
 	//dev_wm8978_open();
 	//dev_tea5767_open();
 	//dev_tea5767_setfre(105700);
-
+	dev_camera_open();
 	#if 0
 	mcu_adc_test();
 	#endif
@@ -124,12 +126,14 @@ int main(void)
 	dev_touchscreen_test();
 	#endif
 
-	#if 1
+	#if 0
 	dev_touchscreen_init();
 	dev_touchscreen_open();
 	ts_calibrate();
 	ts_calibrate_test();
 	#endif
+	camera_test();
+	
 	while (1)
 	{
 		/*Çý¶¯ÂÖÑ¯*/
