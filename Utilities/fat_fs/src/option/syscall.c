@@ -123,6 +123,8 @@ void ff_rel_grant (
 
 
 #if _USE_LFN == 3	/* LFN with a working buffer on the heap */
+
+#include "alloc.h"
 /*------------------------------------------------------------------------*/
 /* Allocate a memory block                                                */
 /*------------------------------------------------------------------------*/
@@ -133,7 +135,7 @@ void* ff_memalloc (	/* Returns pointer to the allocated memory block */
 	UINT msize		/* Number of bytes to allocate */
 )
 {
-	return (void*)malloc(msize);	/* Allocate a new memory block with POSIX API */
+	return (void*)wjq_malloc(msize);	/* Allocate a new memory block with POSIX API */
 }
 
 
@@ -145,7 +147,7 @@ void ff_memfree (
 	void* mblock	/* Pointer to the memory block to free */
 )
 {
-	free(mblock);	/* Discard the memory block with POSIX API */
+	wjq_free(mblock);	/* Discard the memory block with POSIX API */
 }
 
 #endif

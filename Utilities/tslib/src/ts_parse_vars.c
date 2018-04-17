@@ -14,7 +14,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "tslib-private.h"
-
+#include "alloc.h"
 
 
 /*
@@ -35,7 +35,7 @@ int tslib_parse_vars(struct tslib_module_info *mod,
 	if (!str)
 		return 0;
 
-	s = (char *)malloc(1024);
+	s = (char *)wjq_malloc(1024);
 	memset(s, 0, 1024);
 	strncpy(s, str, strlen(str));
 
@@ -58,7 +58,7 @@ int tslib_parse_vars(struct tslib_module_info *mod,
 		}
 	}
 	
-	free(s);
+	wjq_free(s);
 	return ret;
 }
 			 

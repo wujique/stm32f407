@@ -23,19 +23,18 @@
 #include "stm32f4xx_usart.h"
 #include "mcu_uart.h"
 #include "wujique_log.h"
-
-
-
+#include "alloc.h"
 
 /*串口缓冲 暂时通过定义数组，后续改为动态申请*/
 #define MCU_UART1_BUF_SIZE       1024
 #define MCU_UART2_BUF_SIZE       1024
 #define MCU_UART3_BUF_SIZE       1024
 
+#if 0
 u8 McuUart1Buf[MCU_UART1_BUF_SIZE];
 u8 McuUart2Buf[MCU_UART2_BUF_SIZE];
 u8 McuUart3Buf[MCU_UART3_BUF_SIZE];
-
+#endif
 /*
 @bref：串口设备
 */
@@ -107,7 +106,7 @@ s32 mcu_uart_open(McuUartNum comport)
 		McuUart[MCU_UART_1].OverFg = 0;
 		McuUart[MCU_UART_1].size = MCU_UART1_BUF_SIZE;
 		McuUart[MCU_UART_1].gd = 0;
-		McuUart[MCU_UART_1].Buf = (u8 *)McuUart1Buf;
+		McuUart[MCU_UART_1].Buf = (u8 *)wjq_malloc(MCU_UART1_BUF_SIZE);
 
 		// 打开GPIO时钟
 		RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
@@ -162,7 +161,7 @@ s32 mcu_uart_open(McuUartNum comport)
 		McuUart[MCU_UART_2].size = MCU_UART2_BUF_SIZE;
 		McuUart[MCU_UART_2].gd = 0;
 		
-		McuUart[MCU_UART_2].Buf = (u8 *)McuUart2Buf;
+		McuUart[MCU_UART_2].Buf = (u8 *)wjq_malloc(MCU_UART2_BUF_SIZE);
 		
 		// 打开GPIO时钟
 		RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
@@ -216,7 +215,7 @@ s32 mcu_uart_open(McuUartNum comport)
 		McuUart[MCU_UART_3].OverFg = 0;
 		McuUart[MCU_UART_3].size = MCU_UART3_BUF_SIZE;
 		McuUart[MCU_UART_3].gd = 0;
-		McuUart[MCU_UART_3].Buf = (u8 *)McuUart3Buf;
+		McuUart[MCU_UART_3].Buf = (u8 *)wjq_malloc(MCU_UART3_BUF_SIZE);
 		// 打开GPIO时钟
 		RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
 		// 打开串口时钟
@@ -300,7 +299,7 @@ s32 mcu_uart_close (McuUartNum comport)
 	else
 		return -1;
 	
-	//free(McuUart[comport].Buf);
+	wjq_free(McuUart[comport].Buf);
 	
 	McuUart[comport].gd = -1;
 	

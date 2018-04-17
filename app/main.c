@@ -105,6 +105,7 @@ int main(void)
 	mcu_uart_init();
 	mcu_uart_open(PC_PORT);
 	wjq_log(LOG_INFO, "hello word!\r\n");
+	mcu_rtc_init();
 	mcu_i2c_init();
 	mcu_spi_init();
 	dev_key_init();
@@ -145,8 +146,6 @@ int main(void)
 
 	//usb_main();
 	
-	dev_rs485_test(1);
-	//dev_rs485_test(0);
 	while (1)
 	{
 		/*驱动轮询*/
@@ -170,6 +169,13 @@ int main(void)
 				//dev_lcd_test();
 				GPIO_ResetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);	
 				//dev_tea5767_search(1);
+				/*读时间*/
+				mcu_rtc_get_date();
+				mcu_rtc_get_time();
+				/*设置时间*/
+				//mcu_rtc_set_date(2018, 2, 4, 17);
+				//mcu_rtc_set_time(2, 47, 0);
+				
 			}
 			else if(key == DEV_KEY_REL)
 			{
