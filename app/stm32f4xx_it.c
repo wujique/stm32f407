@@ -178,7 +178,7 @@ void PendSV_Handler(void)
   */
 void SysTick_Handler(void)
 {
-  TimingDelay_Decrement();
+  Time_Update();
 }
 
 /******************************************************************************/
@@ -333,4 +333,28 @@ void OTG_HS_EP1_OUT_IRQHandler(void)
   USBD_OTG_EP1OUT_ISR_Handler (&USB_OTG_Core);
 }
 #endif
+
+
+#include "stm32f4x7_eth_bsp.h"
+/**
+  * @brief  This function handles External line 10 interrupt request.
+  * @param  None
+  * @retval None
+  */
+void EXTI15_10_IRQHandler(void)
+{
+  if(EXTI_GetITStatus(ETH_LINK_EXTI_LINE) != RESET)
+  {
+    Eth_Link_ITHandler(ETH_PHY_ADRESS);
+    /* Clear interrupt pending bit */
+    EXTI_ClearITPendingBit(ETH_LINK_EXTI_LINE);
+  }
+
+    if(EXTI_GetITStatus(EXTI_Line10) != RESET)
+  {
+    /* Clear interrupt pending bit */
+    EXTI_ClearITPendingBit(EXTI_Line10);
+  }
+}
+
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

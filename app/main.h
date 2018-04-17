@@ -37,8 +37,9 @@
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
-void TimingDelay_Decrement(void);
-
+extern void Time_Update(void);
+extern void Delay(__IO uint32_t nTime);
+extern uint32_t Time_Get_LocalTime(void);
 #endif /* __MAIN_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

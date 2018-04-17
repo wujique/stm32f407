@@ -43,6 +43,8 @@
 #include "dev_touchscreen.h"
 #include "camera_api.h"
 
+#include "eth_app.h"
+
 /** @addtogroup Template_Project
   * @{
   */ 
@@ -55,8 +57,10 @@ static __IO uint32_t uwTimingDelay;
 RCC_ClocksTypeDef RCC_Clocks;
 
 /* Private function prototypes -----------------------------------------------*/
-void Delay(__IO uint32_t nTime);
+#define SYSTEMTICK_PERIOD_MS  1//滴答定时，单位ms
 
+
+void Delay(__IO uint32_t nTime);
 /* Private functions ---------------------------------------------------------*/
 
 /**
@@ -77,9 +81,9 @@ int main(void)
 	  /* Configure the NVIC Preemption Priority Bits */
   NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
 
-  /* SysTick end of count event each 10ms */
+  /* SysTick end of count event */
   RCC_GetClocksFreq(&RCC_Clocks);
-  SysTick_Config(RCC_Clocks.HCLK_Frequency / 1000);
+  SysTick_Config(RCC_Clocks.HCLK_Frequency / (1000/SYSTEMTICK_PERIOD_MS));
   
   /* Add your application code here */
   /* Insert 5 ms delay */
@@ -112,6 +116,9 @@ int main(void)
 	dev_lcd_init();
 	dev_touchscreen_init();
 	dev_camera_init();
+	eth_app_init();
+
+	
 	//dev_dacsound_open();
 	dev_key_open();
 	//dev_wm8978_open();
@@ -134,13 +141,14 @@ int main(void)
 	#endif
 	camera_test();
 
-	usb_main();
+	//usb_main();
 	
 	while (1)
 	{
 		/*驱动轮询*/
 		dev_key_scan();
-
+		eth_loop_task();
+		
 		/*应用*/
 		u8 key;
 		s32 res;
@@ -174,30 +182,41 @@ int main(void)
 	}
 }
 
+
+__IO uint32_t LocalTime = 0; /* this variable is used to create a time reference incremented by 10ms */
+uint32_t timingdelay;
+
 /**
   * @brief  Inserts a delay time.
-  * @param  nTime: specifies the delay time length, in milliseconds.
+  * @param  nCount: number of 10ms periods to wait for.
   * @retval None
   */
-void Delay(__IO uint32_t nTime)
-{ 
-  uwTimingDelay = nTime;
+void Delay(uint32_t nCount)
+{
+  /* Capture the current local time */
+  timingdelay = LocalTime + nCount;  
 
-  while(uwTimingDelay != 0);
+  /* wait until the desired delay finish */  
+  while(timingdelay > LocalTime)
+  {     
+  }
+}
+
+uint32_t Time_Get_LocalTime(void)
+{
+	return LocalTime;
 }
 
 /**
-  * @brief  Decrements the TimingDelay variable.
+  * @brief  Updates the system local time
   * @param  None
   * @retval None
   */
-void TimingDelay_Decrement(void)
+void Time_Update(void)
 {
-  if (uwTimingDelay != 0x00)
-  { 
-    uwTimingDelay--;
-  }
+  LocalTime += SYSTEMTICK_PERIOD_MS;
 }
+
 
 #ifdef  USE_FULL_ASSERT
 
