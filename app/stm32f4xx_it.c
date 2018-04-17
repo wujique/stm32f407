@@ -57,6 +57,8 @@ extern uint32_t USBD_OTG_EP1IN_ISR_Handler (USB_OTG_CORE_HANDLE *pdev);
 extern uint32_t USBD_OTG_EP1OUT_ISR_Handler (USB_OTG_CORE_HANDLE *pdev);
 #endif
 /* Private functions ---------------------------------------------------------*/
+extern void mcu_uart1_IRQhandler(void);
+extern void mcu_uart2_IRQhandler(void);
 extern void mcu_uart3_IRQhandler(void);
 extern void mcu_tim5_IRQhandler(void);
 extern void mcu_tim3_IRQhandler(void);
@@ -204,6 +206,15 @@ void SysTick_Handler(void)
 void USART3_IRQHandler(void)
 {
 	mcu_uart3_IRQhandler();    
+}
+
+void USART2_IRQHandler(void)
+{
+    mcu_uart2_IRQhandler();    
+}
+void USART1_IRQHandler(void)
+{
+    mcu_uart1_IRQhandler();    
 }
 
 void TIM5_IRQHandler(void)

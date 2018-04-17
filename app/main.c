@@ -42,7 +42,7 @@
 #include "dev_wm8978.h"
 #include "dev_touchscreen.h"
 #include "camera_api.h"
-
+#include "dev_rs485.h"
 #include "eth_app.h"
 
 /** @addtogroup Template_Project
@@ -102,7 +102,8 @@ int main(void)
 	GPIO_SetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
 	
 	/* Infinite loop */
-	mcu_uart_open(3);
+	mcu_uart_init();
+	mcu_uart_open(PC_PORT);
 	wjq_log(LOG_INFO, "hello word!\r\n");
 	mcu_i2c_init();
 	mcu_spi_init();
@@ -113,7 +114,7 @@ int main(void)
 	dev_dacsound_init();
 	dev_spiflash_init();
 	dev_wm8978_init();
-	
+	dev_rs485_init();
 	//dev_lcd_init();
 	//dev_touchscreen_init();
 	//dev_camera_init();
@@ -144,9 +145,8 @@ int main(void)
 
 	//usb_main();
 	
-	//mcu_can_test(1);
-	mcu_can_test(0);
-	
+	dev_rs485_test(1);
+	//dev_rs485_test(0);
 	while (1)
 	{
 		/*Çý¶¯ÂÖÑ¯*/
