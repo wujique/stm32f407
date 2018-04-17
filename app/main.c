@@ -113,10 +113,11 @@ int main(void)
 	dev_dacsound_init();
 	dev_spiflash_init();
 	dev_wm8978_init();
-	dev_lcd_init();
-	dev_touchscreen_init();
-	dev_camera_init();
-	eth_app_init();
+	
+	//dev_lcd_init();
+	//dev_touchscreen_init();
+	//dev_camera_init();
+	//eth_app_init();
 
 	
 	//dev_dacsound_open();
@@ -124,7 +125,7 @@ int main(void)
 	//dev_wm8978_open();
 	//dev_tea5767_open();
 	//dev_tea5767_setfre(105700);
-	dev_camera_open();
+	//dev_camera_open();
 	#if 0
 	mcu_adc_test();
 	#endif
@@ -139,9 +140,12 @@ int main(void)
 	ts_calibrate();
 	ts_calibrate_test();
 	#endif
-	camera_test();
+	//camera_test();
 
 	//usb_main();
+	
+	//mcu_can_test(1);
+	mcu_can_test(0);
 	
 	while (1)
 	{

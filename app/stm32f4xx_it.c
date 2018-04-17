@@ -68,6 +68,7 @@ extern void SD_ProcessDMAIRQ(void);
 extern void mcu_i2s_dma_process(void);
 extern void mcu_tim7_IRQhandler(void);
 extern void mcu_adc_IRQhandler(void);
+extern void mcu_can1_rx0_IRQ(void);
 
 /******************************************************************************/
 /*            Cortex-M4 Processor Exceptions Handlers                         */
@@ -356,5 +357,14 @@ void EXTI15_10_IRQHandler(void)
     EXTI_ClearITPendingBit(EXTI_Line10);
   }
 }
+/**
+  * @brief  This function handles CAN1 RX0 request.
+  * @param  None
+  * @retval None
+  */
+void CAN1_RX0_IRQHandler(void)
+{
 
+	mcu_can1_rx0_IRQ();
+}
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
