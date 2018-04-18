@@ -33,7 +33,7 @@
 #include "mcu_dcmi.h"
 #include "mcu_i2c.h"
 
-#include "dev_ILI9341.h"
+#include "dev_lcd.h"
 #include "wujique_log.h"
 
 

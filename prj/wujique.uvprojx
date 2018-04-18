@@ -801,6 +801,16 @@
               <FileType>1</FileType>
               <FilePath>..\board_dev\dev_rs485.c</FilePath>
             </File>
+            <File>
+              <FileName>dev_lcd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\board_dev\dev_lcd.c</FilePath>
+            </File>
+            <File>
+              <FileName>dev_str7565.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\board_dev\dev_str7565.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

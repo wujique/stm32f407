@@ -31,6 +31,7 @@
 #include "mcu_uart.h"
 #include "mcu_i2c.h"
 #include "mcu_spi.h"
+#include "mcu_rtc.h"
 
 #include "wujique_log.h"
 #include "dev_key.h"
@@ -44,6 +45,7 @@
 #include "camera_api.h"
 #include "dev_rs485.h"
 #include "eth_app.h"
+#include "dev_lcd.h"
 
 /** @addtogroup Template_Project
   * @{
@@ -116,7 +118,7 @@ int main(void)
 	dev_spiflash_init();
 	dev_wm8978_init();
 	dev_rs485_init();
-	//dev_lcd_init();
+	dev_lcd_init();
 	//dev_touchscreen_init();
 	//dev_camera_init();
 	//eth_app_init();
@@ -143,8 +145,6 @@ int main(void)
 	ts_calibrate_test();
 	#endif
 	//camera_test();
-
-	//usb_main();
 	
 	while (1)
 	{
@@ -166,7 +166,7 @@ int main(void)
 				//dev_spiflash_test();
 				//dev_sdio_test();
 				//dev_wm8978_test();
-				//dev_lcd_test();
+				dev_lcd_test();
 				GPIO_ResetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);	
 				//dev_tea5767_search(1);
 				/*∂¡ ±º‰*/
