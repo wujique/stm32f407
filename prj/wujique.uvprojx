@@ -811,6 +811,11 @@
               <FileType>1</FileType>
               <FilePath>..\board_dev\dev_str7565.c</FilePath>
             </File>
+            <File>
+              <FileName>dev_lcdbus.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\board_dev\dev_lcdbus.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

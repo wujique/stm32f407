@@ -24,361 +24,10 @@
 #include "stm32f4xx.h"
 #include "main.h"
 #include "wujique_log.h"
-#include "mcu_spi.h"
+#include "alloc.h"
+#include "dev_lcdbus.h"
 #include "dev_lcd.h"
 #include "dev_str7565.h"
-#include "mcu_i2c.h"
-
-/*
-	一个LCD接口
-	除了通信的接口
-	还有其他不属于通信接口的信号
-	进行二次封装
-*/
-
-/*
-	LCD1接口，使用真正的SPI控制
-
-*/
-#define SERIALLCD_SPI_A0_PORT GPIOG
-#define SERIALLCD_SPI_A0_PIN GPIO_Pin_4
-	
-#define SERIALLCD_SPI_RST_PORT GPIOG
-#define SERIALLCD_SPI_RST_PIN GPIO_Pin_7
-	
-#define SERIALLCD_SPI_BL_PORT GPIOG
-#define SERIALLCD_SPI_BL_PIN GPIO_Pin_9
-
-//复位
-#define SERIALLCD_SPI_RST_Clr() GPIO_ResetBits(SERIALLCD_SPI_RST_PORT, SERIALLCD_SPI_RST_PIN)
-#define SERIALLCD_SPI_RST_Set() GPIO_SetBits(SERIALLCD_SPI_RST_PORT, SERIALLCD_SPI_RST_PIN)
-//命令
-#define SERIALLCD_SPI_RS_Clr() GPIO_ResetBits(SERIALLCD_SPI_A0_PORT, SERIALLCD_SPI_A0_PIN)
-#define SERIALLCD_SPI_RS_Set() GPIO_SetBits(SERIALLCD_SPI_A0_PORT, SERIALLCD_SPI_A0_PIN)
-/**
- *@brief:      bus_lcd_1_init
- *@details:    初始化LCD SPI 总线1
- *@param[in]   void  
- *@param[out]  无
- *@retval:     
- */
-void bus_seriallcd_spi_IO_init(void) 
-{
-	GPIO_InitTypeDef  GPIO_InitStructure;
-
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOG, ENABLE);
-	//DC(A0)
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-	
-	GPIO_InitStructure.GPIO_Pin = SERIALLCD_SPI_A0_PIN;
-	GPIO_Init(SERIALLCD_SPI_A0_PORT, &GPIO_InitStructure);
-	GPIO_SetBits(SERIALLCD_SPI_A0_PORT,SERIALLCD_SPI_A0_PIN);
-
-	//RST
-	GPIO_InitStructure.GPIO_Pin = SERIALLCD_SPI_RST_PIN; //OUT推挽输出   RST
-	GPIO_Init(SERIALLCD_SPI_RST_PORT, &GPIO_InitStructure);
-	GPIO_SetBits(SERIALLCD_SPI_RST_PORT,SERIALLCD_SPI_RST_PIN);
-
-	//bl
-	GPIO_InitStructure.GPIO_Pin = SERIALLCD_SPI_BL_PIN; //OUT推挽输出 
-	GPIO_Init(SERIALLCD_SPI_BL_PORT, &GPIO_InitStructure);
-	GPIO_SetBits(SERIALLCD_SPI_BL_PORT, SERIALLCD_SPI_BL_PIN);	
-
-}
-
-/**
- *@brief:      bus_lcd_spi_init
- *@details:    初始化对应串口屏接口
- 			   主要初始化命令，背光，复位三根线
- *@param[in]   LcdBusType bus  
- *@param[out]  无
- *@retval:     
- */
-s32 bus_seriallcd_spi_init()
-{
-	bus_seriallcd_spi_IO_init();
-	Delay(100);
-	SERIALLCD_SPI_RST_Clr();
-	Delay(100);
-	SERIALLCD_SPI_RST_Set();
-	Delay(100);
-	return 0;
-}
-/**
- *@brief:      bus_lcd_spi_open
- *@details:    打开LCD接口
- *@param[in]   LcdBusType bus  
- *@param[out]  无
- *@retval:     
- */
-s32 bus_seriallcd_spi_open(void)
-{
-	s32 res;
-	res = mcu_spi_open(DEV_SPI_3_3, SPI_MODE_3, SPI_BaudRatePrescaler_4);
-	return res;
-}
-/**
- *@brief:      bus_lcd_spi_close
- *@details:    关闭LCD接口
- *@param[in]   LcdBusType bus  
- *@param[out]  无
- *@retval:     
- */
-s32 bus_seriallcd_spi_close(void)
-{
-	s32 res;
-	res = mcu_spi_close(DEV_SPI_3_3);
-	return res;
-}
-/**
- *@brief:      bus_lcd_spi_write_data
- *@details:    写数据
- *@param[in]   LcdBusType bus  
-               u8 data         
- *@param[out]  无
- *@retval:     
- */
-s32 bus_seriallcd_spi_write_data(u8 *data, u16 len)
-{
-	SERIALLCD_SPI_RS_Set();	
-	mcu_spi_cs(DEV_SPI_3_3,0);
-	mcu_spi_transfer(DEV_SPI_3_3, data, NULL, len);
-	mcu_spi_cs(DEV_SPI_3_3,1);
-	return 0;
-}
-/**
- *@brief:      bus_lcd_spi_write_cmd
- *@details:    写命令
- *@param[in]   LcdBusType bus  
-               u8 cmd          
- *@param[out]  无
- *@retval:     
- */
-s32 bus_seriallcd_spi_write_cmd(u8 cmd)
-{
-	u8 tmp[2];
-	
-	SERIALLCD_SPI_RS_Clr();
-	tmp[0] = cmd;
-	mcu_spi_cs(DEV_SPI_3_3,0);
-	mcu_spi_transfer(DEV_SPI_3_3, &tmp[0], NULL, 1);
-	mcu_spi_cs(DEV_SPI_3_3,1);
-	return 0;
-}
-/**
- *@brief:	   bus_lcd_bl
- *@details:    背光控制
- *@param[in]   LcdBusType bus  
-			   u8 sta		   
- *@param[out]  无
- *@retval:	   
- */
-s32 bus_seriallcd_spi_bl(u8 sta)
-{
-	if(sta ==1)
-	{
-		GPIO_SetBits(SERIALLCD_SPI_BL_PORT, SERIALLCD_SPI_BL_PIN);
-	}
-	else
-	{
-		GPIO_ResetBits(SERIALLCD_SPI_BL_PORT, SERIALLCD_SPI_BL_PIN);	
-	}
-	return 0;
-}
-
-
-_lcd_bus BusSerialLcdSpi={
-		.name = "BusSerivaLcdSpi",
-		.init =bus_seriallcd_spi_init,
-		.open =bus_seriallcd_spi_open,
-		.close =bus_seriallcd_spi_close,
-		.writedata =bus_seriallcd_spi_write_data,
-		.writecmd =bus_seriallcd_spi_write_cmd,
-		.bl =bus_seriallcd_spi_bl,				
-};
-		
-/*
-
-	定义一个串行LCD接口2，使用模拟SPI。
-
-*/
-#define SERIALLCD_VSPI_A0_PORT GPIOF
-#define SERIALLCD_VSPI_A0_PIN GPIO_Pin_8
-	
-#define SERIALLCD_VSPI_RST_PORT GPIOF
-#define SERIALLCD_VSPI_RST_PIN GPIO_Pin_13
-	
-#define SERIALLCD_VSPI_BL_PORT GPIOF
-#define SERIALLCD_VSPI_BL_PIN GPIO_Pin_14
-
-//复位
-#define SERIALLCD_VSPI_RST_Clr() GPIO_ResetBits(SERIALLCD_VSPI_RST_PORT, SERIALLCD_VSPI_RST_PIN)
-#define SERIALLCD_VSPI_RST_Set() GPIO_SetBits(SERIALLCD_VSPI_RST_PORT, SERIALLCD_VSPI_RST_PIN)
-//命令
-#define SERIALLCD_VSPI_RS_Clr() GPIO_ResetBits(SERIALLCD_VSPI_A0_PORT, SERIALLCD_VSPI_A0_PIN)
-#define SERIALLCD_VSPI_RS_Set() GPIO_SetBits(SERIALLCD_VSPI_A0_PORT, SERIALLCD_VSPI_A0_PIN)
-
-void bus_seriallcd_vspi_IO_init(void) 
-{
-	GPIO_InitTypeDef  GPIO_InitStructure;
-
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOG, ENABLE);
-	//DC(A0)
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-	
-	GPIO_InitStructure.GPIO_Pin = SERIALLCD_VSPI_A0_PIN;
-	GPIO_Init(SERIALLCD_VSPI_A0_PORT, &GPIO_InitStructure);
-	GPIO_SetBits(SERIALLCD_VSPI_A0_PORT,SERIALLCD_VSPI_A0_PIN);
-
-	//RST
-	GPIO_InitStructure.GPIO_Pin = SERIALLCD_VSPI_RST_PIN; //OUT推挽输出   RST
-	GPIO_Init(SERIALLCD_VSPI_RST_PORT, &GPIO_InitStructure);
-	GPIO_SetBits(SERIALLCD_VSPI_RST_PORT,SERIALLCD_VSPI_RST_PIN);
-
-	//bl
-	GPIO_InitStructure.GPIO_Pin = SERIALLCD_VSPI_BL_PIN; //OUT推挽输出 
-	GPIO_Init(SERIALLCD_VSPI_BL_PORT, &GPIO_InitStructure);
-	GPIO_SetBits(SERIALLCD_VSPI_BL_PORT, SERIALLCD_VSPI_BL_PIN);	
-
-}
-
-
-s32 bus_seriallcd_vspi_init()
-{
-	bus_seriallcd_vspi_IO_init();
-	Delay(100);
-	SERIALLCD_VSPI_RST_Clr();
-	Delay(100);
-	SERIALLCD_VSPI_RST_Set();
-	Delay(100);
-	return 0;
-}
-
-s32 bus_seriallcd_vspi_open(void)
-{
-	s32 res;
-	res = mcu_spi_open(DEV_VSPI_2, SPI_MODE_3, SPI_BaudRatePrescaler_4);
-	return res;
-}
-
-s32 bus_seriallcd_vspi_close(void)
-{
-	s32 res;
-	res = mcu_spi_close(DEV_VSPI_2);
-	return res;
-}
-
-s32 bus_seriallcd_vspi_write_data(u8 *data, u16 len)
-{
-	SERIALLCD_VSPI_RS_Set();	
-	mcu_spi_cs(DEV_VSPI_2,0);
-	mcu_spi_transfer(DEV_VSPI_2, data, NULL, len);
-	mcu_spi_cs(DEV_VSPI_2,1);
-	return 0;
-}
-
-s32 bus_seriallcd_vspi_write_cmd(u8 cmd)
-{
-	u8 tmp[2];
-	
-	SERIALLCD_VSPI_RS_Clr();
-	tmp[0] = cmd;
-	mcu_spi_cs(DEV_VSPI_2,0);
-	mcu_spi_transfer(DEV_VSPI_2, &tmp[0], NULL, 1);
-	mcu_spi_cs(DEV_VSPI_2,1);
-	return 0;
-}
-
-s32 bus_seriallcd_vspi_bl(u8 sta)
-{
-	if(sta ==1)
-	{
-		GPIO_SetBits(SERIALLCD_VSPI_BL_PORT, SERIALLCD_VSPI_BL_PIN);
-	}
-	else
-	{
-		GPIO_ResetBits(SERIALLCD_VSPI_BL_PORT, SERIALLCD_VSPI_BL_PIN);	
-	}
-	return 0;
-}
-
-
-_lcd_bus BusSerialLcdVSpi={
-		.name = "BusSerivaLcdVSpi",
-		.init =bus_seriallcd_vspi_init,
-		.open =bus_seriallcd_vspi_open,
-		.close =bus_seriallcd_vspi_close,
-		.writedata =bus_seriallcd_vspi_write_data,
-		.writecmd =bus_seriallcd_vspi_write_cmd,
-		.bl =bus_seriallcd_vspi_bl,				
-};
-
-/*
-	定义一个LCD串行总线，用模拟 I2C
-
-*/
-s32 bus_seriallcd_vi2c_init()
-{
-	return 0;
-}
-
-s32 bus_seriallcd_vi2c_open(void)
-{
-
-	return 0;
-}
-
-s32 bus_seriallcd_vi2c_close(void)
-{
-	return 0;
-}
-
-s32 bus_seriallcd_vi2c_write_data(u8 *data, u16 len)
-{
-	u8 tmp[256];
-	
-	tmp[0] = 0x40;
-	memcpy(&tmp[1], data, len);
-	mcu_i2c_transfer(0x3C, MCU_I2C_MODE_W, tmp, len+1);	
-	return 0;
-}
-
-s32 bus_seriallcd_vi2c_write_cmd(u8 cmd)
-{
-	u8 tmp[2];
-	
-	tmp[0] = 0x00;
-	tmp[1] = cmd;
-	mcu_i2c_transfer(0x3C, MCU_I2C_MODE_W, tmp, 2);	
-	return 0;
-}
-
-s32 bus_seriallcd_vi2c_bl(u8 sta)
-{
-
-	return 0;
-}
-
-
-_lcd_bus BusSerialLcdVI2C={
-		.name = "BusSerivaLcdVI2C",
-		.init =bus_seriallcd_vi2c_init,
-		.open =bus_seriallcd_vi2c_open,
-		.close =bus_seriallcd_vi2c_close,
-		.writedata =bus_seriallcd_vi2c_write_data,
-		.writecmd =bus_seriallcd_vi2c_write_cmd,
-		.bl =bus_seriallcd_vi2c_bl,				
-};
-
-
-_lcd_bus *LcdBusDrv = &BusSerialLcdVI2C;
-
 
 /*
 
@@ -397,20 +46,20 @@ struct _cog_drv_data
 	u8 gram[8][128];	
 };	
 
-struct _cog_drv_data LcdGram;
+
 
 #define TFT_LCD_DRIVER_COG12864
 
 #ifdef TFT_LCD_DRIVER_COG12864
 
-s32 drv_ST7565_init(void);
-static s32 drv_ST7565_drawpoint(u16 x, u16 y, u16 color);
-s32 drv_ST7565_color_fill(u16 sx,u16 ex,u16 sy,u16 ey,u16 color);
-s32 drv_ST7565_fill(u16 sx,u16 ex,u16 sy,u16 ey,u16 *color);
-static s32 drv_ST7565_display_onoff(u8 sta);
-s32 drv_ST7565_prepare_display(u16 sx, u16 ex, u16 sy, u16 ey);
-static void drv_ST7565_scan_dir(u8 dir);
-void drv_ST7565_lcd_bl(u8 sta);
+s32 drv_ST7565_init(DevLcd *lcd);
+static s32 drv_ST7565_drawpoint(DevLcd *lcd, u16 x, u16 y, u16 color);
+s32 drv_ST7565_color_fill(DevLcd *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 color);
+s32 drv_ST7565_fill(DevLcd *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color);
+static s32 drv_ST7565_display_onoff(DevLcd *lcd, u8 sta);
+s32 drv_ST7565_prepare_display(DevLcd *lcd, u16 sx, u16 ex, u16 sy, u16 ey);
+static void drv_ST7565_scan_dir(DevLcd *lcd, u8 dir);
+void drv_ST7565_lcd_bl(DevLcd *lcd, u8 sta);
 
 /*
 
@@ -429,9 +78,35 @@ _lcd_drv CogLcdST7565Drv = {
 							.set_dir = drv_ST7565_scan_dir,
 							.backlight = drv_ST7565_lcd_bl
 							};
+/*
 
-void drv_ST7565_lcd_bl(u8 sta)
+	这是一个衍生出来的ST7565驱动，
+	ID叫做7564，用处是：
+	如果一个系统有两个ST7565的LCD，
+	一个是128*64，一个是128*32。
+	如果设备ID跟驱动ID通过映射表对应，就没有问题，
+	我们暂时不做映射，直接设备ID就是驱动ID。
+	因此需要区分两种不同设备，只好衍生一种假的驱动，
+	这种驱动除了ID不一样，其他跟ST7565完全一样。
+
+*/
+_lcd_drv CogLcdST7564Drv = {
+							.id = 0X7564,
+
+							.init = drv_ST7565_init,
+							.draw_point = drv_ST7565_drawpoint,
+							.color_fill = drv_ST7565_color_fill,
+							.fill = drv_ST7565_fill,
+							.onoff = drv_ST7565_display_onoff,
+							.prepare_display = drv_ST7565_prepare_display,
+							.set_dir = drv_ST7565_scan_dir,
+							.backlight = drv_ST7565_lcd_bl
+							};
+
+void drv_ST7565_lcd_bl(DevLcd *lcd, u8 sta)
 {
+	_lcd_bus *LcdBusDrv;
+	LcdBusDrv = dev_lcdbus_find(lcd->dev->bus);
 	LcdBusDrv->bl(sta);
 }
 	
@@ -442,7 +117,7 @@ void drv_ST7565_lcd_bl(u8 sta)
  *@param[out]  无
  *@retval:     static
  */
-static void drv_ST7565_scan_dir(u8 dir)
+static void drv_ST7565_scan_dir(DevLcd *lcd, u8 dir)
 {
 	return;
 }
@@ -457,7 +132,7 @@ static void drv_ST7565_scan_dir(u8 dir)
  *@param[out]  无
  *@retval:     
  */
-static s32 drv_ST7565_set_cp_addr(u16 sc, u16 ec, u16 sp, u16 ep)
+static s32 drv_ST7565_set_cp_addr(DevLcd *lcd, u16 sc, u16 ec, u16 sp, u16 ep)
 {
 	return 0;
 }
@@ -473,13 +148,15 @@ static s32 drv_ST7565_set_cp_addr(u16 sc, u16 ec, u16 sp, u16 ep)
  *@param[out]  无
  *@retval:     static
  */
-static s32 drv_ST7565_refresh_gram(u16 sc, u16 ec, u16 sp, u16 ep)
+static s32 drv_ST7565_refresh_gram(DevLcd *lcd, u16 sc, u16 ec, u16 sp, u16 ep)
 {	
 	struct _cog_drv_data *gram; 
 	u8 i;
-
+	
+	_lcd_bus *LcdBusDrv;
+	LcdBusDrv = dev_lcdbus_find(lcd->dev->bus);
 	//uart_printf("drv_ST7565_refresh:%d,%d,%d,%d\r\n", sc,ec,sp,ep);
-	gram = (struct _cog_drv_data *)&LcdGram;
+	gram = (struct _cog_drv_data *)lcd->pri;
 	
 	LcdBusDrv->open();
     for(i=sp/8; i <= ep/8; i++)
@@ -503,9 +180,11 @@ static s32 drv_ST7565_refresh_gram(u16 sc, u16 ec, u16 sp, u16 ep)
  *@param[out]  无
  *@retval:     static
  */
-static s32 drv_ST7565_display_onoff(u8 sta)
+static s32 drv_ST7565_display_onoff(DevLcd *lcd, u8 sta)
 {
-
+	_lcd_bus *LcdBusDrv;
+	LcdBusDrv = dev_lcdbus_find(lcd->dev->bus);
+	
 	LcdBusDrv->open();
 	if(sta == 1)
 	{
@@ -526,8 +205,10 @@ static s32 drv_ST7565_display_onoff(u8 sta)
  *@param[out]  无
  *@retval:     
  */
-s32 drv_ST7565_init(void)
+s32 drv_ST7565_init(DevLcd *lcd)
 {
+	_lcd_bus *LcdBusDrv;
+	LcdBusDrv = dev_lcdbus_find(lcd->dev->bus);
 	
 	LcdBusDrv->init();
 	LcdBusDrv->open();
@@ -556,9 +237,10 @@ s32 drv_ST7565_init(void)
 	wjq_log(LOG_INFO, "drv_ST7565_init finish\r\n");
 
 	/*申请显存，永不释放*/
-	memset((char*)&LcdGram, 0x00, 128*8);//要改为动态判断显存大小
+	lcd->pri = (void *)wjq_malloc(sizeof(struct _cog_drv_data));
+	memset((char*)lcd->pri, 0x00, 128*8);//要改为动态判断显存大小
 	
-	drv_ST7565_refresh_gram(0,127,0,63);
+	drv_ST7565_refresh_gram(lcd, 0,127,0,63);
 
 	return 0;
 }
@@ -574,7 +256,7 @@ s32 drv_ST7565_init(void)
  *@param[out]  无
  *@retval:     
  */
-s32 drv_ST7565_xy2cp(u16 sx, u16 ex, u16 sy, u16 ey, u16 *sc, u16 *ec, u16 *sp, u16 *ep)
+s32 drv_ST7565_xy2cp(DevLcd *lcd, u16 sx, u16 ex, u16 sy, u16 ey, u16 *sc, u16 *ec, u16 *sp, u16 *ep)
 {
 
 	return 0;
@@ -588,15 +270,16 @@ s32 drv_ST7565_xy2cp(u16 sx, u16 ex, u16 sy, u16 ey, u16 *sc, u16 *ec, u16 *sp, 
  *@param[out]  无
  *@retval:     static
  */
-static s32 drv_ST7565_drawpoint( u16 x, u16 y, u16 color)
+static s32 drv_ST7565_drawpoint(DevLcd *lcd, u16 x, u16 y, u16 color)
 {
 	u16 xtmp,ytmp;
 	u16 page, colum;
-	struct _strlcd_obj *lcd = &LCD;
-	
-	struct _cog_drv_data *gram;
 
-	gram = (struct _cog_drv_data *)&LcdGram;
+	struct _cog_drv_data *gram;
+	_lcd_bus *LcdBusDrv;
+	LcdBusDrv = dev_lcdbus_find(lcd->dev->bus);
+	
+	gram = (struct _cog_drv_data *)lcd->pri;
 
 	if(x > lcd->width)
 		return -1;
@@ -646,18 +329,18 @@ static s32 drv_ST7565_drawpoint( u16 x, u16 y, u16 color)
  *@param[out]  无
  *@retval:     
  */
-s32 drv_ST7565_color_fill(u16 sx,u16 ex,u16 sy,u16 ey,u16 color)
+s32 drv_ST7565_color_fill(DevLcd *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 color)
 {
 	u16 i,j;
 	u16 xtmp,ytmp;
 	u16 page, colum;
-	struct _strlcd_obj *lcd = &LCD;
+
 	
 	struct _cog_drv_data *gram;
 
 	//uart_printf("drv_ST7565_fill:%d,%d,%d,%d\r\n", sx,ex,sy,ey);
 
-	gram = (struct _cog_drv_data *)&LcdGram;
+	gram = (struct _cog_drv_data *)lcd->pri;
 
 	/*防止坐标溢出*/
 	if(sy >= lcd->height)
@@ -718,11 +401,11 @@ s32 drv_ST7565_color_fill(u16 sx,u16 ex,u16 sy,u16 ey,u16 color)
 	*/
 	if(lcd->dir == W_LCD)
 	{
-		drv_ST7565_refresh_gram(sx,ex,sy,ey);
+		drv_ST7565_refresh_gram(lcd, sx,ex,sy,ey);
 	}
 	else
 	{
-		drv_ST7565_refresh_gram(sy, ey, lcd->width-ex-1, lcd->width-sx-1); 	
+		drv_ST7565_refresh_gram(lcd, sy, ey, lcd->width-ex-1, lcd->width-sx-1); 	
 	}
 		
 	return 0;
@@ -740,7 +423,7 @@ s32 drv_ST7565_color_fill(u16 sx,u16 ex,u16 sy,u16 ey,u16 color)
  *@param[out]  无
  *@retval:     
  */
-s32 drv_ST7565_fill(u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
+s32 drv_ST7565_fill(DevLcd *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
 {
 	u16 i,j;
 	u16 xtmp,ytmp;
@@ -748,10 +431,11 @@ s32 drv_ST7565_fill(u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
 	u16 page, colum;
 	u32 index;
 	
-	struct _strlcd_obj *lcd = &LCD;
 	struct _cog_drv_data *gram;
-	
-	gram = (struct _cog_drv_data *)&LcdGram;
+
+	//uart_printf("drv_ST7565_fill:%d,%d,%d,%d\r\n", sx,ex,sy,ey);
+
+	gram = (struct _cog_drv_data *)lcd->pri;
 
 	/*xlen跟ylen是用来取数据的，不是填LCD*/
 	xlen = ex-sx+1;//全包含
@@ -817,18 +501,18 @@ s32 drv_ST7565_fill(u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
 	*/
 	if(lcd->dir == W_LCD)
 	{
-		drv_ST7565_refresh_gram(sx,ex,sy,ey);
+		drv_ST7565_refresh_gram(lcd, sx,ex,sy,ey);
 	}
 	else
 	{
 
-		drv_ST7565_refresh_gram(sy, ey, lcd->width-ex-1, lcd->width-sx-1); 	
+		drv_ST7565_refresh_gram(lcd, sy, ey, lcd->width-ex-1, lcd->width-sx-1); 	
 	}
 	//uart_printf("refresh ok\r\n");		
 	return 0;
 }
 
-s32 drv_ST7565_prepare_display(u16 sx, u16 ex, u16 sy, u16 ey)
+s32 drv_ST7565_prepare_display(DevLcd *lcd, u16 sx, u16 ex, u16 sy, u16 ey)
 {
 	return 0;
 }
@@ -849,8 +533,11 @@ s32 drv_ST7565_prepare_display(u16 sx, u16 ex, u16 sy, u16 ey)
  *@param[out]  无
  *@retval:	   
  */
-s32 drv_ssd1615_init(void)
+s32 drv_ssd1615_init(DevLcd *lcd)
 {
+	_lcd_bus *LcdBusDrv;
+	LcdBusDrv = dev_lcdbus_find(lcd->dev->bus);
+	
 	LcdBusDrv->init();
 
 	LcdBusDrv->open();
@@ -888,9 +575,10 @@ s32 drv_ssd1615_init(void)
 	LcdBusDrv->close();
 	wjq_log(LOG_INFO, "dev_ssd1615_init finish\r\n");
 
-	memset((char*)&LcdGram, 0x00, 128*8);//要改为动态判断显存大小
+	lcd->pri = (void *)wjq_malloc(sizeof(struct _cog_drv_data));
+	memset((char*)lcd->pri, 0x00, 128*8);//要改为动态判断显存大小
 	
-	drv_ST7565_refresh_gram(0,127,0,63);
+	drv_ST7565_refresh_gram(lcd, 0,127,0,63);
 
 	return 0;
 }
@@ -903,8 +591,11 @@ s32 drv_ssd1615_init(void)
  *@param[out]  无
  *@retval:     
  */
-void drv_ssd1615_display_onoff(u8 sta)
+s32 drv_ssd1615_display_onoff(DevLcd *lcd, u8 sta)
 {
+	_lcd_bus *LcdBusDrv;
+	LcdBusDrv = dev_lcdbus_find(lcd->dev->bus);
+	
 	LcdBusDrv->open();
 	if(sta == 1)
 	{
@@ -919,6 +610,8 @@ void drv_ssd1615_display_onoff(u8 sta)
     	LcdBusDrv->writecmd(0XAE);  //DISPLAY OFF	
 	}
 	LcdBusDrv->close();
+	
+	return 0;
 }
 
 _lcd_drv OledLcdSSD1615rv = {

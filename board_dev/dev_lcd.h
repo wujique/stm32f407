@@ -1,7 +1,9 @@
 #ifndef _DEV_LCD_H_
 #define _DEV_LCD_H_
 
+#include "dev_lcdbus.h"
 
+typedef struct _strDevLcd DevLcd;
 /*
 	LCD驱动定义
 */
@@ -9,43 +11,69 @@ typedef struct
 {	
 	u16 id;
 	
-	s32 (*init)(void);
-	s32 (*draw_point)(u16 x, u16 y, u16 color);
-	s32 (*color_fill)(u16 sx,u16 ex,u16 sy,u16 ey, u16 color);
-	s32 (*fill)(u16 sx,u16 ex,u16 sy,u16 ey,u16 *color);
-	s32 (*onoff)(u8 sta);
-	s32 (*prepare_display)(u16 sx, u16 ex, u16 sy, u16 ey);
-	void (*set_dir)(u8 scan_dir);
-	void (*backlight)(u8 sta);
+	s32 (*init)(DevLcd *lcd);
+	
+	s32 (*draw_point)(DevLcd *lcd, u16 x, u16 y, u16 color);
+	s32 (*color_fill)(DevLcd *lcd, u16 sx,u16 ex,u16 sy,u16 ey, u16 color);
+	s32 (*fill)(DevLcd *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color);
+	
+	s32 (*prepare_display)(DevLcd *lcd, u16 sx, u16 ex, u16 sy, u16 ey);
+	
+	s32 (*onoff)(DevLcd *lcd, u8 sta);
+	void (*set_dir)(DevLcd *lcd, u8 scan_dir);
+	void (*backlight)(DevLcd *lcd, u8 sta);
 }_lcd_drv; 
 
-
-struct _strlcd_obj
+/* 
+	LCD参数, 属于设备的一部分
+	同一个LCD接口可以接不同的LCD，所有参数通过侦测获取。
+*/
+typedef struct
 {
+	u16 id;
+	u16 width;	//LCD 宽度  竖屏
+	u16 height;	//LCD 高度    竖屏
+}_lcd_pra;
+
+/*
+	设备定义
+	包含挂载方式定义
+	也就是说明有一什么ID的设备挂载什么地方
+	例如定义一个COG LCD挂载在SPI3上
+	用什么驱动？LCD具体参数是什么？通过ID匹配
+	同一个类型的LCD，驱动相同，只是像素大小不一样，如何处理？
+	可以重生一个驱动结构体，函数一样，ID不一样。
+*/
+typedef struct
+{
+	char *name;//设备名字
+	LcdBusType bus;//挂在那条LCD总线上
+	u16 id;
+}LcdObj;
+/*
+	初始化的时候会根据设备数定义，
+	并且匹配驱动跟参数，并初始化变量。
+	打开的时候只是获取了一个指针
+*/
+struct _strDevLcd
+{
+	s32 gd;//句柄，控制是否可以打开
+	
+	LcdObj	 *dev;
+	/* LCD参数，固定，不可变*/
+	_lcd_pra *pra;
+	
+	/* LCD驱动 */
 	_lcd_drv *drv;
 
+	/*驱动需要的变量*/
 	u8  dir;	//横屏还是竖屏控制：0，竖屏；1，横屏。	
 	u8  scandir;//扫描方向
 	u16 width;	//LCD 宽度 
 	u16 height;	//LCD 高度
 
+	void *pri;//私有数据，黑白屏跟OLED屏在初始化的时候会开辟显存
 };
-
-
-/*
-	LCD接口定义
-*/
-typedef struct  
-{	
-	char * name;
-	
-	s32 (*init)(void);
-	s32 (*open)(void);
-	s32 (*close)(void);
-	s32 (*writedata)(u8 *data, u16 len);
-	s32 (*writecmd)(u8 cmd);
-	s32 (*bl)(u8 sta);
-}_lcd_bus; 
 
 
 #define H_LCD 0//竖屏
@@ -101,12 +129,8 @@ typedef struct
 #define LGRAYBLUE        0XA651 //浅灰蓝色(中间层颜色)
 #define LBBLUE           0X2B12 //浅棕蓝色(选择条目的反色)
 
-
-extern struct _strlcd_obj LCD;
-
+extern DevLcd *dev_lcd_open(char *name);
 extern s32 dev_lcd_init(void);
-extern void dev_lcd_test(void);
-
 
 #endif
 

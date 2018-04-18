@@ -20,9 +20,13 @@
 */
 #include <stdarg.h>
 #include <stdio.h>
+#include "string.h"
 #include "stm32f4xx.h"
 #include "wujique_log.h"
+#include "dev_lcdbus.h"
 #include "dev_lcd.h"
+#include "dev_ILI9341.h"
+#include "dev_str7565.h"
 
 //#define DEV_LCD_DEBUG
 
@@ -32,13 +36,169 @@
 #define LCD_DEBUG(a, ...)
 #endif
 
+s32 LcdMagNum = 95862;
 
-struct _strlcd_obj LCD;
+u16 PenColor = BLACK;
+u16 BackColor = BLUE;
 
-extern _lcd_drv TftLcdILI9341Drv;
-extern _lcd_drv TftLcdILI9325Drv;
-extern _lcd_drv CogLcdST7565Drv;
-extern _lcd_drv OledLcdSSD1615rv;
+
+
+/*
+	各种LCD的规格参数
+*/
+_lcd_pra LCD_IIL9341 ={
+		.id	  = 0x9341,
+		.width = 240,	//LCD 宽度
+		.height = 320,	//LCD 高度
+};
+		
+_lcd_pra LCD_IIL9325 ={
+		.id   = 0x9325,
+		.width = 240,	//LCD 宽度
+		.height = 320, //LCD 高度
+};
+
+_lcd_pra LCD_R61408 ={
+		.id   = 0x1408,//
+		.width = 480,	//LCD 宽度
+		.height = 800, //LCD 高度
+};
+
+
+_lcd_pra LCD_Cog12864 ={
+		.id   = 0x7565,//
+		.width = 64,	//LCD 宽度
+		.height = 128, //LCD 高度
+};
+		
+_lcd_pra LCD_Cog12832 ={
+		.id   = 0x7564,//
+		.width = 32,	//LCD 宽度
+		.height = 128, //LCD 高度
+};		
+		
+_lcd_pra LCD_Oled12864 ={
+		.id   = 0x1315,//
+		.width = 64,	//LCD 宽度
+		.height = 128, //LCD 高度
+};
+
+/*各种LCD列表*/
+_lcd_pra *LcdPraList[5]=
+			{
+				&LCD_IIL9341,		
+				&LCD_IIL9325,
+				&LCD_R61408,
+				&LCD_Cog12864,
+				&LCD_Oled12864,
+};
+
+/*
+	所有驱动列表
+*/
+_lcd_drv *LcdDrvList[] = {
+					&TftLcdILI9341Drv,
+					&TftLcdILI9325Drv,
+					&CogLcdST7565Drv,
+					&OledLcdSSD1615rv,
+};
+/*
+
+	可自动识别ID的驱动
+
+*/
+_lcd_drv *LcdProbDrv8080List[] = {
+					&TftLcdILI9341Drv,
+					&TftLcdILI9325Drv,
+};
+
+/*
+	设备树定义
+	指明系统有多少个LCD设备，挂在哪个LCD总线上。
+*/
+#define DEV_LCD_C 4//系统存在3个LCD设备
+LcdObj LcdObjList[DEV_LCD_C]=
+{
+	{"i2coledlcd",  LCD_BUS_I2C,  0X1315},
+	{"vspioledlcd", LCD_BUS_VSPI, 0X1315},
+	{"spicoglcd",   LCD_BUS_SPI,  0X7565},
+	{"tftlcd",      LCD_BUS_8080, NULL},
+};
+
+
+/*LCD设备总结构体，初始化设备时初始化*/
+DevLcd DevLcdList[DEV_LCD_C];
+
+/**
+ *@brief:      dev_lcd_cpydev
+ *@details:    拷贝设备信息
+ *@param[in]   DevLcd *src  
+               DevLcd *dst  
+ *@param[out]  无
+ *@retval:     
+ */
+static s32 dev_lcd_cpydev(DevLcd *src, DevLcd *dst)
+{
+	src->gd = dst->gd;
+	src->dev = dst->dev;
+	src->pra = dst->pra;
+	src->drv = dst->drv;
+	src->dir = dst->dir;
+	src->scandir = dst->scandir;
+	src->width = dst->width;
+	src->height = dst->height;
+	return 0;
+}
+
+/**
+ *@brief:      dev_lcd_findpra
+ *@details:    根据ID查找LCD参数
+ *@param[in]   u16 id  
+ *@param[out]  无
+ *@retval:     _lcd_pra
+ */
+static _lcd_pra *dev_lcd_findpra(u16 id)
+{
+	u8 i =0;
+	
+	while(1)
+	{
+		if(LcdPraList[i]->id == id)
+		{
+			return LcdPraList[i];
+		}
+		i++;
+		if(i>= sizeof(LcdPraList)/sizeof(_lcd_pra *))
+		{
+			return NULL;
+		}
+	}
+	
+}
+/**
+ *@brief:      dev_lcd_finddrv
+ *@details:    根据ID查找设备驱动
+ *@param[in]   u16 id  
+ *@param[out]  无
+ *@retval:     _lcd_drv
+ */
+_lcd_drv *dev_lcd_finddrv(u16 id)
+{
+	u8 i =0;
+	
+	while(1)
+	{
+		if(LcdDrvList[i]->id == id)
+		{
+			return LcdDrvList[i];
+		}
+		i++;
+		if(i>= sizeof(LcdDrvList)/sizeof(_lcd_drv *))
+		{
+			return NULL;
+		}
+	}
+}
 
 /**
  *@brief:      dev_lcd_setdir
@@ -48,26 +208,27 @@ extern _lcd_drv OledLcdSSD1615rv;
  *@param[out]  无
  *@retval:     
  */
-void dev_lcd_setdir(u8 dir, u8 scan_dir)
+s32 dev_lcd_setdir(DevLcd *lcd, u8 dir, u8 scan_dir)
 {
-	struct _strlcd_obj *obj;
-	obj = &LCD;
-
 	u16 temp;
 	u8 scan_dir_tmp;
+
+	if(lcd == NULL)
+		return -1;
+
 	
-	if(dir != obj->dir)//切换屏幕方向	
+	if(dir != lcd->dir)//切换屏幕方向	
 	{
 		
-		obj->dir = obj->dir^0x01;
-		temp = obj->width;
-		obj->width = obj->height;
-		obj->height = temp;
-		LCD_DEBUG(LOG_DEBUG, "set dir w:%d, h:%d\r\n", obj->width, obj->height);
+		lcd->dir = lcd->dir^0x01;
+		temp = lcd->width;
+		lcd->width = lcd->height;
+		lcd->height = temp;
+		LCD_DEBUG(LOG_DEBUG, "set dir w:%d, h:%d\r\n", lcd->width, lcd->height);
 	}
 	
 	
-	if(obj->dir == W_LCD)//横屏，扫描方向映射转换
+	if(lcd->dir == W_LCD)//横屏，扫描方向映射转换
 	{
 		/*
 			横屏	 竖屏
@@ -98,107 +259,238 @@ void dev_lcd_setdir(u8 dir, u8 scan_dir)
 		scan_dir_tmp = scan_dir;
 	}
 	
-	obj->scandir = scan_dir_tmp;
+	lcd->scandir = scan_dir_tmp;
 	
-	obj->drv->set_dir(obj->scandir);
-}
-
-
-s32 dev_lcd_init(void)
-{
-	s32 ret = -1;
-
-	#if 0
-	/*初始化8080接口，包括背光信号*/
-	bus_8080interface_init();
-
-	if(ret != 0)
-	{
-		/*尝试初始化9341*/
-		ret = drv_ILI9341_init();
-		if(ret == 0)
-		{
-			LCD.drv = &TftLcdILI9341Drv;//将9341驱动赋值到LCD
-			LCD.dir = H_LCD;//默认竖屏
-			LCD.height = 320;
-			LCD.width = 240;
-		}
-	}
-	
-
-	if(ret != 0)
-	{
-		/* 尝试初始化9325 */
-		ret = drv_ILI9325_init();
-		if(ret == 0)
-		{
-			LCD.drv = &TftLcdILI9325Drv;
-			LCD.dir = H_LCD;
-			LCD.height = 320;
-			LCD.width = 240;
-		}
-	}
-
-	#else
-	#if 0
-	if(ret != 0)
-	{
-		/* 初始化COG 12864 LCD */
-		ret = drv_ST7565_init();
-		if(ret == 0)
-		{
-			LCD.drv = &CogLcdST7565Drv;
-			LCD.dir = W_LCD;
-			LCD.height = 64;
-			LCD.width = 128;
-		}
-	}
-	#else
-	if(ret != 0)
-	{
-		/* 初始化OLED LCD */
-		ret = drv_ssd1615_init();
-		if(ret == 0)
-		{
-			LCD.drv = &OledLcdSSD1615rv;
-			LCD.dir = W_LCD;
-			LCD.height = 64;
-			LCD.width = 128;
-		}
-	}
-	#endif
-	
-	#endif
-	/*设置屏幕方向，扫描方向*/
-	dev_lcd_setdir(W_LCD, U2D_L2R);
-	LCD.drv->onoff(1);//打开显示
-	bus_8080_lcd_bl(1);//打开背光	
-	LCD.drv->color_fill(0, LCD.width, 0, LCD.height, YELLOW);
+	lcd->drv->set_dir(lcd, lcd->scandir);
 	
 	return 0;
 }
 
-
-s32 dev_lcd_drawpoint(u16 x, u16 y, u16 color)
+/**
+ *@brief:      dev_lcd_init
+ *@details:    初始化LCD
+ 			   根据设备树，初始化所有LCD
+ *@param[in]   void  
+ *@param[out]  无
+ *@retval:     
+ */
+s32 dev_lcd_init(void)
 {
-	return LCD.drv->draw_point(x, y, color);
+	s32 ret = -1;
+	u8 i = 0;
+	LcdObj *pobj;
+	DevLcd *pdev;
+	
+	while(1)
+	{	
+		pobj = &LcdObjList[i];
+		pdev = &DevLcdList[i];
+		
+		wjq_log(LOG_INFO, "\r\nlcd name:%s\r\n",pobj->name);
+
+		pdev->dev = pobj;
+		pdev->gd = -99;//初始化成功就设置为-1；
+		ret = -1;
+		/*
+			根据ID找驱动跟参数
+		*/
+		if(pobj->id == NULL)
+		{
+			LCD_DEBUG(LOG_DEBUG, "prob LCD id\r\n");
+			if(pobj->bus == LCD_BUS_8080)
+			{
+				/*找到驱动跟规格后，初始化*/
+				u8 j = 0;
+
+				while(1)
+				{
+					ret = LcdProbDrv8080List[j]->init(pdev);
+					if(ret == 0)
+					{
+						LCD_DEBUG(LOG_DEBUG, "lcd drv prob ok!\r\n");	
+						pdev->drv = LcdProbDrv8080List[j];
+						/*
+							用驱动的ID找参数
+						*/
+						pdev->pra = dev_lcd_findpra(pdev->drv->id);
+						break;
+					}	
+					else
+					{
+						j++;
+						if(j >= sizeof(LcdProbDrv8080List)/sizeof(_lcd_drv *))
+						{
+							LCD_DEBUG(LOG_DEBUG, "lcd prob err\r\n");
+							break;
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			pdev->drv = dev_lcd_finddrv(pobj->id);
+			if(pdev->drv != NULL)
+			{
+				
+				pdev->pra = dev_lcd_findpra(pobj->id);
+				if(pdev->pra != NULL)
+				{
+					/*找到驱动跟规格后，初始化*/
+					ret = pdev->drv->init(pdev);
+				}
+				else
+					LCD_DEBUG(LOG_DEBUG, "lcd find drv fail!\r\n");
+			}
+			else
+				LCD_DEBUG(LOG_DEBUG, "lcd find drv fail!\r\n");
+
+
+		}
+
+		if(ret == 0)
+		{
+			pdev->gd = -1;
+			
+			pdev->dir = H_LCD;
+			pdev->height = pdev->pra->height;
+			pdev->width = pdev->pra->width;
+			dev_lcd_setdir(pdev, W_LCD, L2R_U2D);
+			pdev->drv->onoff((pdev),1);//打开显示
+			pdev->drv->color_fill(pdev, 0, pdev->width, 0, pdev->height, BLUE);
+
+			pdev->drv->backlight(pdev, 1);
+
+			wjq_log(LOG_INFO, "lcd init OK\r\n");
+		}
+		else
+		{
+			wjq_log(LOG_INFO, "lcd drv init err!\r\n");
+		}
+		
+
+		i++;
+		if(i >= sizeof(LcdObjList)/sizeof(LcdObj))
+		{
+			wjq_log(LOG_INFO, "lcd init finish\r\n");
+			break;
+		}
+	}
+
+	return 0;
 }
 
-s32 dev_lcd_prepare_display(u16 sx, u16 ex, u16 sy, u16 ey)
+/**
+ *@brief:      dev_lcd_open
+ *@details:    打开LCD
+ *@param[in]   char *name  
+ *@param[out]  无
+ *@retval:     DevLcd
+ */
+DevLcd *dev_lcd_open(char *name)
 {
-	return LCD.drv->prepare_display(sx, ex, sy, ey);
+	DevLcd *p;
+	u8 i;
+
+	i = 0;
+	while(1)
+	{
+		
+		p = &DevLcdList[i];
+		if(0 == strcmp(name, p->dev->name))
+		{
+			LCD_DEBUG(LOG_DEBUG, "find lcd\r\n");
+			
+			if(p->gd == -99)
+			{
+				LCD_DEBUG(LOG_DEBUG, "lcd dev no init!\r\n");
+				return NULL;
+			}
+			
+			return p;
+
+		}
+		
+		i++;
+		if(i>= sizeof(LcdObjList)/sizeof(LcdObj))
+			return NULL;
+	}
+
+}
+/**
+ *@brief:      dev_lcd_close
+ *@details:    关闭LCD
+ *@param[in]   DevLcd *dev  
+ *@param[out]  无
+ *@retval:     
+ */
+s32 dev_lcd_close(DevLcd *dev)
+{
+	if(dev->gd <0)
+		return -1;
+	else
+	{
+		dev->gd = -1;
+		return 0;
+	}
+}
+/*
+坐标-1 是坐标原点的变化，
+在APP层，原点是（1，1），这样更符合平常人。
+
+到驱动就换为(0,0)，无论程序还是控制器显存，都是从（0，0）开始
+
+*/
+s32 dev_lcd_drawpoint(DevLcd *lcd, u16 x, u16 y, u16 color)
+{
+	if(lcd == NULL)
+		return -1;
+	
+	return lcd->drv->draw_point(lcd, x-1, y-1, color);
 }
 
-s32 dev_lcd_display_onoff(u8 sta)
+s32 dev_lcd_prepare_display(DevLcd *lcd, u16 sx, u16 ex, u16 sy, u16 ey)
 {
-	return LCD.drv->onoff(sta);
+	if(lcd == NULL)
+		return -1;
+	
+	return lcd->drv->prepare_display(lcd, sx-1, ex-1, sy-1, ey-1);
+}
+
+
+s32 dev_lcd_fill(DevLcd *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
+{	
+	if(lcd == NULL)
+		return -1;
+	
+	return lcd->drv->fill(lcd, sx-1,ex-1,sy-1,ey-1,color);
+}
+s32 dev_lcd_color_fill(DevLcd *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 color)
+{
+	if(lcd == NULL)
+		return -1;
+	
+	return lcd->drv->color_fill(lcd, sx-1,ex-1,sy-1,ey-1,color);
+}
+s32 dev_lcd_backlight(DevLcd *lcd, u8 sta)
+{
+	if(lcd == NULL)
+		return -1;
+	
+	lcd->drv->backlight(lcd, sta);
+	return 0;
+}
+s32 dev_lcd_display_onoff(DevLcd *lcd, u8 sta)
+{
+	if(lcd == NULL)
+		return -1;
+
+	return lcd->drv->onoff(lcd, sta);
 }
 /* 
 
 从tslib拷贝一些显示函数到这里
 这些函数可以归为GUI
-
-
 */
 #include "font.h"
 
@@ -213,11 +505,14 @@ s32 dev_lcd_display_onoff(u8 sta)
  *@param[out]  无
  *@retval:     
  */
-void line (int x1, int y1, int x2, int y2, unsigned colidx)
+void line (DevLcd *lcd, int x1, int y1, int x2, int y2, unsigned colidx)
 {
 	int tmp;
 	int dx = x2 - x1;
 	int dy = y2 - y1;
+
+	if(lcd == NULL)
+		return;
 
 	if (abs (dx) < abs (dy)) 
 	{
@@ -232,7 +527,7 @@ void line (int x1, int y1, int x2, int y2, unsigned colidx)
 		dx = (dx << 16) / dy;
 		while (y1 <= y2)
 		{
-			LCD.drv->draw_point (x1 >> 16, y1, colidx);
+			dev_lcd_drawpoint(lcd, x1 >> 16, y1, colidx);
 			x1 += dx;
 			y1++;
 		}
@@ -250,7 +545,7 @@ void line (int x1, int y1, int x2, int y2, unsigned colidx)
 		dy = dx ? (dy << 16) / dx : 0;
 		while (x1 <= x2) 
 		{
-			LCD.drv->draw_point (x1, y1 >> 16, colidx);
+			dev_lcd_drawpoint(lcd, x1, y1 >> 16, colidx);
 			y1 += dy;
 			x1++;
 		}
@@ -266,21 +561,24 @@ void line (int x1, int y1, int x2, int y2, unsigned colidx)
  *@param[out]  无
  *@retval:     
  */
-void put_cross(int x, int y, unsigned colidx)
+void put_cross(DevLcd *lcd, int x, int y, unsigned colidx)
 {
-	line (x - 10, y, x - 2, y, colidx);
-	line (x + 2, y, x + 10, y, colidx);
-	line (x, y - 10, x, y - 2, colidx);
-	line (x, y + 2, x, y + 10, colidx);
+	if(lcd == NULL)
+		return;
+	
+	line (lcd, x - 10, y, x - 2, y, colidx);
+	line (lcd, x + 2, y, x + 10, y, colidx);
+	line (lcd, x, y - 10, x, y - 2, colidx);
+	line (lcd, x, y + 2, x, y + 10, colidx);
 
-	line (x - 6, y - 9, x - 9, y - 9, colidx + 1);
-	line (x - 9, y - 8, x - 9, y - 6, colidx + 1);
-	line (x - 9, y + 6, x - 9, y + 9, colidx + 1);
-	line (x - 8, y + 9, x - 6, y + 9, colidx + 1);
-	line (x + 6, y + 9, x + 9, y + 9, colidx + 1);
-	line (x + 9, y + 8, x + 9, y + 6, colidx + 1);
-	line (x + 9, y - 6, x + 9, y - 9, colidx + 1);
-	line (x + 8, y - 9, x + 6, y - 9, colidx + 1);
+	line (lcd, x - 6, y - 9, x - 9, y - 9, colidx + 1);
+	line (lcd, x - 9, y - 8, x - 9, y - 6, colidx + 1);
+	line (lcd, x - 9, y + 6, x - 9, y + 9, colidx + 1);
+	line (lcd, x - 8, y + 9, x - 6, y + 9, colidx + 1);
+	line (lcd, x + 6, y + 9, x + 9, y + 9, colidx + 1);
+	line (lcd, x + 9, y + 8, x + 9, y + 6, colidx + 1);
+	line (lcd, x + 9, y - 6, x + 9, y - 9, colidx + 1);
+	line (lcd, x + 8, y - 9, x + 6, y - 9, colidx + 1);
 
 }
 /**
@@ -293,18 +591,23 @@ void put_cross(int x, int y, unsigned colidx)
  *@param[out]  无
  *@retval:     
  */
-void put_char(int x, int y, int c, int colidx)
+void put_char(DevLcd *lcd, int x, int y, int c, int colidx)
 {
 	int i,j,bits;
-
+	u8* p;
+	
+	if(lcd == NULL)
+		return;	
+	
+	p = (u8*)font_vga_8x8.data;
 	for (i = 0; i < font_vga_8x8.height; i++) 
 	{
-		bits = font_vga_8x8.data [font_vga_8x8.height * c + i];
+		bits =  p[font_vga_8x8.height * c + i];
 		for (j = 0; j < font_vga_8x8.width; j++, bits <<= 1)
 		{
 			if (bits & 0x80)
 			{
-				LCD.drv->draw_point(x + j, y + i, colidx);
+				lcd->drv->draw_point(lcd, x + j, y + i, colidx);
 			}
 		}
 	}
@@ -319,12 +622,15 @@ void put_char(int x, int y, int c, int colidx)
  *@param[out]  无
  *@retval:     
  */
-void put_string(int x, int y, char *s, unsigned colidx)
+void put_string(DevLcd *lcd, int x, int y, char *s, unsigned colidx)
 {
 	int i;
 	
+	if(lcd == NULL)
+		return;	
+	
 	for (i = 0; *s; i++, x += font_vga_8x8.width, s++)
-		put_char(x, y, *s, colidx);
+		put_char(lcd, x, y, *s, colidx);
 }
 /**
  *@brief:      put_string_center
@@ -336,11 +642,14 @@ void put_string(int x, int y, char *s, unsigned colidx)
  *@param[out]  无
  *@retval:     
  */
-void put_string_center(int x, int y, char *s, unsigned colidx)
+void put_string_center(DevLcd *lcd, int x, int y, char *s, unsigned colidx)
 {
 	int sl = strlen (s);
 	
-    put_string (x - (sl / 2) * font_vga_8x8.width,
+	if(lcd == NULL)
+		return;	
+	
+    put_string (lcd, x - (sl / 2) * font_vga_8x8.width,
                 y - font_vga_8x8.height / 2, s, colidx);
 }
 
@@ -355,12 +664,15 @@ void put_string_center(int x, int y, char *s, unsigned colidx)
  *@param[out]  无
  *@retval:     
  */
-void rect (int x1, int y1, int x2, int y2, unsigned colidx)
+void rect (DevLcd *lcd, int x1, int y1, int x2, int y2, unsigned colidx)
 {
-	line (x1, y1, x2, y1, colidx);
-	line (x2, y1, x2, y2, colidx);
-	line (x2, y2, x1, y2, colidx);
-	line (x1, y2, x1, y1, colidx);
+	if(lcd == NULL)
+		return;
+
+	line (lcd, x1, y1, x2, y1, colidx);
+	line (lcd, x2, y1, x2, y2, colidx);
+	line (lcd, x2, y2, x1, y2, colidx);
+	line (lcd, x1, y2, x1, y1, colidx);
 }
 
 
@@ -373,32 +685,40 @@ void rect (int x1, int y1, int x2, int y2, unsigned colidx)
  */
 void dev_lcd_test(void)
 {
+	DevLcd *LcdCog = NULL;
+	DevLcd *LcdOled = NULL;
+	DevLcd *LcdOledI2C = NULL;
+	DevLcd *LcdTft = NULL;
 
-	while(1)
-	{		
-		#if 0//测试彩屏
-		LCD.drv->color_fill(0,LCD.width,0,LCD.height,BLUE);
-		Delay(1000);
-		LCD.drv->color_fill(0,LCD.width/2,0,LCD.height/2,RED);
-		Delay(1000);
-		LCD.drv->color_fill(0,LCD.width/4,0,LCD.height/4,GREEN);
-		Delay(1000);
-		
-		put_string_center (LCD.width/2+50, LCD.height/2+50,
-			   "ADCD WUJIQUE !", 0xF800);
-		Delay(1000);
-		#else//测试COG LCD跟OLED LCD
-		put_string_center (20, 32,
-			   "ADCD WUJIQUE !", BLACK);
-		Delay(1000);
-		LCD.drv->color_fill(0,LCD.width,0,LCD.height,WHITE);
-		Delay(1000);
-		LCD.drv->color_fill(0,LCD.width,0,LCD.height,BLACK);
-		Delay(1000);
-		LCD.drv->color_fill(0,LCD.width,0,LCD.height,WHITE);
-		Delay(1000);
-		#endif
-	}
+	/*  打开三个设备 */
+	LcdCog = dev_lcd_open("spicoglcd");
+	if(LcdCog==NULL)
+		wjq_log(LOG_FUN, "open cog lcd err\r\n");
 
+	LcdOled = dev_lcd_open("vspioledlcd");
+	if(LcdOled==NULL)
+		wjq_log(LOG_FUN, "open oled lcd err\r\n");
+	
+	LcdTft = dev_lcd_open("tftlcd");
+	if(LcdTft==NULL)
+		wjq_log(LOG_FUN, "open tft lcd err\r\n");
+
+	LcdOledI2C = dev_lcd_open("i2coledlcd");
+	if(LcdOledI2C==NULL)
+		wjq_log(LOG_FUN, "open oled i2c lcd err\r\n");
+	
+	/*打开背光*/
+	dev_lcd_backlight(LcdCog, 1);
+	dev_lcd_backlight(LcdOled, 1);
+	dev_lcd_backlight(LcdOledI2C, 1);
+	dev_lcd_backlight(LcdTft, 1);
+
+	put_string(LcdCog, 5, 5, "spi cog lcd", BLACK);
+	put_string(LcdOled, 5, 5, "vspi oled lcd", BLACK);
+	put_string(LcdOledI2C, 5, 5, "i2c oled lcd", BLACK);
+	put_string(LcdTft, 5, 5, "2.8 tft lcd", BLACK);
+
+	while(1);
 }
+
 

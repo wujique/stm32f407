@@ -32,6 +32,7 @@
 #include "mcu_i2c.h"
 #include "mcu_spi.h"
 #include "mcu_rtc.h"
+#include "dev_lcdbus.h"
 
 #include "wujique_log.h"
 #include "dev_key.h"
@@ -110,6 +111,8 @@ int main(void)
 	mcu_rtc_init();
 	mcu_i2c_init();
 	mcu_spi_init();
+	dev_lcdbus_init();
+	
 	dev_key_init();
 	//mcu_timer_init();
 	dev_buzzer_init();

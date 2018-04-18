@@ -24,6 +24,7 @@
 #include "stm32f4xx.h"
 #include "stm324xg_eval_fsmc_sram.h"
 #include "wujique_log.h"
+#include "dev_lcdbus.h"
 #include "dev_lcd.h"
 #include "dev_ILI9341.h"
 
@@ -45,6 +46,7 @@ extern void Delay(__IO uint32_t nTime);
 */
 #define TFT_LCD_DRIVER_9341
 #define TFT_LCD_DRIVER_9325
+
 
 /*
 
@@ -178,14 +180,14 @@ void bus_8080_lcd_bl(u8 sta)
 #define ILI9341_CMD_SETX 0x2a
 #define ILI9341_CMD_SETY 0x2b
 
-s32 drv_ILI9341_init(void);
-static s32 drv_ILI9341_drawpoint(u16 x, u16 y, u16 color);
-s32 drv_ILI9341_color_fill(u16 sx,u16 ex,u16 sy,u16 ey,u16 color);
-s32 drv_ILI9341_fill(u16 sx,u16 ex,u16 sy,u16 ey,u16 *color);
-static s32 drv_ILI9341_display_onoff(u8 sta);
-s32 drv_ILI9341_prepare_display(u16 sx, u16 ex, u16 sy, u16 ey);
-static void drv_ILI9341_scan_dir(u8 dir);
-void drv_ILI9341_lcd_bl(u8 sta);
+s32 drv_ILI9341_init(DevLcd *lcd);
+static s32 drv_ILI9341_drawpoint(DevLcd *lcd, u16 x, u16 y, u16 color);
+s32 drv_ILI9341_color_fill(DevLcd *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 color);
+s32 drv_ILI9341_fill(DevLcd *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color);
+static s32 drv_ILI9341_display_onoff(DevLcd *lcd, u8 sta);
+s32 drv_ILI9341_prepare_display(DevLcd *lcd, u16 sx, u16 ex, u16 sy, u16 ey);
+static void drv_ILI9341_scan_dir(DevLcd *lcd, u8 dir);
+void drv_ILI9341_lcd_bl(DevLcd *lcd, u8 sta);
 
 /*
 
@@ -205,7 +207,7 @@ _lcd_drv TftLcdILI9341Drv = {
 							.backlight = drv_ILI9341_lcd_bl
 							};
 
-void drv_ILI9341_lcd_bl( u8 sta)
+void drv_ILI9341_lcd_bl(DevLcd *lcd, u8 sta)
 {
 	bus_8080_lcd_bl(sta);
 }
@@ -217,7 +219,7 @@ void drv_ILI9341_lcd_bl( u8 sta)
  *@param[out]  无
  *@retval:     static
  */
-static void drv_ILI9341_scan_dir(u8 dir)
+static void drv_ILI9341_scan_dir(DevLcd *lcd, u8 dir)
 {
 	u16 regval=0;
 
@@ -277,7 +279,7 @@ static void drv_ILI9341_scan_dir(u8 dir)
  *@param[out]  无
  *@retval:     
  */
-s32 drv_ILI9341_set_cp_addr(u16 sc, u16 ec, u16 sp, u16 ep)
+s32 drv_ILI9341_set_cp_addr(DevLcd *lcd, u16 sc, u16 ec, u16 sp, u16 ep)
 {
 
 	*LcdReg  = ILI9341_CMD_SETX; 
@@ -303,7 +305,7 @@ s32 drv_ILI9341_set_cp_addr(u16 sc, u16 ec, u16 sp, u16 ep)
  *@param[out]  无
  *@retval:     static
  */
-static s32 drv_ILI9341_display_onoff(u8 sta)
+static s32 drv_ILI9341_display_onoff(DevLcd *lcd, u8 sta)
 {
 	if(sta == 1)
 		*LcdReg	= 0x29;
@@ -320,7 +322,7 @@ static s32 drv_ILI9341_display_onoff(u8 sta)
  *@param[out]  无
  *@retval:     
  */
-s32 drv_ILI9341_init(void)
+s32 drv_ILI9341_init(DevLcd *lcd)
 {
 	u16 data;
 
@@ -413,36 +415,33 @@ s32 drv_ILI9341_init(void)
  *@param[out]  无
  *@retval:     
  */
-s32 drv_ILI9341_xy2cp(u16 sx, u16 ex, u16 sy, u16 ey, u16 *sc, u16 *ec, u16 *sp, u16 *ep)
+s32 drv_ILI9341_xy2cp(DevLcd *lcd, u16 sx, u16 ex, u16 sy, u16 ey, u16 *sc, u16 *ec, u16 *sp, u16 *ep)
 {
-	struct _strlcd_obj *obj;
-	obj = &LCD;
-
 	/*
 		显示XY轴范围
 	*/
-	if(sx > obj->width)
-		sx = obj->width;
+	if(sx > lcd->width)
+		sx = lcd->width;
 	
-	if(ex > obj->width)
-		ex = obj->width;
+	if(ex > lcd->width)
+		ex = lcd->width;
 	
-	if(sy > obj->height)
-		sy = obj->height;
+	if(sy > lcd->height)
+		sy = lcd->height;
 	
-	if(ey > obj->height)
-		ey = obj->height;
+	if(ey > lcd->height)
+		ey = lcd->height;
 	/*
 		XY轴，实物角度来看，方向取决于横屏还是竖屏
 		CP轴，是控制器显存角度，
 		XY轴的映射关系取决于扫描方向
 	*/
 	if(
-		(((obj->scandir&LRUD_BIT_MASK) == LRUD_BIT_MASK)
-		&&(obj->dir == H_LCD))
+		(((lcd->scandir&LRUD_BIT_MASK) == LRUD_BIT_MASK)
+		&&(lcd->dir == H_LCD))
 		||
-		(((obj->scandir&LRUD_BIT_MASK) == 0)
-		&&(obj->dir == W_LCD))
+		(((lcd->scandir&LRUD_BIT_MASK) == 0)
+		&&(lcd->dir == W_LCD))
 		)
 		{
 			*sc = sy;
@@ -469,12 +468,12 @@ s32 drv_ILI9341_xy2cp(u16 sx, u16 ex, u16 sy, u16 ey, u16 *sc, u16 *ec, u16 *sp,
  *@param[out]  无
  *@retval:     static
  */
-static s32 drv_ILI9341_drawpoint(u16 x, u16 y, u16 color)
+static s32 drv_ILI9341_drawpoint(DevLcd *lcd, u16 x, u16 y, u16 color)
 {
 	u16 sc,ec,sp,ep;
 
-	drv_ILI9341_xy2cp(x, x, y, y, &sc,&ec,&sp,&ep);
-	drv_ILI9341_set_cp_addr(sc, ec, sp, ep);
+	drv_ILI9341_xy2cp(lcd, x, x, y, y, &sc,&ec,&sp,&ep);
+	drv_ILI9341_set_cp_addr(lcd, sc, ec, sp, ep);
 	*LcdData = color; 
 	return 0;
 }
@@ -489,16 +488,16 @@ static s32 drv_ILI9341_drawpoint(u16 x, u16 y, u16 color)
  *@param[out]  无
  *@retval:     
  */
-s32 drv_ILI9341_color_fill(u16 sx,u16 ex,u16 sy,u16 ey,u16 color)
+s32 drv_ILI9341_color_fill(DevLcd *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 color)
 {
 
 	u16 height,width;
 	u16 i,j;
 	u16 sc,ec,sp,ep;
 
-	drv_ILI9341_xy2cp(sx, ex, sy, ey, &sc,&ec,&sp,&ep);
+	drv_ILI9341_xy2cp(lcd, sx, ex, sy, ey, &sc,&ec,&sp,&ep);
 	
-	drv_ILI9341_set_cp_addr(sc, ec, sp, ep);
+	drv_ILI9341_set_cp_addr(lcd, sc, ec, sp, ep);
 
 	width=(ec+1)-sc;//得到填充的宽度 +1是因为坐标从0开始
 	height=(ep+1)-sp;//高度
@@ -531,16 +530,16 @@ s32 drv_ILI9341_color_fill(u16 sx,u16 ex,u16 sy,u16 ey,u16 color)
  *@param[out]  无
  *@retval:     
  */
-s32 drv_ILI9341_fill(u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
+s32 drv_ILI9341_fill(DevLcd *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
 {
 
 	u16 height,width;
 	u32 i,j;
 	u16 sc,ec,sp,ep;
 
-	drv_ILI9341_xy2cp(sx, ex, sy, ey, &sc,&ec,&sp,&ep);
+	drv_ILI9341_xy2cp(lcd, sx, ex, sy, ey, &sc,&ec,&sp,&ep);
 	
-	drv_ILI9341_set_cp_addr(sc, ec, sp, ep);
+	drv_ILI9341_set_cp_addr(lcd, sc, ec, sp, ep);
 
 	width=(ec+1)-sc;//得到填充的宽度 +1是因为坐标从0开始
 	height=(ep+1)-sp;//高度
@@ -557,12 +556,12 @@ s32 drv_ILI9341_fill(u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
 
 } 
 
-s32 drv_ILI9341_prepare_display(u16 sx, u16 ex, u16 sy, u16 ey)
+s32 drv_ILI9341_prepare_display(DevLcd *lcd, u16 sx, u16 ex, u16 sy, u16 ey)
 {
 	u16 sc,ec,sp,ep;
 
-	drv_ILI9341_xy2cp(sx, ex, sy, ey, &sc,&ec,&sp,&ep);
-	drv_ILI9341_set_cp_addr(sc, ec, sp, ep);	
+	drv_ILI9341_xy2cp(lcd, sx, ex, sy, ey, &sc,&ec,&sp,&ep);
+	drv_ILI9341_set_cp_addr(lcd, sc, ec, sp, ep);	
 	return 0;
 }
 #endif
@@ -607,14 +606,14 @@ s32 drv_ILI9341_prepare_display(u16 sx, u16 ex, u16 sy, u16 ey)
 #define ILI9325_CMD_SETH 0x20
 
 
-s32 drv_ILI9325_init(void);
-static s32 drv_ILI9325_drawpoint(u16 x, u16 y, u16 color);
-s32 drv_ILI9325_color_fill(u16 sx,u16 sy,u16 ex,u16 ey,u16 color);
-s32 drv_ILI9325_fill(u16 sx,u16 sy,u16 ex,u16 ey,u16 *color);
-static s32 drv_ILI9325_display_onoff(u8 sta);
-s32 drv_ILI9325_prepare_display(u16 sc, u16 ec, u16 sp, u16 ep);
-static void drv_ILI9325_scan_dir(u8 dir);
-void drv_ILI9325_lcd_bl(u8 sta);
+s32 drv_ILI9325_init(DevLcd *lcd);
+static s32 drv_ILI9325_drawpoint(DevLcd *lcd, u16 x, u16 y, u16 color);
+s32 drv_ILI9325_color_fill(DevLcd *lcd, u16 sx,u16 sy,u16 ex,u16 ey,u16 color);
+s32 drv_ILI9325_fill(DevLcd *lcd, u16 sx,u16 sy,u16 ex,u16 ey,u16 *color);
+static s32 drv_ILI9325_display_onoff(DevLcd *lcd, u8 sta);
+s32 drv_ILI9325_prepare_display(DevLcd *lcd, u16 sc, u16 ec, u16 sp, u16 ep);
+static void drv_ILI9325_scan_dir(DevLcd *lcd, u8 dir);
+void drv_ILI9325_lcd_bl(DevLcd *lcd, u8 sta);
 /*
 
 	9325驱动
@@ -632,7 +631,7 @@ _lcd_drv TftLcdILI9325Drv = {
 							.set_dir = drv_ILI9325_scan_dir,
 							.backlight = drv_ILI9325_lcd_bl
 							};
-void drv_ILI9325_lcd_bl(u8 sta)
+void drv_ILI9325_lcd_bl(DevLcd *lcd, u8 sta)
 {
 	bus_8080_lcd_bl(sta);
 }	
@@ -643,7 +642,7 @@ void drv_ILI9325_lcd_bl(u8 sta)
  *@param[out]  无
  *@retval:	   static OK
  */
-static void drv_ILI9325_scan_dir(u8 dir)
+static void drv_ILI9325_scan_dir(DevLcd *lcd, u8 dir)
 {
 	u16 regval=0;
 	u8 dirreg=0;
@@ -693,10 +692,8 @@ static void drv_ILI9325_scan_dir(u8 dir)
  *@param[out]  无
  *@retval:     9325设置扫描区域有一个限制，那就是窗口宽度不能小于四
  */
-static s32 drv_ILI9325_set_cp_addr(u16 hsa, u16 hea, u16 vsa, u16 vea)
+static s32 drv_ILI9325_set_cp_addr(DevLcd *lcd, u16 hsa, u16 hea, u16 vsa, u16 vea)
 {
-	struct _strlcd_obj *obj;
-	obj = &LCD;
 	u16 heatmp;
 
 	/* 设置扫描窗口 */
@@ -720,7 +717,7 @@ static s32 drv_ILI9325_set_cp_addr(u16 hsa, u16 hea, u16 vsa, u16 vea)
 	/*
 		设置扫描起始地址。
 	*/
-	if((obj->scandir&LR_BIT_MASK) == LR_BIT_MASK)
+	if((lcd->scandir&LR_BIT_MASK) == LR_BIT_MASK)
 	{
 		*LcdReg  = ILI9325_CMD_SETH; 
 		*LcdData = hea&0XFF; 
@@ -731,7 +728,7 @@ static s32 drv_ILI9325_set_cp_addr(u16 hsa, u16 hea, u16 vsa, u16 vea)
 		*LcdData = hsa&0XFF; 	  
 	}
 
-	if((obj->scandir&UD_BIT_MASK) == UD_BIT_MASK)
+	if((lcd->scandir&UD_BIT_MASK) == UD_BIT_MASK)
 	{
 		*LcdReg  = ILI9325_CMD_SETV;  
 		*LcdData = vea&0X1FF;
@@ -754,7 +751,7 @@ static s32 drv_ILI9325_set_cp_addr(u16 hsa, u16 hea, u16 vsa, u16 vea)
  *@param[out]  无
  *@retval:	   static OK
  */
-static s32 drv_ILI9325_display_onoff(u8 sta)
+static s32 drv_ILI9325_display_onoff(DevLcd *lcd, u8 sta)
 {
 	if(sta == 1)
 	{
@@ -777,7 +774,7 @@ static s32 drv_ILI9325_display_onoff(u8 sta)
  *@param[out]  无
  *@retval:	   
  */
-s32 drv_ILI9325_init(void)
+s32 drv_ILI9325_init(DevLcd *lcd)
 {
 	u16 data;
 
@@ -965,25 +962,22 @@ s32 drv_ILI9325_init(void)
  *@param[out]  无
  *@retval:     
  */
-s32 drv_ILI9325_xy2cp(u16 sx, u16 ex, u16 sy, u16 ey, u16 *hsa, u16 *hea, u16 *vsa, u16 *vea)
+s32 drv_ILI9325_xy2cp(DevLcd *lcd, u16 sx, u16 ex, u16 sy, u16 ey, u16 *hsa, u16 *hea, u16 *vsa, u16 *vea)
 {
-	struct _strlcd_obj *obj;
-	obj = &LCD;
-
 	/*
 		显示XY轴范围
 	*/
-	if(sx >= obj->width)
-		sx = obj->width-1;
+	if(sx >= lcd->width)
+		sx = lcd->width-1;
 	
-	if(ex >= obj->width)
-		ex = obj->width-1;
+	if(ex >= lcd->width)
+		ex = lcd->width-1;
 	
-	if(sy >= obj->height)
-		sy = obj->height-1;
+	if(sy >= lcd->height)
+		sy = lcd->height-1;
 	
-	if(ey >= obj->height)
-		ey = obj->height-1;
+	if(ey >= lcd->height)
+		ey = lcd->height-1;
 	/*
 		XY轴，实物来看，方向取决于横屏还是竖屏
 		CP轴，是控制器显存，
@@ -994,10 +988,10 @@ s32 drv_ILI9325_xy2cp(u16 sx, u16 ex, u16 sy, u16 ey, u16 *hsa, u16 *hea, u16 *v
 		而且，9325在横竖屏也要进行映射
 		
 	*/
-	if(obj->dir == W_LCD)
+	if(lcd->dir == W_LCD)
 	{
-		*hsa = (obj->height - ey) - 1;
-		*hea = (obj->height - sy) - 1;
+		*hsa = (lcd->height - ey) - 1;
+		*hea = (lcd->height - sy) - 1;
 		
 		*vsa = sx;
 		*vea = ex;
@@ -1021,12 +1015,12 @@ s32 drv_ILI9325_xy2cp(u16 sx, u16 ex, u16 sy, u16 ey, u16 *hsa, u16 *hea, u16 *v
  *@param[out]  无
  *@retval:     static
  */
-static s32 drv_ILI9325_drawpoint(u16 x, u16 y, u16 color)
+static s32 drv_ILI9325_drawpoint(DevLcd *lcd, u16 x, u16 y, u16 color)
 {
 	u16 hsa,hea,vsa,vea;
 
-	drv_ILI9325_xy2cp(x, x, y, y, &hsa,&hea,&vsa,&vea);
-	drv_ILI9325_set_cp_addr(hsa, hea, vsa, vea);
+	drv_ILI9325_xy2cp(lcd, x, x, y, y, &hsa,&hea,&vsa,&vea);
+	drv_ILI9325_set_cp_addr(lcd, hsa, hea, vsa, vea);
 	*LcdData = color; 
 	return 0;
 }
@@ -1041,15 +1035,15 @@ static s32 drv_ILI9325_drawpoint(u16 x, u16 y, u16 color)
  *@param[out]  无
  *@retval:     
  */
-s32 drv_ILI9325_color_fill(u16 sx,u16 ex,u16 sy,u16 ey,u16 color)
+s32 drv_ILI9325_color_fill(DevLcd *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 color)
 {
 
 	u16 height,width;
 	u16 i,j;
 	u16 hsa,hea,vsa,vea;
 
-	drv_ILI9325_xy2cp(sx, ex, sy, ey, &hsa,&hea,&vsa,&vea);
-	drv_ILI9325_set_cp_addr(hsa, hea, vsa, vea);
+	drv_ILI9325_xy2cp(lcd, sx, ex, sy, ey, &hsa,&hea,&vsa,&vea);
+	drv_ILI9325_set_cp_addr(lcd, hsa, hea, vsa, vea);
 
 	width = hea - hsa + 1;//得到填充的宽度
 	height = vea - vsa + 1;//高度
@@ -1082,15 +1076,15 @@ s32 drv_ILI9325_color_fill(u16 sx,u16 ex,u16 sy,u16 ey,u16 color)
  *@param[out]  无
  *@retval:     
  */
-s32 drv_ILI9325_fill(u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
+s32 drv_ILI9325_fill(DevLcd *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
 {
 
 	u16 height,width;
 	u16 i,j;
 	u16 hsa,hea,vsa,vea;
 
-	drv_ILI9325_xy2cp(sx, ex, sy, ey, &hsa,&hea,&vsa,&vea);
-	drv_ILI9325_set_cp_addr(hsa, hea, vsa, vea);
+	drv_ILI9325_xy2cp(lcd, sx, ex, sy, ey, &hsa,&hea,&vsa,&vea);
+	drv_ILI9325_set_cp_addr(lcd, hsa, hea, vsa, vea);
 
 	width=(hea +1) - hsa ;//得到填充的宽度 +1是因为坐标从0开始
 	height=(vea +1) - vsa;//高度
@@ -1112,12 +1106,12 @@ s32 drv_ILI9325_fill(u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
 
 } 
 
-s32 drv_ILI9325_prepare_display(u16 sx, u16 ex, u16 sy, u16 ey)
+s32 drv_ILI9325_prepare_display(DevLcd *lcd, u16 sx, u16 ex, u16 sy, u16 ey)
 {
 	u16 hsa,hea,vsa,vea;
 
-	drv_ILI9325_xy2cp(sx, ex, sy, ey, &hsa,&hea,&vsa,&vea);
-	drv_ILI9325_set_cp_addr(hsa, hea, vsa, vea);	
+	drv_ILI9325_xy2cp(lcd, sx, ex, sy, ey, &hsa,&hea,&vsa,&vea);
+	drv_ILI9325_set_cp_addr(lcd, hsa, hea, vsa, vea);	
 	return 0;
 }
 #endif
