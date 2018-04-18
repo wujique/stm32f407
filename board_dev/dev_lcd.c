@@ -27,6 +27,7 @@
 #include "dev_lcd.h"
 #include "dev_ILI9341.h"
 #include "dev_str7565.h"
+#include "alloc.h"
 
 //#define DEV_LCD_DEBUG
 
@@ -137,6 +138,7 @@ DevLcd DevLcdList[DEV_LCD_C];
  *@param[out]  无
  *@retval:     
  */
+#if 0
 static s32 dev_lcd_cpydev(DevLcd *src, DevLcd *dst)
 {
 	src->gd = dst->gd;
@@ -149,7 +151,7 @@ static s32 dev_lcd_cpydev(DevLcd *src, DevLcd *dst)
 	src->height = dst->height;
 	return 0;
 }
-
+#endif
 /**
  *@brief:      dev_lcd_findpra
  *@details:    根据ID查找LCD参数
@@ -675,6 +677,123 @@ void rect (DevLcd *lcd, int x1, int y1, int x2, int y2, unsigned colidx)
 	line (lcd, x1, y2, x1, y1, colidx);
 }
 
+/**
+ *@brief:      dev_lcd_put_string
+ *@details:    显示字符串，支持中文
+ *@param[in]   无
+ *@param[out]  无
+ *@retval:     	
+ */
+s32 dev_lcd_put_string(DevLcd *lcd, FontType font, int x, int y, char *s, unsigned colidx)
+{
+	u16 slen;
+	u16 xlen,ylen;
+	u16 *framebuff;//样点缓冲，按照L2R_U2D格式填充
+	u8 *dotbuf;//字符点阵缓冲
+	s32 res;
+	u16 sidx;
+	u8 i,j;
+	u32 xbase;
+
+	if(lcd == NULL)
+		return -1;
+	
+	/* 通过刷一整块，提高显示速度 */
+	slen = strlen(s);
+	//uart_printf("str len:%d\r\n", slen);
+
+	/*
+		根据字符串长度计算刷新区域长宽
+	*/
+	xlen = slen*FontAscList[font]->width;
+	ylen = FontAscList[font]->height;
+
+	framebuff = (u16*)wjq_malloc(xlen*ylen*sizeof(u16));//样点缓冲
+	dotbuf = (u8*)wjq_malloc(32);//要改为根据字库类型申请
+	sidx = 0;
+
+	/*获取点阵，并转化为LCD像素*/
+	while(1)
+	{
+		if(*(s+sidx) < 0x81)//英文字母
+		{
+			//uart_printf("eng\r\n");
+			u8 ch;
+			/*获取点阵*/
+			ch = *(s+sidx);
+			
+			res = font_get_asc(font, &ch, dotbuf);
+			//PrintFormat(dotbuf, 16);
+			/*asc是横库*/
+
+			for(j=0;j<FontAscList[font]->height;j++)
+			{
+
+				xbase = xlen*j + sidx*FontAscList[font]->width;//当前字符X轴偏移量
+				for(i=0;i<FontAscList[font]->width;i++)
+				{
+					/*暂时只处理6*12，8*16的ASC，每一列1个字节*/
+					if((dotbuf[j*1+i/8]&(0x80>>(i%8)))!= 0)
+					{
+						//uart_printf("* ");
+						framebuff[xbase + i] = colidx;
+					}
+					else
+					{
+						//uart_printf("- ");
+						framebuff[xbase + i] = BackColor;
+					}
+				}
+				//uart_printf("\r\n");
+			}	
+			
+			sidx++;
+		}
+		else//汉字
+		{
+			//uart_printf("ch\r\n");
+			res = font_get_hz(font, s+sidx, dotbuf);//从SD卡读取一个1616汉字的点阵要1ms
+			//PrintFormat(dotbuf, 32);
+
+			/*仅仅支持纵库，取模方式2,16*16*/
+			for(j=0; j<FontList[font]->height; j++)
+			{
+				xbase = xlen*j + sidx*FontAscList[font]->width;//当前字符X轴偏移量
+				for(i=0;i<FontList[font]->width;i++)
+				{
+					/*暂时只做1212，1616，每一列2个字节数据*/
+					if((dotbuf[i*2+j/8]&(0x80>>(j%8)))!= 0)
+					{
+						//uart_printf("* ");
+						framebuff[xbase + i] = colidx;
+					}
+					else
+					{
+						//uart_printf("- ");
+						framebuff[xbase + i] = BackColor;
+					}
+				}
+				//uart_printf("\r\n");
+			}	
+			
+			sidx+= 2;
+		}
+
+		if(sidx >= slen)
+		{
+			//uart_printf("finish");
+			break;
+		}
+	}
+	
+
+	dev_lcd_fill(lcd, x, x + xlen-1, y, y + ylen-1, framebuff);
+
+	wjq_free(framebuff);
+	wjq_free(dotbuf);
+
+	return 0;	
+}
 
 /**
  *@brief:      dev_lcd_test
@@ -713,11 +832,35 @@ void dev_lcd_test(void)
 	dev_lcd_backlight(LcdOledI2C, 1);
 	dev_lcd_backlight(LcdTft, 1);
 
+	#if 0/*不支持汉字时*/
 	put_string(LcdCog, 5, 5, "spi cog lcd", BLACK);
 	put_string(LcdOled, 5, 5, "vspi oled lcd", BLACK);
 	put_string(LcdOledI2C, 5, 5, "i2c oled lcd", BLACK);
 	put_string(LcdTft, 5, 5, "2.8 tft lcd", BLACK);
+	#endif
 
+	#if 1
+	dev_lcd_put_string(LcdOled, FONT_SONGTI_1212, 10,1, "ABC-abc，", BLACK);
+	dev_lcd_put_string(LcdOled, FONT_SIYUAN_1616, 1, 13, "这是oled lcd", BLACK);
+	dev_lcd_put_string(LcdOled, FONT_SONGTI_1212, 10,30, "www.wujique.com", BLACK);
+	dev_lcd_put_string(LcdOled, FONT_SIYUAN_1616, 1, 47, "屋脊雀工作室", BLACK);
+
+	dev_lcd_put_string(LcdCog, FONT_SONGTI_1212, 10,1, "ABC-abc，", BLACK);
+	dev_lcd_put_string(LcdCog, FONT_SIYUAN_1616, 1, 13, "这是cog lcd", BLACK);
+	dev_lcd_put_string(LcdCog, FONT_SONGTI_1212, 10,30, "www.wujique.com", BLACK);
+	dev_lcd_put_string(LcdCog, FONT_SIYUAN_1616, 1, 47, "屋脊雀工作室", BLACK);
+
+	dev_lcd_put_string(LcdTft, FONT_SONGTI_1212, 20,30, "ABC-abc，", RED);
+	dev_lcd_put_string(LcdTft, FONT_SIYUAN_1616, 20,60, "这是tft lcd", RED);
+	dev_lcd_put_string(LcdTft, FONT_SONGTI_1212, 20,100, "www.wujique.com", RED);
+	dev_lcd_put_string(LcdTft, FONT_SIYUAN_1616, 20,150, "屋脊雀工作室", RED);
+
+	dev_lcd_put_string(LcdOledI2C, FONT_SONGTI_1212, 10,1, "ABC-abc，", BLACK);
+	dev_lcd_put_string(LcdOledI2C, FONT_SIYUAN_1616, 1,13, "这是LcdOledI2C", BLACK);
+	dev_lcd_put_string(LcdOledI2C, FONT_SONGTI_1212, 10,30, "www.wujique.com", BLACK);
+	dev_lcd_put_string(LcdOledI2C, FONT_SIYUAN_1616, 1,47, "屋脊雀工作室", BLACK);
+	#endif
+	
 	while(1);
 }
 

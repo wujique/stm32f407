@@ -8,7 +8,7 @@
 
 #define FONTDATAMAX 2048
 
-const static unsigned char fontdata_8x8[FONTDATAMAX] = {
+ unsigned char const fontdata_8x8[FONTDATAMAX] = {
 
 	/* 0 0x00 '^@' */
 	0x00, /* 00000000 */
@@ -2578,6 +2578,7 @@ struct fbcon_font_desc font_vga_8x8 = {
 	"VGA8x8",
 	8,
 	8,
-	(char *)fontdata_8x8,
-	0
+	(void *)fontdata_8x8,
+	0,
+	8
 };

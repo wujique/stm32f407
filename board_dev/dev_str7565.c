@@ -132,11 +132,12 @@ static void drv_ST7565_scan_dir(DevLcd *lcd, u8 dir)
  *@param[out]  无
  *@retval:     
  */
+#if 0
 static s32 drv_ST7565_set_cp_addr(DevLcd *lcd, u16 sc, u16 ec, u16 sp, u16 ep)
 {
 	return 0;
 }
-
+#endif
 /**
  *@brief:      drv_ST7565_refresh_gram
  *@details:       刷新指定区域到屏幕上

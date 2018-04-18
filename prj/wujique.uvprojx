@@ -841,6 +841,16 @@
               <FileType>1</FileType>
               <FilePath>..\Utilities\alloc\alloc.c</FilePath>
             </File>
+            <File>
+              <FileName>font.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\font\font.c</FilePath>
+            </File>
+            <File>
+              <FileName>font_6x12.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\font\font_6x12.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

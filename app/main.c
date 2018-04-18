@@ -126,6 +126,8 @@ int main(void)
 	//dev_camera_init();
 	//eth_app_init();
 
+	fun_mount_sd();
+	//font_check_hzfont();
 	
 	//dev_dacsound_open();
 	dev_key_open();
