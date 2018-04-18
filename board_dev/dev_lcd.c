@@ -140,7 +140,7 @@ s32 dev_lcd_init(void)
 	}
 
 	#else
-	#if 1
+	#if 0
 	if(ret != 0)
 	{
 		/* ≥ı ºªØCOG 12864 LCD */

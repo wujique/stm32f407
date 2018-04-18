@@ -40,7 +40,7 @@
 static void mcu_i2c_delay(void)
 {
     //Delay(1);//ÑÓÊ±£¬I2CÊ±ÖÓ
-    u32 i = 70;
+    u32 i = 5;
 
     for(;i>0;i--);
 }

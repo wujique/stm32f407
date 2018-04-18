@@ -1,5 +1,7 @@
 #ifndef _DEV_LCD_H_
 #define _DEV_LCD_H_
+
+
 /*
 	LCD驱动定义
 */
@@ -28,6 +30,22 @@ struct _strlcd_obj
 	u16 height;	//LCD 高度
 
 };
+
+
+/*
+	LCD接口定义
+*/
+typedef struct  
+{	
+	char * name;
+	
+	s32 (*init)(void);
+	s32 (*open)(void);
+	s32 (*close)(void);
+	s32 (*writedata)(u8 *data, u16 len);
+	s32 (*writecmd)(u8 cmd);
+	s32 (*bl)(u8 sta);
+}_lcd_bus; 
 
 
 #define H_LCD 0//竖屏

@@ -2,6 +2,7 @@
 #define __MCU_SPI_H_
 
 #define SYS_USE_VSPI1
+#define SYS_USE_VSPI2
 
 typedef enum{
 	DEV_SPI_NULL = 0,
@@ -12,7 +13,7 @@ typedef enum{
 
 	DEV_VSPI_0 = 0XA0,	//空的，不用
 	DEV_VSPI_1 = 0XA1, //触摸屏XPT2046方案，用原来的ADC方案管脚模拟SPI
-
+	DEV_VSPI_2 = 0XA2, //外扩IO口模拟spi
 }SPI_DEV;
 
 typedef enum{

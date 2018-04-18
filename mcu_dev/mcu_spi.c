@@ -446,6 +446,42 @@ DevVspiIO DevVspi1IO={
 		VSPI1_CS_PORT,
 		VSPI1_CS_PIN,
 	};
+		
+#define VSPI2_CS_PORT GPIOF
+#define VSPI2_CS_PIN GPIO_Pin_12
+		
+#define VSPI2_CLK_PORT GPIOF
+#define VSPI2_CLK_PIN GPIO_Pin_11
+		
+#define VSPI2_MOSI_PORT GPIOF
+#define VSPI2_MOSI_PIN GPIO_Pin_10
+		
+#define VSPI2_MISO_PORT GPIOF
+#define VSPI2_MISO_PIN GPIO_Pin_9
+		
+#define VSPI2_RCC RCC_AHB1Periph_GPIOF
+		
+DevVspiIO DevVspi2IO={
+		"VSPI2",
+		DEV_VSPI_2,
+		-2,//未初始化
+		
+		VSPI2_RCC,
+		VSPI2_CLK_PORT,
+		VSPI2_CLK_PIN,
+		
+		VSPI2_RCC,
+		VSPI2_MOSI_PORT,
+		VSPI2_MOSI_PIN,
+
+		VSPI2_RCC,
+		VSPI2_MISO_PORT,
+		VSPI2_MISO_PIN,
+
+		VSPI2_RCC,
+		VSPI2_CS_PORT,
+		VSPI2_CS_PIN,
+	};
 
 /*无用的虚拟SPI设备，占位用*/		
 DevVspiIO DevVspiNULL={
@@ -461,6 +497,9 @@ DevVspiIO *DevVspiIOList[]={
 	&DevVspi1IO,
 	#endif
 
+	#ifdef SYS_USE_VSPI2
+	&DevVspi2IO,
+	#endif
 	};
 
 /**
@@ -771,6 +810,7 @@ s32 mcu_spi_open(SPI_DEV dev, SPI_MODE mode, u16 pre)
 			return mcu_hspi_open(dev, mode, pre);
 
 		case DEV_VSPI_1:
+		case DEV_VSPI_2:
 			return mcu_vspi_open(dev, mode, pre);
 		
 		default:
@@ -796,6 +836,7 @@ s32 mcu_spi_close(SPI_DEV dev)
 			return mcu_hspi_close(dev);
 
 		case DEV_VSPI_1:
+		case DEV_VSPI_2:
 			return mcu_vspi_close(dev);
 
 		default:
@@ -822,6 +863,7 @@ s32 mcu_spi_transfer(SPI_DEV dev, u8 *snd, u8 *rsv, s32 len)
 			return mcu_hspi_transfer(dev, snd, rsv, len);
 		
 		case DEV_VSPI_1:
+		case DEV_VSPI_2:
 			return mcu_vspi_transfer(dev, snd, rsv, len);
 
 		default:
@@ -846,6 +888,7 @@ s32 mcu_spi_cs(SPI_DEV dev, u8 sta)
 			return mcu_hspi_cs(dev, sta);
 
 		case DEV_VSPI_1:
+		case DEV_VSPI_2:
 			return mcu_vspi_cs( dev, sta);
 		
 		default:
