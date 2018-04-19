@@ -117,11 +117,11 @@ _lcd_drv *LcdProbDrv8080List[] = {
 	设备树定义
 	指明系统有多少个LCD设备，挂在哪个LCD总线上。
 */
-#define DEV_LCD_C 4//系统存在3个LCD设备
+#define DEV_LCD_C 2//系统存在3个LCD设备
 LcdObj LcdObjList[DEV_LCD_C]=
 {
-	{"i2coledlcd",  LCD_BUS_I2C,  0X1315},
-	{"vspioledlcd", LCD_BUS_VSPI, 0X1315},
+	//{"i2coledlcd",  LCD_BUS_I2C,  0X1315},
+	//{"vspioledlcd", LCD_BUS_VSPI, 0X1315},
 	{"spicoglcd",   LCD_BUS_SPI,  0X7565},
 	{"tftlcd",      LCD_BUS_8080, NULL},
 };

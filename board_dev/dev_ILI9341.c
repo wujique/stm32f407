@@ -68,7 +68,7 @@ extern void Delay(__IO uint32_t nTime);
 */
 s32 Bus8080Gd = -1;
 
-s32 bus_8080interface_init()
+s32 bus_8080interface_init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
 	

@@ -156,7 +156,7 @@ int main(void)
 		/*驱动轮询*/
 		dev_key_scan();
 		eth_loop_task();
-		
+		fun_sound_task();
 		/*应用*/
 		u8 key;
 		s32 res;
@@ -171,12 +171,13 @@ int main(void)
 				//dev_spiflash_test();
 				//dev_sdio_test();
 				//dev_wm8978_test();
-				dev_lcd_test();
+				//dev_lcd_test();
 				GPIO_ResetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);	
 				//dev_tea5767_search(1);
 				/*读时间*/
 				mcu_rtc_get_date();
 				mcu_rtc_get_time();
+				fun_sound_test();
 				/*设置时间*/
 				//mcu_rtc_set_date(2018, 2, 4, 17);
 				//mcu_rtc_set_time(2, 47, 0);

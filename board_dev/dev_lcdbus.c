@@ -27,6 +27,8 @@
 #include "mcu_i2c.h"
 #include "dev_lcdbus.h"
 
+extern s32 bus_8080interface_init(void);
+
 /*
 	一个LCD接口
 	除了通信的接口

@@ -373,7 +373,7 @@
               <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>..\app;..\StLib\core;..\StLib\STM32F4xx_StdPeriph_Driver\inc;..\mcu_dev;..\board_dev;..\Utilities\font;..\Utilities\tslib\src;..\Utilities\tslib\tests;..\app\usb\inc;..\StLib\STM32_USB_OTG_Driver\inc;..\StLib\STM32_USB_HOST_Library\Core\inc;..\StLib\STM32_USB_HOST_Library\Class\MSC\inc;..\StLib\STM32_USB_Device_Library\Core\inc;..\StLib\STM32_USB_Device_Library\Class\msc\inc;..\Utilities\fat_fs\src;..\app\eth\inc;..\StLib\STM32F4x7_ETH_Driver\inc;..\Utilities\lwip-1.4.1\port\STM32F4x7\Standalone;..\Utilities\lwip-1.4.1\src\include\ipv4;..\Utilities\lwip-1.4.1\src\include;..\Utilities\lwip-1.4.1\src\include\netif;..\Utilities\lwip-1.4.1\port\STM32F4x7;..\Utilities\lwip-1.4.1\src\include\lwip;..\Utilities\alloc</IncludePath>
+              <IncludePath>..\app;..\StLib\core;..\StLib\STM32F4xx_StdPeriph_Driver\inc;..\mcu_dev;..\board_dev;..\Utilities\font;..\Utilities\tslib\src;..\Utilities\tslib\tests;..\app\usb\inc;..\StLib\STM32_USB_OTG_Driver\inc;..\StLib\STM32_USB_HOST_Library\Core\inc;..\StLib\STM32_USB_HOST_Library\Class\MSC\inc;..\StLib\STM32_USB_Device_Library\Core\inc;..\StLib\STM32_USB_Device_Library\Class\msc\inc;..\Utilities\fat_fs\src;..\app\eth\inc;..\StLib\STM32F4x7_ETH_Driver\inc;..\Utilities\lwip-1.4.1\port\STM32F4x7\Standalone;..\Utilities\lwip-1.4.1\src\include\ipv4;..\Utilities\lwip-1.4.1\src\include;..\Utilities\lwip-1.4.1\src\include\netif;..\Utilities\lwip-1.4.1\port\STM32F4x7;..\Utilities\lwip-1.4.1\src\include\lwip;..\Utilities\alloc;..\function</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -1330,6 +1330,16 @@
               <FileName>ethernetif.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Utilities\lwip-1.4.1\port\STM32F4x7\Standalone\ethernetif.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>fun</GroupName>
+          <Files>
+            <File>
+              <FileName>soundplay.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\function\soundplay.c</FilePath>
             </File>
           </Files>
         </Group>
