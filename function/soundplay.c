@@ -31,7 +31,7 @@
 #include "ff.h"
 #include "stm32f4xx_spi.h"
 #include "dev_wm8978.h"
-
+#include "mcu_i2s.h"
 #include "soundplay.h"
 #include "wujique_log.h"
 #include "alloc.h"
@@ -88,6 +88,9 @@ volatile SOUND_State SoundSta = SOUND_IDLE;
 u32 playlen;
 SOUND_DEV_TYPE SoundDevType = SOUND_DEV_NULL;
 
+
+
+/*------------------------------------------*/
 
 s32 fun_sound_stop(void);
 /**
@@ -235,10 +238,7 @@ int fun_sound_play(char *name, char *dev)
 	/*打开指定设备*/
 	if(0 == strcmp(dev, "wm8978"))
 	{
-		dev_wm8978_open();
-		dev_wm8978_dataformat(wav_header->nSamplesPerSec, WM8978_I2S_Phillips, format);
-		mcu_i2s_dma_init(SoundBufP[0], SoundBufP[1], SoundBufSize);
-		SoundDevType = SOUND_DEV_2CH;
+
 	}
 
 	playlen = 0;
@@ -266,6 +266,10 @@ int fun_sound_play(char *name, char *dev)
 
 	if(0 == strcmp(dev, "wm8978"))
 	{
+		dev_wm8978_open();
+		dev_wm8978_dataformat(wav_header->nSamplesPerSec, WM8978_I2S_Phillips, format);
+		mcu_i2s_dma_init(SoundBufP[0], SoundBufP[1], SoundBufSize);
+		SoundDevType = SOUND_DEV_2CH;
 		dev_wm8978_transfer(1);//启动I2S传输
 	}
 	
@@ -322,7 +326,6 @@ void fun_sound_task(void)
 	volatile s32 buf_index = 0;
 	int rlen;
 	u16 i;
-	u8 *p;
 
 	if(SoundSta == SOUND_BUSY
 		|| SoundSta == SOUND_IDLE)
@@ -458,6 +461,7 @@ s32 fun_sound_setvol(u8 vol)
 {
 	return 0;
 }
+
 /**
  *@brief:      fun_sound_test
  *@details:    测试播放
@@ -480,5 +484,218 @@ stereo_16bit_32k.wav
 
 */
 
+/*
 
+	通过I2S利用WM8978录音
+	跟播放一样，通过双缓冲DMA录音。
+	需要注意的一点是，录音属于I2S_EXIT，不产生时钟，需要I2S才能产生通信时钟。
+	也就是说要播音才能录音。
+	所以录音时，也要配置I2S播放，我们只配置一个字节的DMA缓冲，以便I2S产生通信时钟，
+	
+*/
+/*---录音跟播音缓冲要差不多，否则会互相卡顿----*/
+u32 SoundRecBufSize;
+u16 *SoundRecBufP[2];
+static u8 SoundRecBufIndex=0xff;//双缓冲索引，取值0和1，都填充后赋值0XFF
+TWavHeader *recwav_header;	
+FIL SoundRecFile;//声音文件
+u32 RecWavSize = 0;
+u16 RecPlayTmp[8];
+
+/*
+	录音频率，如果考虑播音跟录音一起工作，
+	需要综合考虑如何配置录音频率
+*/
+#define SOUND_REC_FRE 32000
+/**
+ *@brief:      fun_rec_set_free_buf
+ *@details:    设置录音缓冲索引，在I2S exit中断中使用
+ *@param[in]   u8 index  
+ *@param[out]  无
+ *@retval:     
+ */
+s32 fun_rec_set_free_buf(u8 index)
+{
+	SoundRecBufIndex = index;
+	return 0;
+}
+/**
+ *@brief:      fun_rec_get_buff_index
+ *@details:    查询录音满的缓冲，满就要读走
+ *@param[in]   void  
+ *@param[out]  无
+ *@retval:     static
+ */
+static s32 fun_rec_get_buff_index(void)
+{
+	s32 res;
+
+	res = SoundRecBufIndex;
+	SoundRecBufIndex = 0xff;
+	return res;
+}
+/**
+ *@brief:      fun_sound_rec
+ *@details:    启动录音
+ *@param[in]   char *name  
+ *@param[out]  无
+ *@retval:     
+ */
+s32 fun_sound_rec(char *name)
+{
+	FRESULT fres;
+	u32 len;
+
+	SOUND_DEBUG(LOG_DEBUG, "sound rec\r\n");
+	RecWavSize = 0;
+	SoundRecBufSize = SoundBufSize;
+
+	/*  创建WAV文件 */
+	fres=f_open(&SoundRecFile,(const TCHAR*)name, FA_CREATE_ALWAYS | FA_WRITE); 
+	if(fres != FR_OK)			//文件创建失败
+	{
+		SOUND_DEBUG(LOG_DEBUG, "create rec file err!\r\n");
+		return -1;
+	}
+
+	recwav_header = (TWavHeader *)wjq_malloc(sizeof(TWavHeader));
+	if(recwav_header == NULL)
+	{
+		SOUND_DEBUG(LOG_DEBUG, "rec malloc err!\r\n");
+		return -1;	
+	}
+	
+	recwav_header->rId=0X46464952;
+	recwav_header->rLen = 0;//录音结束后填
+	recwav_header->wId = 0X45564157;//wave
+	recwav_header->fId=0X20746D66;
+	recwav_header->fLen = 16;
+	recwav_header->wFormatTag = 0X01;
+	recwav_header->nChannels = 2;
+	recwav_header->nSamplesPerSec = SOUND_REC_FRE;//这个采样频率需要特殊处理，暂时不做。
+	recwav_header->nAvgBytesPerSec = (recwav_header->nSamplesPerSec)*(recwav_header->nChannels)*(16/8);
+	recwav_header->nBlockAlign = recwav_header->nChannels*(16/8);
+	recwav_header->wBitsPerSample = 16;
+	recwav_header->dId = 0X61746164;
+	recwav_header->wSampleLength = 0;
+
+	fres=f_write(&SoundRecFile,(const void*)recwav_header,sizeof(TWavHeader), &len);
+	if((fres!= FR_OK)
+		|| (len != sizeof(TWavHeader)))
+	{
+
+		SOUND_DEBUG(LOG_DEBUG, "rec write err!\r\n");
+		wjq_free(recwav_header);
+		return -1;		
+	}
+	else
+	{
+		SOUND_DEBUG(LOG_DEBUG, "create rec wav ok!\r\n");
+	}
+
+	/*  测试录音     */
+	SoundRecBufP[0] = (u16 *)wjq_malloc(SoundRecBufSize*2); 
+	SoundRecBufP[1] = (u16 *)wjq_malloc(SoundRecBufSize*2); 
+	
+	SOUND_DEBUG(LOG_DEBUG, "%08x, %08x\r\n", SoundRecBufP[0], SoundRecBufP[1]);
+	if(SoundRecBufP[0] == NULL)
+	{
+
+		SOUND_DEBUG(LOG_DEBUG, "sound malloc err\r\n");
+		return -1;
+	}
+
+	if(SoundRecBufP[1] == NULL )
+	{
+		wjq_free(SoundRecBufP[0]);
+		return -1;
+	}
+	
+	dev_wm8978_open();
+	dev_wm8978_dataformat(SOUND_REC_FRE, WM8978_I2S_Phillips, WM8978_I2S_Data_16b);
+	
+	mcu_i2s_dma_init(RecPlayTmp, RecPlayTmp, 1);
+	dev_wm8978_transfer(1);//启动I2S传输
+	
+	mcu_i2sext_dma_init(SoundRecBufP[0], SoundRecBufP[1], SoundRecBufSize);
+	mcu_i2sext_dma_start();
+	
+	SOUND_DEBUG(LOG_DEBUG, "rec--------------------\r\n");
+	
+	return 0;
+}
+/**
+ *@brief:      fun_rec_stop
+ *@details:    停止录音
+ *@param[in]   void  
+ *@param[out]  无
+ *@retval:     
+ */
+s32 fun_rec_stop(void)
+{
+	u32 len;
+	dev_wm8978_transfer(0);
+	mcu_i2sext_dma_stop();
+	
+	recwav_header->rLen = RecWavSize+36;
+	recwav_header->wSampleLength = RecWavSize;
+	f_lseek(&SoundRecFile,0);
+	
+	f_write(&SoundRecFile,(const void*)recwav_header,sizeof(TWavHeader),&len);//写入头数据
+	f_close(&SoundRecFile);
+
+	wjq_free(SoundRecBufP[0]);
+	wjq_free(SoundRecBufP[1]);
+	wjq_free(recwav_header);
+	return 0;
+}
+/**
+ *@brief:      fun_rec_task
+ *@details:    录音线程
+ *@param[in]   void  
+ *@param[out]  无
+ *@retval:     
+ */
+void fun_rec_task(void)
+{
+	int buf_index = 0;
+	u32 len;
+	FRESULT fres;
+	
+	buf_index = fun_rec_get_buff_index();
+	if(0xff != buf_index)
+	{
+		//uart_printf("rec buf full:%d!\r\n", buf_index);
+		RecWavSize += SoundRecBufSize*2;
+	
+		fres = f_write(&SoundRecFile,(const void*)SoundRecBufP[buf_index], 2*SoundRecBufSize, &len);
+		if(fres != FR_OK)
+		{
+			SOUND_DEBUG(LOG_DEBUG, "write err\r\n");
+		}
+		
+		if(len!= 2*SoundRecBufSize)
+		{
+			SOUND_DEBUG(LOG_DEBUG, "len err\r\n");
+		}
+		
+	}
+}
+
+/**
+ *@brief:      fun_rec_test
+ *@details:    开始录音
+ *@param[in]   void  
+ *@param[out]  无
+ *@retval:     
+ */
+void fun_rec_test(void)
+{
+	fun_sound_rec("1:/rec9.wav");
+}
+
+void fun_play_rec_test(void)
+{
+	fun_sound_play("1:/rec9.wav", "wm8978");	
+}
 

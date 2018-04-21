@@ -120,7 +120,12 @@ void mcu_i2s_dma_init(u16 *buffer0,u16 *buffer1,u32 len)
 	DMA_str.DMA_DIR 					= DMA_DIR_MemoryToPeripheral;			//	存储器到外设模式
 	DMA_str.DMA_BufferSize 			= len;										//	数据长度 
 	DMA_str.DMA_PeripheralInc 		= DMA_PeripheralInc_Disable;			//	外设非增量模式
-	DMA_str.DMA_MemoryInc 			= DMA_MemoryInc_Enable;					//	存储器增量模式
+
+	if(len == 1)
+		DMA_str.DMA_MemoryInc 			= DMA_MemoryInc_Disable;	
+	else
+		DMA_str.DMA_MemoryInc 			= DMA_MemoryInc_Enable;					//	存储器增量模式
+
 	DMA_str.DMA_PeripheralDataSize 	= DMA_PeripheralDataSize_HalfWord;	//	外设数据长度16位
 	DMA_str.DMA_MemoryDataSize 		= DMA_MemoryDataSize_HalfWord;		//	存储器数据长度16位 
 	DMA_str.DMA_Mode 					= DMA_Mode_Circular;						//	循环模式 
@@ -196,4 +201,138 @@ void mcu_i2s_dma_process(void)
 		fun_sound_set_free_buf(1);
 	}
 }
+
+/*
+
+	I2SEXT
+	
+	扩展 I2S (I2Sx_ext) 只能用于全双工模式。 I2Sx_ext 始终在从模式下工作。
+*/
+extern s32 fun_rec_set_free_buf(u8 index);
+
+#define I2S2_EXT_DMA DMA1_Stream3
+/**
+ *@brief:      mcu_i2sext_config
+ *@details:    配置I2SEXT（应该跟I2S一样吧？合并？）
+ *@param[in]   u32 AudioFreq   
+               u16 Standard    
+               u16 DataFormat  
+ *@param[out]  无
+ *@retval:     
+ */
+void mcu_i2sext_config(u32 AudioFreq, u16 Standard,u16 DataFormat)
+{  
+	I2S_InitTypeDef I2S2ext_InitStructure;
+	
+	I2S2ext_InitStructure.I2S_Mode = I2S_Mode_MasterTx;//I2S_FullDuplexConfig会进行转换
+	I2S2ext_InitStructure.I2S_Standard=Standard;//IIS标准
+	I2S2ext_InitStructure.I2S_DataFormat=DataFormat;//IIS数据长度
+	I2S2ext_InitStructure.I2S_MCLKOutput=I2S_MCLKOutput_Enable;//主时钟输出,i2sext无效
+	I2S2ext_InitStructure.I2S_AudioFreq=AudioFreq;//IIS频率设置
+	I2S2ext_InitStructure.I2S_CPOL=I2S_CPOL_Low;//空闲状态时钟电平
+	
+	I2S_FullDuplexConfig(I2S2ext, &I2S2ext_InitStructure);//初始化I2S2ext配置
+	
+	I2S_Cmd(I2S2ext, ENABLE);		//I2S2ext I2S EN使能.
+}
+/**
+ *@brief:      mcu_i2sext_dma_init
+ *@details:    设置I2S EXT DMA缓冲
+ *@param[in]   u16* buf0  
+               u16 *buf1  
+               u32 len    
+ *@param[out]  无
+ *@retval:     
+ */
+void mcu_i2sext_dma_init(u16* buf0, u16 *buf1, u32 len)
+{	
+
+	NVIC_InitTypeDef   NVIC_InitStructure;
+	DMA_InitTypeDef  DMA_InitStructure;
+
+
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA1,ENABLE);//DMA1时钟使能 
+
+	DMA_DeInit(I2S2_EXT_DMA);
+	while (DMA_GetCmdStatus(I2S2_EXT_DMA) != DISABLE){}//等待DMA1_Stream3可配置 
+
+	DMA_ClearITPendingBit(I2S2_EXT_DMA,DMA_IT_FEIF3|DMA_IT_DMEIF3|DMA_IT_TEIF3|DMA_IT_HTIF3|DMA_IT_TCIF3);//清空DMA1_Stream3上所有中断标志
+
+	/* 配置 DMA Stream */
+	DMA_InitStructure.DMA_Channel = DMA_Channel_3;
+	DMA_InitStructure.DMA_PeripheralBaseAddr = (u32)&I2S2ext->DR;
+	DMA_InitStructure.DMA_Memory0BaseAddr = (u32)buf0;//DMA 存储器0地址
+	DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;//外设到存储器模式
+	DMA_InitStructure.DMA_BufferSize = len;//数据传输量 
+	DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;//外设非增量模式
+	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;//存储器增量模式
+	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;//外设数据长度:16位
+	DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord;//存储器数据长度：16位 
+	DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;// 使用循环模式 
+	DMA_InitStructure.DMA_Priority = DMA_Priority_High;
+	DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable; //不使用FIFO模式		  
+	DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_1QuarterFull;
+	DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;//外设突发单次传输
+	DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;//存储器突发单次传输
+	DMA_Init(I2S2_EXT_DMA, &DMA_InitStructure);//初始化DMA Stream
+
+	DMA_DoubleBufferModeConfig(I2S2_EXT_DMA, (u32)buf0, DMA_Memory_0);//双缓冲模式配置
+	DMA_DoubleBufferModeConfig(I2S2_EXT_DMA, (u32)buf1, DMA_Memory_1);//双缓冲模式配置
+	
+	DMA_DoubleBufferModeCmd(I2S2_EXT_DMA,ENABLE);//双缓冲模式开启
+
+	DMA_ITConfig(I2S2_EXT_DMA,DMA_IT_TC,ENABLE);//开启传输完成中断
+
+	SPI_I2S_DMACmd(I2S2ext, SPI_I2S_DMAReq_Rx, ENABLE);//I2S2ext RX DMA请求使能.
+	
+	NVIC_InitStructure.NVIC_IRQChannel = DMA1_Stream3_IRQn; 
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority =0x00;//抢占优先级0
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x00;//子优先级1
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;//使能外部中断通道
+	NVIC_Init(&NVIC_InitStructure);//配置
+
+} 
+
+/**
+ *@brief:      mcu_i2sext_dma_start
+ *@details:    开始I2SEXT DMA传输
+ *@param[in]   void  
+ *@param[out]  无
+ *@retval:     
+ */
+void mcu_i2sext_dma_start(void)
+{   	  
+	DMA_Cmd(I2S2_EXT_DMA,ENABLE);	// 开启DMA TX传输
+}
+/**
+ *@brief:      mcu_i2sext_dma_stop
+ *@details:    停止DMA传输
+ *@param[in]   void  
+ *@param[out]  无
+ *@retval:     
+ */
+void mcu_i2sext_dma_stop(void)
+{   	 
+	DMA_Cmd(I2S2_EXT_DMA,DISABLE);	//关闭 DMA TX传输
+}
+/**
+ *@brief:      mcu_i2sext_dma_process
+ *@details:    DMA中断
+ *@param[in]   void  
+ *@param[out]  无
+ *@retval:     
+ */
+void mcu_i2sext_dma_process(void)
+{
+	if(I2S2_EXT_DMA->CR&(1<<19))
+	{
+		fun_rec_set_free_buf(0);
+	}
+	else
+	{
+		fun_rec_set_free_buf(1);
+	}
+
+}
+
 

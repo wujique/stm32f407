@@ -71,7 +71,7 @@ extern void mcu_i2s_dma_process(void);
 extern void mcu_tim7_IRQhandler(void);
 extern void mcu_adc_IRQhandler(void);
 extern void mcu_can1_rx0_IRQ(void);
-
+extern void mcu_i2sext_dma_process(void);
 /******************************************************************************/
 /*            Cortex-M4 Processor Exceptions Handlers                         */
 /******************************************************************************/
@@ -264,6 +264,14 @@ void DMA1_Stream4_IRQHandler(void)
 		mcu_i2s_dma_process();		
 	} 
 
+}
+void DMA1_Stream3_IRQHandler(void)
+{  
+	if(DMA_GetITStatus(DMA1_Stream3,DMA_IT_TCIF3)==SET) //DMA1_Stream3,传输完成标志
+	{ 
+		DMA_ClearITPendingBit(DMA1_Stream3, DMA_IT_TCIF3);	//清除传输完成中断
+		mcu_i2sext_dma_process();	//执行回调函数,读取数据等操作在这里面处理  
+	}
 }
 
 void ADC_IRQHandler(void)

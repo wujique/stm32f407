@@ -442,9 +442,8 @@ s32 dev_wm8978_init(void)
  */
 s32 dev_wm8978_open(void)
 {
-	dev_wm8978_inout(WM8978_INPUT_DAC|WM8978_INPUT_AUX, 
-					WM8978_OUTPUT_PHONE|WM8978_OUTPUT_SPK);
-
+	dev_wm8978_inout(WM8978_INPUT_DAC|WM8978_INPUT_LMIC|WM8978_INPUT_RMIC|WM8978_INPUT_ADC, 
+					WM8978_OUTPUT_SPK|WM8978_OUTPUT_PHONE);
 	return 0;
 }
 /**
@@ -502,6 +501,7 @@ s32 dev_wm8978_dataformat(u32 Freq, u8 Standard, u8 Format)
 	}
 	
 	mcu_i2s_config(Freq, standard, dataformat);
+	mcu_i2sext_config(Freq, standard, dataformat);
 	
 	return 0;
 }
