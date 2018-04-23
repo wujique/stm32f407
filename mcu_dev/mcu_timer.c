@@ -240,7 +240,7 @@ u32 mcu_timer_get_cap(void)
 */
 
 #define DacTim TIM3
-#define TIM3_CLK_PRESCALER    84 //预分频,840个时钟才触发一次定时器计数 
+#define TIM3_CLK_PRESCALER    84 //预分频,84个时钟才触发一次定时器计数 
                                     //一个定时器计数的时间就是(1/84M)*84 = 1us                       
 #define TIM3_CLK_PERIOD       125//定时周期 125us
 

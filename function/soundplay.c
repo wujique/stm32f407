@@ -36,7 +36,7 @@
 #include "wujique_log.h"
 #include "alloc.h"
 
-//#define FUN_SOUND_DEBUG
+#define FUN_SOUND_DEBUG
 
 #ifdef FUN_SOUND_DEBUG
 #define SOUND_DEBUG	wjq_log 
@@ -272,6 +272,14 @@ int fun_sound_play(char *name, char *dev)
 		SoundDevType = SOUND_DEV_2CH;
 		dev_wm8978_transfer(1);//Æô¶¯I2S´«Êä
 	}
+	else if(0 == strcmp(dev, "dacsound"))
+	{
+		dev_dacsound_open();
+		dev_dacsound_dataformat(wav_header->nSamplesPerSec, WM8978_I2S_Phillips, format);
+		dev_dacsound_setbuf(SoundBufP[0], SoundBufP[1], SoundBufSize);
+		SoundDevType = SOUND_DEV_1CH;
+		dev_dacsound_transfer(1);
+	}
 	
 
 	SoundSta = SOUND_PLAY;
@@ -408,7 +416,8 @@ s32 fun_sound_stop(void)
 		}
 		else if(SoundDevType == SOUND_DEV_1CH)
 		{
-			
+			dev_dacsound_transfer(0);
+			dev_dacsound_close();
 		}
 		
 		wjq_free(SoundBufP[0]);
@@ -472,7 +481,7 @@ s32 fun_sound_setvol(u8 vol)
 void fun_sound_test(void)
 {
 	SOUND_DEBUG(LOG_DEBUG, "play sound\r\n");
-	fun_sound_play("1:/mono_16bit_8k.wav", "wm8978");		
+	fun_sound_play("1:/mono_16bit_8k.wav", "dacsound");		
 
 }
 /*

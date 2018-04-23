@@ -31,6 +31,10 @@
 #define DACSOUND_DEBUG(a, ...)
 #endif
 
+/*
+测试硬件的时候使用
+*/
+#if 0
 
 
 #define BEEP_DATA_LEN   ((561-21)*16)
@@ -648,7 +652,7 @@ s32 dev_dacsound_timerinit(void)
 	return 0;
 }
 
-#if 0
+
 s32 dev_dacsound_test(void)
 {
 	dev_dacsound_open();
@@ -659,6 +663,149 @@ s32 dev_dacsound_test(void)
 		dev_dacsound_play();
 	}
 
+}
+#else
+/*
+
+	DAC 播放声音，固定播放8K单声道16BIT的音源。
+
+*/
+
+u16 *DacSoundSampleP0;
+u16 *DacSoundSampleP1;
+u16 *DacSoundCrBufP;//当前使用的BUF
+
+u32 DacSoundSampleBufSize;
+u32 DacSoundSampleIndex;
+
+s32 dev_dacsound_init(void)
+{
+	GPIO_InitTypeDef GPIO_InitStructure;
+	
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//---模拟模式
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//---下拉
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOA, &GPIO_InitStructure);//---初始化 GPIO
+
+	GPIO_ResetBits(GPIOA, GPIO_Pin_5);
+	
+	return 0;
+}
+
+s32 dev_dacsound_open(void)
+{
+	mcu_dac_open();
+	mcu_tim3_init();
+	DacSoundSampleIndex = 0;
+	DacSoundCrBufP = DacSoundSampleP0;
+	
+	return 0;
+}
+/**
+ *@brief:      dev_dacsound_dataformat
+ *@details:       设置播放配置，DAC播放固定支持8K 16BIT 单声-
+                  道
+ *@param[in]   u32 Freq     
+               u8 Standard  
+               u8 Format    
+ *@param[out]  无
+ *@retval:     
+ */
+s32 dev_dacsound_dataformat(u32 Freq, u8 Standard, u8 Format)
+{
+	return 0;
+}
+/**
+ *@brief:      dev_dacsound_setbuf
+ *@details:    设置播放缓冲
+ *@param[in]   u16 *buffer0  
+               u16 *buffer1  
+               u32 len       
+ *@param[out]  无
+ *@retval:     
+ */
+s32 dev_dacsound_setbuf(u16 *buffer0,u16 *buffer1,u32 len)
+{
+	DacSoundSampleP0 = buffer0;
+	DacSoundSampleP1 = buffer1;
+	DacSoundSampleBufSize = len;
+	
+	return 0;
+}
+/**
+ *@brief:      dev_dacsound_transfer
+ *@details:    启动或停止DAC播放
+ *@param[in]   u8 sta  
+ *@param[out]  无
+ *@retval:     
+ */
+s32 dev_dacsound_transfer(u8 sta)
+{
+	if(sta == 1)
+	{
+		/*打开定时器，启动播放*/
+		DACSOUND_DEBUG(LOG_DEBUG, "dac sound play\r\n");
+		mcu_tim3_start();
+	}
+	else
+	{
+		/*停止定时器*/
+		mcu_tim3_stop();
+	}
+	
+	return 0;
+}
+
+s32 dev_dacsound_close(void)
+{
+	dev_dacsound_init();
+	return 0;
+}
+
+/**
+ *@brief:      dev_dacsound_timerinit
+ *@details:    在定时器中断中调用，每125US输出一个DAC数据
+ 			   能不能改为DMA？
+ *@param[in]   void  
+ *@param[out]  无
+ *@retval:     
+ */
+s32 dev_dacsound_timerinit(void)
+{
+    s16 data = 0;
+    u16 tmp;
+
+	if(DacSoundSampleIndex >= DacSoundSampleBufSize)
+	{
+		if(DacSoundCrBufP == DacSoundSampleP0)
+		{
+			DacSoundCrBufP = DacSoundSampleP1;
+			fun_sound_set_free_buf(0);
+		}
+		else
+		{
+			DacSoundCrBufP = DacSoundSampleP0;
+			fun_sound_set_free_buf(1);
+		}
+		DacSoundSampleIndex = 0;
+
+	}
+
+	/*要注意，读到的数据是S16，正负值*/
+	data = *(DacSoundCrBufP + DacSoundSampleIndex);
+	/*
+		先压缩，也就是减少音量，在负数时候压缩（除）
+		压缩方向时中位值，如果先将负数调整为正数（抬高直流电平），
+		压缩方向就会变成音频的最低值，音效会失真。
+	*/
+	data = data/(16+30);//12位DAC，再加上音量设置，
+	/*再调整中位值(直流电平)，因为音频数据有负数，DAC输出没有负数*/
+	tmp = (data+0x800);
+	mcu_dac_output(tmp);
+	
+	DacSoundSampleIndex++;
+	return 0;
 }
 
 #endif

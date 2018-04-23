@@ -59,7 +59,7 @@ s32 mcu_dac_open(void)
     DAC_InitType.DAC_Trigger=DAC_Trigger_None;  //---不使用触发功能 TEN1=0
     DAC_InitType.DAC_WaveGeneration=DAC_WaveGeneration_None;   //---不使用波形发生
     DAC_InitType.DAC_LFSRUnmask_TriangleAmplitude=DAC_LFSRUnmask_Bit0;
-    DAC_InitType.DAC_OutputBuffer=DAC_OutputBuffer_Disable ;        //---输出缓存关闭
+    DAC_InitType.DAC_OutputBuffer=DAC_OutputBuffer_Enable ;        //---输出缓存关闭
     //DAC_InitType.DAC_LFSRUnmask_TriangleAmplitude = DAC_TriangleAmplitude_4095; //噪声生成器
 	DAC_Init(DAC_Channel_2,&DAC_InitType); //---初始化 DAC 通道 2    
 
@@ -94,10 +94,9 @@ s32 mcu_dac_output_vol(u16 vol)
  *@param[out]  无
  *@retval:     
  */
-s32 mcu_dac_output(u16 data)
+void mcu_dac_output(u16 data)
 {
     DAC_SetChannel2Data(DAC_Align_12b_R, data);//12 位右对齐数据格式
-	return 0;
 }
 
 

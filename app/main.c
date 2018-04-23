@@ -178,7 +178,9 @@ int main(void)
 				/*读时间*/
 				mcu_rtc_get_date();
 				mcu_rtc_get_time();
-				fun_rec_test();
+				
+				fun_sound_test();
+				
 				/*设置时间*/
 				//mcu_rtc_set_date(2018, 2, 4, 17);
 				//mcu_rtc_set_time(2, 47, 0);
@@ -187,8 +189,7 @@ int main(void)
 			else if(key == DEV_KEY_REL)
 			{
 				//dev_buzzer_close();
-				fun_rec_stop();
-				fun_play_rec_test();
+
 				GPIO_SetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);	
 			}
 		}
