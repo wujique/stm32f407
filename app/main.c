@@ -47,6 +47,7 @@
 #include "dev_rs485.h"
 #include "eth_app.h"
 #include "dev_lcd.h"
+#include "dev_keypad.h"
 
 /** @addtogroup Template_Project
   * @{
@@ -114,6 +115,7 @@ int main(void)
 	dev_lcdbus_init();
 	
 	dev_key_init();
+	dev_keypad_init();
 	//mcu_timer_init();
 	dev_buzzer_init();
 	dev_tea5767_init();
@@ -131,6 +133,7 @@ int main(void)
 	
 	//dev_dacsound_open();
 	dev_key_open();
+	dev_keypad_open();
 	//dev_wm8978_open();
 	//dev_tea5767_open();
 	//dev_tea5767_setfre(105700);
@@ -155,10 +158,13 @@ int main(void)
 	{
 		/*驱动轮询*/
 		dev_key_scan();
+		dev_keypad_scan();
 		eth_loop_task();
 		fun_sound_task();
 		fun_rec_task();
+
 		/*应用*/
+		dev_keypad_test();
 		u8 key;
 		s32 res;
 		
@@ -178,9 +184,9 @@ int main(void)
 				/*读时间*/
 				mcu_rtc_get_date();
 				mcu_rtc_get_time();
-				
-				fun_sound_test();
-				
+
+				dev_i2coledlcd_test();
+				//fun_sound_test();
 				/*设置时间*/
 				//mcu_rtc_set_date(2018, 2, 4, 17);
 				//mcu_rtc_set_time(2, 47, 0);

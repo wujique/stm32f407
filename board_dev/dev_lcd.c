@@ -117,11 +117,11 @@ _lcd_drv *LcdProbDrv8080List[] = {
 	设备树定义
 	指明系统有多少个LCD设备，挂在哪个LCD总线上。
 */
-#define DEV_LCD_C 2//系统存在3个LCD设备
+#define DEV_LCD_C 4//系统存在3个LCD设备
 LcdObj LcdObjList[DEV_LCD_C]=
 {
-	//{"i2coledlcd",  LCD_BUS_I2C,  0X1315},
-	//{"vspioledlcd", LCD_BUS_VSPI, 0X1315},
+	{"i2coledlcd",  LCD_BUS_I2C,  0X1315},
+	{"vspioledlcd", LCD_BUS_VSPI, 0X1315},
 	{"spicoglcd",   LCD_BUS_SPI,  0X7565},
 	{"tftlcd",      LCD_BUS_8080, NULL},
 };
@@ -864,4 +864,22 @@ void dev_lcd_test(void)
 	while(1);
 }
 
+void dev_i2coledlcd_test(void)
+{
+
+	DevLcd *LcdOledI2C = NULL;
+
+	LcdOledI2C = dev_lcd_open("i2coledlcd");
+	if(LcdOledI2C==NULL)
+		wjq_log(LOG_FUN, "open oled i2c lcd err\r\n");
+	
+	/*打开背光*/
+	dev_lcd_backlight(LcdOledI2C, 1);
+
+	dev_lcd_put_string(LcdOledI2C, FONT_SONGTI_1212, 10,1, "ABC-abc，", BLACK);
+	dev_lcd_put_string(LcdOledI2C, FONT_SIYUAN_1616, 1,13, "这是LcdOledI2C", BLACK);
+	dev_lcd_put_string(LcdOledI2C, FONT_SONGTI_1212, 10,30, "www.wujique.com", BLACK);
+	dev_lcd_put_string(LcdOledI2C, FONT_SIYUAN_1616, 1,47, "屋脊雀工作室", BLACK);
+
+}
 

@@ -2,7 +2,7 @@
 #define __MCU_SPI_H_
 
 #define SYS_USE_VSPI1
-#define SYS_USE_VSPI2
+//#define SYS_USE_VSPI2
 
 typedef enum{
 	DEV_SPI_NULL = 0,

@@ -816,6 +816,11 @@
               <FileType>1</FileType>
               <FilePath>..\board_dev\dev_lcdbus.c</FilePath>
             </File>
+            <File>
+              <FileName>dev_keypad.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\board_dev\dev_keypad.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

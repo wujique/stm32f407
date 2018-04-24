@@ -410,6 +410,11 @@ typedef struct
 	u16 cspin;
 }DevVspiIO;
 
+/*
+
+	外扩接口模拟SPI，可接OLED LCD或COG LCD
+
+*/
 #define VSPI1_CS_PORT GPIOB
 #define VSPI1_CS_PIN GPIO_Pin_1
 	

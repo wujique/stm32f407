@@ -35,6 +35,7 @@
 #include "soundplay.h"
 #include "wujique_log.h"
 #include "alloc.h"
+#include "dev_dacsound.h"
 
 #define FUN_SOUND_DEBUG
 

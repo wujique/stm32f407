@@ -330,14 +330,52 @@ _lcd_bus BusSerialLcdVI2C={
 		.bl =bus_seriallcd_vi2c_bl,				
 };
 
+
+/*
+	定义一个LCD总线，空的，不存在
+*/
+static s32 bus_seriallcd_null_init()
+{
+	return 0;
+}
+
+static s32 bus_seriallcd_null_open(void)
+{
+
+	return 0;
+}
+
+static s32 bus_seriallcd_null_close(void)
+{
+	return 0;
+}
+
+static s32 bus_seriallcd_null_write_data(u8 *data, u16 len)
+{
+	return 0;
+}
+
+static s32 bus_seriallcd_null_write_cmd(u8 cmd)
+{
+
+	return 0;
+}
+
+static s32 bus_seriallcd_null_bl(u8 sta)
+{
+
+	return 0;
+}
+
+
 _lcd_bus BusSerialLcdNULL={
 		.name = "NULL",
-		.init =NULL,
-		.open =NULL,
-		.close =NULL,
-		.writedata =NULL,
-		.writecmd =NULL,
-		.bl =NULL,				
+		.init =bus_seriallcd_null_init,
+		.open =bus_seriallcd_null_open,
+		.close =bus_seriallcd_null_close,
+		.writedata =bus_seriallcd_null_write_data,
+		.writecmd =bus_seriallcd_null_write_cmd,
+		.bl =bus_seriallcd_null_bl,				
 };
 
 /*
@@ -348,7 +386,14 @@ _lcd_bus BusSerialLcdNULL={
 _lcd_bus *LcdBusList[] = {
 		&BusSerialLcdNULL,
 		&BusSerialLcdSpi,
+
+		/*vspi跟矩阵按键冲突*/
+		#ifdef SYS_USE_VSPI2
 		&BusSerialLcdVSpi,
+		#else
+		&BusSerialLcdNULL,
+		#endif
+		
 		&BusSerialLcdVI2C,
 	};
 
