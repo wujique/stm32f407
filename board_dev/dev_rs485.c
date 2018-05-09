@@ -25,10 +25,12 @@
 #include "stm32f4xx.h"
 #include "mcu_uart.h"
 #include "wujique_log.h"
+#include "wujique_sysconf.h"
+
 
 /*rs485使用串口1*/
 #define DEV_RS485_UART MCU_UART_1
-
+s32 RS485Gd = -2;
 /**
  *@brief:      dev_rs485_init
  *@details:    初始化485设备
@@ -38,8 +40,8 @@
  */
 s32 dev_rs485_init(void)
 {
+	#ifdef SYS_USE_RS485
 	GPIO_InitTypeDef GPIO_InitStructure;
-
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOG,ENABLE); //使能 PG时钟
 	//PG8 推挽输出， 485 模式控制
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8; //GPIOG8
@@ -52,6 +54,10 @@ s32 dev_rs485_init(void)
 	//初始化设置为接收模式
 	GPIO_ResetBits(GPIOG, GPIO_Pin_8);
 
+	RS485Gd = -1;
+	#else
+	wjq_log(LOG_INFO, ">---------------RS485 IS NO ININT!\R\N");
+	#endif
 	return 0;
 }
 /**
@@ -63,6 +69,9 @@ s32 dev_rs485_init(void)
  */
 s32 dev_rs485_open(void)
 {
+	if(RS485Gd!= -1)
+		return -1;
+	
 	mcu_uart_open(DEV_RS485_UART);
 	mcu_uart_set_baud(DEV_RS485_UART, 9600);	
 	return 0;
@@ -76,6 +85,9 @@ s32 dev_rs485_open(void)
  */
 s32 dev_rs485_close(void)
 {
+	if(RS485Gd!= 0)
+		return -1;
+	
 	mcu_uart_close(DEV_RS485_UART);
 	return 0;
 }
@@ -92,6 +104,8 @@ s32 dev_rs485_read(u8 *buf, s32 len)
 {
 	s32 res;
 	
+	if(RS485Gd!= 0)
+		return -1;
 	res = mcu_uart_read(DEV_RS485_UART, buf, len);	
 	
 	return res;
@@ -108,6 +122,8 @@ s32 dev_rs485_write(u8 *buf, s32 len)
 {
 	s32 res;
 	
+	if(RS485Gd!= 0)
+		return -1;
 	GPIO_SetBits(GPIOG, GPIO_Pin_8);//设置为发送模式
 	res = mcu_uart_write(DEV_RS485_UART, buf, len);
 	GPIO_ResetBits(GPIOG, GPIO_Pin_8);//发送结束后设置为接收模式
@@ -123,6 +139,9 @@ s32 dev_rs485_write(u8 *buf, s32 len)
  */
 s32 dev_rs485_ioctl(void)
 {
+	if(RS485Gd!= 0)
+		return -1;
+
 		return 0;
 }
 

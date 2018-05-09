@@ -8,5 +8,10 @@
 
 extern s32 dev_touchkey_task(void);
 extern s32 dev_touchkey_test(void);
+extern s32 dev_touchkey_open(void);
+extern s32 dev_touchkey_init(void);
+extern s32 dev_touchkey_close(void);
+extern s32 dev_touchkey_read(u8 *buf, u32 count);
+
 
 #endif

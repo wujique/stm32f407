@@ -10,12 +10,13 @@
       <TargetName>wujique</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>5060061::V5.06 update 1 (build 61)::ARMCC</pCCUsed>
+      <pCCUsed>5060528::V5.06 update 5 (build 528)::ARMCC</pCCUsed>
+      <uAC6>0</uAC6>
       <TargetOption>
         <TargetCommonOption>
           <Device>STM32F407ZGTx</Device>
           <Vendor>STMicroelectronics</Vendor>
-          <PackID>Keil.STM32F4xx_DFP.2.11.0</PackID>
+          <PackID>Keil.STM32F4xx_DFP.2.13.0</PackID>
           <PackURL>http://www.keil.com/pack</PackURL>
           <Cpu>IROM(0x08000000,0x100000) IRAM(0x20000000,0x20000) IRAM2(0x10000000,0x10000) CPUTYPE("Cortex-M4") FPU2 CLOCK(12000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
@@ -79,9 +80,9 @@
             <nStopB2X>0</nStopB2X>
           </BeforeMake>
           <AfterMake>
-            <RunUserProg1>0</RunUserProg1>
+            <RunUserProg1>1</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name></UserProg1Name>
+            <UserProg1Name>C:\Keil_v5\ARM\ARMCC\bin\fromelf.exe -bin -o H:\wujique\prog\stm32f407\prj\Objects\wujique.bin H:\wujique\prog\stm32f407\prj\Objects\wujique.axf</UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
@@ -125,47 +126,6 @@
             <HexOffset>0</HexOffset>
             <Oh166RecLen>16</Oh166RecLen>
           </OPTHX>
-          <Simulator>
-            <UseSimulator>0</UseSimulator>
-            <LoadApplicationAtStartup>1</LoadApplicationAtStartup>
-            <RunToMain>1</RunToMain>
-            <RestoreBreakpoints>1</RestoreBreakpoints>
-            <RestoreWatchpoints>1</RestoreWatchpoints>
-            <RestoreMemoryDisplay>1</RestoreMemoryDisplay>
-            <RestoreFunctions>1</RestoreFunctions>
-            <RestoreToolbox>1</RestoreToolbox>
-            <LimitSpeedToRealTime>0</LimitSpeedToRealTime>
-            <RestoreSysVw>1</RestoreSysVw>
-          </Simulator>
-          <Target>
-            <UseTarget>1</UseTarget>
-            <LoadApplicationAtStartup>1</LoadApplicationAtStartup>
-            <RunToMain>1</RunToMain>
-            <RestoreBreakpoints>1</RestoreBreakpoints>
-            <RestoreWatchpoints>1</RestoreWatchpoints>
-            <RestoreMemoryDisplay>1</RestoreMemoryDisplay>
-            <RestoreFunctions>0</RestoreFunctions>
-            <RestoreToolbox>1</RestoreToolbox>
-            <RestoreTracepoints>1</RestoreTracepoints>
-            <RestoreSysVw>1</RestoreSysVw>
-          </Target>
-          <RunDebugAfterBuild>0</RunDebugAfterBuild>
-          <TargetSelection>12</TargetSelection>
-          <SimDlls>
-            <CpuDll></CpuDll>
-            <CpuDllArguments></CpuDllArguments>
-            <PeripheralDll></PeripheralDll>
-            <PeripheralDllArguments></PeripheralDllArguments>
-            <InitializationFile></InitializationFile>
-          </SimDlls>
-          <TargetDlls>
-            <CpuDll></CpuDll>
-            <CpuDllArguments></CpuDllArguments>
-            <PeripheralDll></PeripheralDll>
-            <PeripheralDllArguments></PeripheralDllArguments>
-            <InitializationFile></InitializationFile>
-            <Driver>BIN\CMSIS_AGDI.dll</Driver>
-          </TargetDlls>
         </DebugOption>
         <Utilities>
           <Flash1>
@@ -249,7 +209,7 @@
             <Ra2Chk>0</Ra2Chk>
             <Ra3Chk>0</Ra3Chk>
             <Im1Chk>1</Im1Chk>
-            <Im2Chk>0</Im2Chk>
+            <Im2Chk>1</Im2Chk>
             <OnChipMemories>
               <Ocm1>
                 <Type>0</Type>
@@ -364,16 +324,20 @@
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
             <uC99>0</uC99>
+            <uGnu>0</uGnu>
             <useXO>0</useXO>
             <v6Lang>0</v6Lang>
             <v6LangP>0</v6LangP>
             <vShortEn>0</vShortEn>
             <vShortWch>0</vShortWch>
+            <v6Lto>0</v6Lto>
+            <v6WtE>0</v6WtE>
+            <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>..\app;..\StLib\core;..\StLib\STM32F4xx_StdPeriph_Driver\inc;..\mcu_dev;..\board_dev;..\Utilities\font;..\Utilities\tslib\src;..\Utilities\tslib\tests;..\app\usb\inc;..\StLib\STM32_USB_OTG_Driver\inc;..\StLib\STM32_USB_HOST_Library\Core\inc;..\StLib\STM32_USB_HOST_Library\Class\MSC\inc;..\StLib\STM32_USB_Device_Library\Core\inc;..\StLib\STM32_USB_Device_Library\Class\msc\inc;..\Utilities\fat_fs\src;..\app\eth\inc;..\StLib\STM32F4x7_ETH_Driver\inc;..\Utilities\lwip-1.4.1\port\STM32F4x7\Standalone;..\Utilities\lwip-1.4.1\src\include\ipv4;..\Utilities\lwip-1.4.1\src\include;..\Utilities\lwip-1.4.1\src\include\netif;..\Utilities\lwip-1.4.1\port\STM32F4x7;..\Utilities\lwip-1.4.1\src\include\lwip;..\Utilities\alloc;..\function</IncludePath>
+              <IncludePath>..\app;..\StLib\core;..\StLib\STM32F4xx_StdPeriph_Driver\inc;..\mcu_dev;..\board_dev;..\Utilities\font;..\Utilities\tslib\src;..\Utilities\tslib\tests;..\app\usb\inc;..\StLib\STM32_USB_OTG_Driver\inc;..\StLib\STM32_USB_HOST_Library\Core\inc;..\StLib\STM32_USB_HOST_Library\Class\MSC\inc;..\StLib\STM32_USB_Device_Library\Core\inc;..\StLib\STM32_USB_Device_Library\Class\msc\inc;..\Utilities\fat_fs\src;..\app\eth\inc;..\StLib\STM32F4x7_ETH_Driver\inc;..\Utilities\lwip-1.4.1\port\STM32F4x7\Standalone;..\Utilities\lwip-1.4.1\src\include\ipv4;..\Utilities\lwip-1.4.1\src\include;..\Utilities\lwip-1.4.1\src\include\netif;..\Utilities\lwip-1.4.1\port\STM32F4x7;..\Utilities\lwip-1.4.1\src\include\lwip;..\Utilities\alloc;..\function;..\Utilities\FreeRTOS\Source\include;..\Utilities\FreeRTOS\Source\portable\RVDS\ARM_CM4F</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -386,6 +350,7 @@
             <NoWarn>0</NoWarn>
             <uSurpInc>0</uSurpInc>
             <useXO>0</useXO>
+            <uClangAs>0</uClangAs>
             <VariousControls>
               <MiscControls></MiscControls>
               <Define></Define>
@@ -394,7 +359,7 @@
             </VariousControls>
           </Aads>
           <LDads>
-            <umfTarg>1</umfTarg>
+            <umfTarg>0</umfTarg>
             <Ropi>0</Ropi>
             <Rwpi>0</Rwpi>
             <noStLib>0</noStLib>
@@ -403,7 +368,7 @@
             <TextAddressRange>0x08000000</TextAddressRange>
             <DataAddressRange>0x20000000</DataAddressRange>
             <pXoBase></pXoBase>
-            <ScatterFile></ScatterFile>
+            <ScatterFile>.\Objects\wujique.sct</ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
             <Misc></Misc>
@@ -435,6 +400,16 @@
               <FileName>wujique_log.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\app\wujique_log.c</FilePath>
+            </File>
+            <File>
+              <FileName>wujique_stm407.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\app\wujique_stm407.c</FilePath>
+            </File>
+            <File>
+              <FileName>wujique_sysconf.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\app\wujique_sysconf.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -820,6 +795,16 @@
               <FileName>dev_keypad.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\board_dev\dev_keypad.c</FilePath>
+            </File>
+            <File>
+              <FileName>dev_rf24l01.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\board_dev\dev_rf24l01.c</FilePath>
+            </File>
+            <File>
+              <FileName>dev_esp8266.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\board_dev\dev_esp8266.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1346,10 +1331,71 @@
               <FileType>1</FileType>
               <FilePath>..\function\soundplay.c</FilePath>
             </File>
+            <File>
+              <FileName>emenu.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\function\emenu.c</FilePath>
+            </File>
+            <File>
+              <FileName>emenu_test.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\function\emenu_test.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>freertos</GroupName>
+          <Files>
+            <File>
+              <FileName>frtos_croutine.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\FreeRTOS\Source\frtos_croutine.c</FilePath>
+            </File>
+            <File>
+              <FileName>frtos_event_groups.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\FreeRTOS\Source\frtos_event_groups.c</FilePath>
+            </File>
+            <File>
+              <FileName>frtos_list.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\FreeRTOS\Source\frtos_list.c</FilePath>
+            </File>
+            <File>
+              <FileName>frtos_queue.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\FreeRTOS\Source\frtos_queue.c</FilePath>
+            </File>
+            <File>
+              <FileName>frtos_stream_buffer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\FreeRTOS\Source\frtos_stream_buffer.c</FilePath>
+            </File>
+            <File>
+              <FileName>frtos_tasks.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\FreeRTOS\Source\frtos_tasks.c</FilePath>
+            </File>
+            <File>
+              <FileName>frtos_timers.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\FreeRTOS\Source\frtos_timers.c</FilePath>
+            </File>
+            <File>
+              <FileName>port.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\FreeRTOS\Source\portable\RVDS\ARM_CM4F\port.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>
     </Target>
   </Targets>
+
+  <RTE>
+    <apis/>
+    <components/>
+    <files/>
+  </RTE>
 
 </Project>

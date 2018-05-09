@@ -77,7 +77,7 @@ FIL SoundFile;//声音文件
 播放SD卡的音乐，只要2*4K缓冲
 播放U盘中的音乐，却要2*8K
 */
-#define I2S_DMA_BUFF_SIZE1   (1024*8)
+#define I2S_DMA_BUFF_SIZE1   (1024*4)
 #define DAC_SOUND_BUFF_SIZE2 (1024*1)
 
 u32 SoundBufSize = I2S_DMA_BUFF_SIZE1;//采样频率小，就开小一点缓冲。
@@ -88,8 +88,6 @@ u16 *SoundBufP[2];
 volatile SOUND_State SoundSta = SOUND_IDLE;
 u32 playlen;
 SOUND_DEV_TYPE SoundDevType = SOUND_DEV_NULL;
-
-
 
 /*------------------------------------------*/
 
@@ -121,6 +119,37 @@ static s32 fun_sound_get_buff_index(void)
 	res = SoundBufIndex;
 	SoundBufIndex = 0xff;
 	return res;
+}
+/*
+
+	单声道数据使用WM8978播放要经过处理，
+	造成双声道
+
+*/
+static s32 fun_sound_deal_1ch_data(u8 *p)
+{
+	u8 ch1,ch2;
+	u16 shift;
+	u16 i;
+	
+	for(i=SoundBufSize;i>0;)
+	{
+		i--;
+		//uart_printf("%d-",i);
+		ch1 = *(p+i);
+		i--;
+		ch2 = *(p+i);
+		
+		shift = i*2;
+		
+		*(p+shift) = ch2;	
+		*(p+shift+1) = ch1;
+		*(p+shift+2) = ch2;	
+		*(p+shift+3) = ch1;
+
+	}
+	
+	return 0;
 }
 
 /**
@@ -268,6 +297,7 @@ int fun_sound_play(char *name, char *dev)
 	if(0 == strcmp(dev, "wm8978"))
 	{
 		dev_wm8978_open();
+
 		dev_wm8978_dataformat(wav_header->nSamplesPerSec, WM8978_I2S_Phillips, format);
 		mcu_i2s_dma_init(SoundBufP[0], SoundBufP[1], SoundBufSize);
 		SoundDevType = SOUND_DEV_2CH;
@@ -284,38 +314,6 @@ int fun_sound_play(char *name, char *dev)
 	
 
 	SoundSta = SOUND_PLAY;
-	
-	return 0;
-}
-
-/*
-
-	单声道数据使用WM8978播放要经过处理，
-	造成双声道
-
-*/
-static s32 fun_sound_deal_1ch_data(u8 *p)
-{
-	u8 ch1,ch2;
-	u16 shift;
-	u16 i;
-	
-	for(i=SoundBufSize;i>0;)
-	{
-		i--;
-		//uart_printf("%d-",i);
-		ch1 = *(p+i);
-		i--;
-		ch2 = *(p+i);
-		
-		shift = i*2;
-		
-		*(p+shift) = ch2;	
-		*(p+shift+1) = ch1;
-		*(p+shift+2) = ch2;	
-		*(p+shift+3) = ch1;
-
-	}
 	
 	return 0;
 }
@@ -511,6 +509,7 @@ TWavHeader *recwav_header;
 FIL SoundRecFile;//声音文件
 u32 RecWavSize = 0;
 u16 RecPlayTmp[8];
+s32 RecSta = 0;
 
 /*
 	录音频率，如果考虑播音跟录音一起工作，
@@ -621,15 +620,18 @@ s32 fun_sound_rec(char *name)
 		return -1;
 	}
 	
-	dev_wm8978_open();
+	dev_wm8978_open();	
 	dev_wm8978_dataformat(SOUND_REC_FRE, WM8978_I2S_Phillips, WM8978_I2S_Data_16b);
-	
 	mcu_i2s_dma_init(RecPlayTmp, RecPlayTmp, 1);
-	dev_wm8978_transfer(1);//启动I2S传输
-	
+
 	mcu_i2sext_dma_init(SoundRecBufP[0], SoundRecBufP[1], SoundRecBufSize);
 	mcu_i2sext_dma_start();
 	
+	RecSta = 1;
+	
+	dev_wm8978_transfer(1);//启动I2S传输
+	
+
 	SOUND_DEBUG(LOG_DEBUG, "rec--------------------\r\n");
 	
 	return 0;
@@ -644,6 +646,9 @@ s32 fun_sound_rec(char *name)
 s32 fun_rec_stop(void)
 {
 	u32 len;
+
+	RecSta = 0;
+	
 	dev_wm8978_transfer(0);
 	mcu_i2sext_dma_stop();
 	
@@ -671,6 +676,9 @@ void fun_rec_task(void)
 	int buf_index = 0;
 	u32 len;
 	FRESULT fres;
+
+	if(RecSta == 0)
+		return;
 	
 	buf_index = fun_rec_get_buff_index();
 	if(0xff != buf_index)

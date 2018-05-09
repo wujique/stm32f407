@@ -35,6 +35,7 @@
 #include "dev_lcdbus.h"
 
 #include "wujique_log.h"
+
 #include "dev_key.h"
 #include "dev_buzzer.h"
 #include "dev_touchkey.h"
@@ -49,6 +50,7 @@
 #include "dev_lcd.h"
 #include "dev_keypad.h"
 
+#include "FreeRTos.h"
 /** @addtogroup Template_Project
   * @{
   */ 
@@ -67,6 +69,15 @@ RCC_ClocksTypeDef RCC_Clocks;
 void Delay(__IO uint32_t nTime);
 /* Private functions ---------------------------------------------------------*/
 
+
+/*
+	尽快启动RTOS任务
+*/
+#define START_TASK_STK_SIZE 4096
+#define START_TASK_PRIO	3//中间优先级
+TaskHandle_t  StartTaskHandle;
+void start_task(void *pvParameters);
+
 /**
   * @brief  Main program
   * @param  None
@@ -74,25 +85,62 @@ void Delay(__IO uint32_t nTime);
   */
 int main(void)
 {
-  GPIO_InitTypeDef GPIO_InitStructure;
- 
  /*!< At this stage the microcontroller clock setting is already configured, 
        this is done through SystemInit() function which is called from startup
        files before to branch to application main.
        To reconfigure the default setting of SystemInit() function, 
        refer to system_stm32f4xx.c file */
 
-	  /* Configure the NVIC Preemption Priority Bits */
-  NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
 
-  /* SysTick end of count event */
-  RCC_GetClocksFreq(&RCC_Clocks);
-  SysTick_Config(RCC_Clocks.HCLK_Frequency / (1000/SYSTEMTICK_PERIOD_MS));
+	/* Set the Vector Table base address at 0x08000000 */
+  	NVIC_SetVectorTable(NVIC_VectTab_FLASH, 0x00);
+	/*
+		中断优先级分组，是一个全局的设置，只能在上电初始化时设置一次
+		如果中断优先级分组设置为1，会死机，应该跟RTOS有关系
+ 	*/	
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
+ 	
+	#ifndef SYS_USE_RTOS
+  	/* SysTick end of count event */
+  	RCC_GetClocksFreq(&RCC_Clocks);
+  	SysTick_Config(RCC_Clocks.HCLK_Frequency / (1000/SYSTEMTICK_PERIOD_MS));
+	#endif
+	
+	mcu_uart_init();
+	mcu_uart_open(PC_PORT);
+	wjq_log(LOG_INFO,"\r\n---hello world!--20180424 10:41---\r\n");
+
+  /* Infinite loop */
+	#ifdef SYS_USE_RTOS
+	wjq_log(LOG_INFO,"create start task!\r\n");
+	xTaskCreate(	(TaskFunction_t) start_task,
+					(const char *)"StartTask",		/*lint !e971 Unqualified char types are allowed for strings and single characters only. */
+					(const configSTACK_DEPTH_TYPE) START_TASK_STK_SIZE,
+					(void *) NULL,
+					(UBaseType_t) START_TASK_PRIO,
+					(TaskHandle_t *) &StartTaskHandle );
+	vTaskStartScheduler();
+	#else
+	void *p;
+	wjq_log(LOG_INFO,"run start task(no rtos)\r\n");
+	start_task(p);
+	#endif
+	while(1);
   
-  /* Add your application code here */
-  /* Insert 5 ms delay */
-  Delay(5);
-
+}
+/**
+ *@brief:      start_task
+ *@details:    开始第一个任务，主要做初始化
+ 			   初始化完成后不删除本任务，做为一个最低优先级任务存在
+ 			   类似HOOK
+ *@param[in]   void *pvParameters  
+ *@param[out]  无
+ *@retval:     
+ */
+void start_task(void *pvParameters)
+{
+	#if 0
+	GPIO_InitTypeDef GPIO_InitStructure;
 	/*初始化LED IO口*/
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOG, ENABLE);
 
@@ -104,11 +152,9 @@ int main(void)
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
 	GPIO_Init(GPIOG, &GPIO_InitStructure);   
 	GPIO_SetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
+	#endif
+	wjq_log(LOG_INFO,"start task---\r\n");
 	
-	/* Infinite loop */
-	mcu_uart_init();
-	mcu_uart_open(PC_PORT);
-	wjq_log(LOG_INFO, "hello word!\r\n");
 	mcu_rtc_init();
 	mcu_i2c_init();
 	mcu_spi_init();
@@ -116,7 +162,6 @@ int main(void)
 	
 	dev_key_init();
 	dev_keypad_init();
-	//mcu_timer_init();
 	dev_buzzer_init();
 	dev_tea5767_init();
 	dev_dacsound_init();
@@ -124,87 +169,31 @@ int main(void)
 	dev_wm8978_init();
 	dev_rs485_init();
 	dev_lcd_init();
-	//dev_touchscreen_init();
-	//dev_camera_init();
-	//eth_app_init();
-
-	fun_mount_sd();
-	//font_check_hzfont();
-	
-	//dev_dacsound_open();
-	dev_key_open();
-	dev_keypad_open();
-	//dev_wm8978_open();
-	//dev_tea5767_open();
-	//dev_tea5767_setfre(105700);
-	//dev_camera_open();
-	#if 0
-	mcu_adc_test();
-	#endif
-	
-	#if 0
-	dev_touchscreen_test();
-	#endif
-
-	#if 0
 	dev_touchscreen_init();
-	dev_touchscreen_open();
-	ts_calibrate();
-	ts_calibrate_test();
-	#endif
-	//camera_test();
+	dev_touchkey_init();
+	dev_camera_init();
+	dev_8266_init();
+	
+	fun_mount_sd();
+	usb_task_create();
+
+	wujique_407test_init();
+	
+	/* 默认开启网络测试*/
+	//eth_app_init();
 	
 	while (1)
 	{
 		/*驱动轮询*/
+		//wjq_log(LOG_DEBUG, "CORE TASK ");
 		dev_key_scan();
 		dev_keypad_scan();
 		eth_loop_task();
 		fun_sound_task();
 		fun_rec_task();
+		vTaskDelay(2);
+		dev_touchkey_task();
 
-		/*应用*/
-		dev_keypad_test();
-		u8 key;
-		s32 res;
-		
-		res = dev_key_read(&key, 1);
-		if(res == 1)
-		{
-			if(key == DEV_KEY_PRESS)
-			{
-				//dev_buzzer_open();
-				//dev_dacsound_play();
-				//dev_spiflash_test();
-				//dev_sdio_test();
-				//dev_wm8978_test();
-				//dev_lcd_test();
-				GPIO_ResetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);	
-				//dev_tea5767_search(1);
-				/*读时间*/
-				mcu_rtc_get_date();
-				mcu_rtc_get_time();
-
-				dev_i2coledlcd_test();
-				//fun_sound_test();
-				/*设置时间*/
-				//mcu_rtc_set_date(2018, 2, 4, 17);
-				//mcu_rtc_set_time(2, 47, 0);
-				
-			}
-			else if(key == DEV_KEY_REL)
-			{
-				//dev_buzzer_close();
-
-				GPIO_SetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);	
-			}
-		}
-		
-		Delay(1);
-
-		/*测试触摸按键*/
-		//dev_touchkey_task();
-		//dev_touchkey_test();
 	}
 }
 

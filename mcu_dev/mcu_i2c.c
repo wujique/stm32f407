@@ -28,6 +28,85 @@
 #define MCU_I2C_SCL GPIO_Pin_6
 #define MCU_I2C_SDA GPIO_Pin_7
 
+
+/*
+	i2c接口硬件定义
+*/
+typedef struct
+{
+	char *name;
+	VI2C_DEV dev;
+	s32 gd;
+	
+	u32 sclrcc;
+	GPIO_TypeDef *sclport;
+	u16 sclpin;
+
+	u32 sdarcc;
+	GPIO_TypeDef *sdaport;
+	u16 sdapin;
+}DevVi2cIO;
+
+
+/*无用的虚拟i2c设备，占位用*/		
+DevVi2cIO DevVi2cNULL={
+		"VI2C0",
+		DEV_VI2C_NULL,
+		-2,//未初始化;
+		};
+
+#define MCU_I2C1_PORT GPIOD
+#define MCU_I2C1_SCL GPIO_Pin_6
+#define MCU_I2C1_SDA GPIO_Pin_7
+#define MCU_I2C1_RCC RCC_AHB1Periph_GPIOD
+
+DevVi2cIO DevVi2c1={
+		"VI2C1",
+		DEV_VI2C_1,
+		-2,//未初始化;
+		
+		MCU_I2C1_RCC,
+		MCU_I2C1_PORT,
+		MCU_I2C1_SCL,
+
+		MCU_I2C1_RCC,
+		MCU_I2C1_PORT,
+		MCU_I2C1_SDA,
+		
+		};
+
+#ifdef SYS_USE_VI2C2		
+#define MCU_I2C2_PORT GPIOF
+#define MCU_I2C2_SCL GPIO_Pin_11
+#define MCU_I2C2_SDA GPIO_Pin_10
+#define MCU_I2C2_RCC RCC_AHB1Periph_GPIOF
+		
+		DevVi2cIO DevVi2c2={
+				"VI2C2",
+				DEV_VI2C_2,
+				-2,//未初始化;
+				
+				MCU_I2C2_RCC,
+				MCU_I2C2_PORT,
+				MCU_I2C2_SCL,
+		
+				MCU_I2C2_RCC,
+				MCU_I2C2_PORT,
+				MCU_I2C2_SDA,
+				
+				};
+#endif
+
+DevVi2cIO *DevVi2cIOList[]={
+	&DevVi2cNULL,
+	&DevVi2c1,
+	#ifdef SYS_USE_VI2C2
+	&DevVi2c2,
+	#endif
+	};
+
+
+
 #define MCU_I2C_TIMEOUT 250
 
 /**
@@ -40,7 +119,7 @@
 static void mcu_i2c_delay(void)
 {
     //Delay(1);//延时，I2C时钟
-    u32 i = 5;
+    volatile u32 i = 5;
 
     for(;i>0;i--);
 }
@@ -52,15 +131,18 @@ static void mcu_i2c_delay(void)
  *@param[out]  无
  *@retval:     
  */
-void mcu_i2c_sda_input(void)
+void mcu_i2c_sda_input(VI2C_DEV dev)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
-    
-    GPIO_InitStructure.GPIO_Pin = MCU_I2C_SDA;
+    DevVi2cIO *devp;
+
+	devp = DevVi2cIOList[dev];
+	
+    GPIO_InitStructure.GPIO_Pin = devp->sdapin;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;//输入模式  
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
     GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-    GPIO_Init(MCU_I2C_PORT, &GPIO_InitStructure);//初始化   
+    GPIO_Init(devp->sdaport, &GPIO_InitStructure);//初始化   
 }
 /**
  *@brief:      mcu_i2c_sda_output
@@ -69,17 +151,19 @@ void mcu_i2c_sda_input(void)
  *@param[out]  无
  *@retval:     
  */
-void mcu_i2c_sda_output(void)
+void mcu_i2c_sda_output(VI2C_DEV dev)
 {
 
     GPIO_InitTypeDef GPIO_InitStructure;
-    
-    GPIO_InitStructure.GPIO_Pin = MCU_I2C_SDA;
+    DevVi2cIO *devp;
+
+	devp = DevVi2cIOList[dev];
+    GPIO_InitStructure.GPIO_Pin = devp->sdapin;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//普通输出模式   
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//上拉
-    GPIO_Init(MCU_I2C_PORT, &GPIO_InitStructure);//初始化
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;//上拉
+    GPIO_Init(devp->sdaport, &GPIO_InitStructure);//初始化
 
 }
 /**
@@ -89,9 +173,13 @@ void mcu_i2c_sda_output(void)
  *@param[out]  无
  *@retval:     static
  */
-static s32 mcu_i2c_readsda(void)
+static s32 mcu_i2c_readsda(VI2C_DEV dev)
 {
-    if(Bit_SET == GPIO_ReadInputDataBit(MCU_I2C_PORT, MCU_I2C_SDA))
+	DevVi2cIO *devp;
+
+	devp = DevVi2cIOList[dev];
+	
+    if(Bit_SET == GPIO_ReadInputDataBit(devp->sdaport, devp->sdapin))
         return 1;
     else
         return 0;
@@ -103,15 +191,19 @@ static s32 mcu_i2c_readsda(void)
  *@param[out]  无
  *@retval:     static
  */
-static void mcu_i2c_sda(u8 sta)
+static void mcu_i2c_sda(VI2C_DEV dev, u8 sta)
 {
+	DevVi2cIO *devp;
+
+	devp = DevVi2cIOList[dev];
+
     if(sta == 1)
     {
-        GPIO_SetBits(MCU_I2C_PORT,MCU_I2C_SDA);    
+        GPIO_SetBits(devp->sdaport, devp->sdapin);    
     }
     else if(sta == 0)
     {
-        GPIO_ResetBits(MCU_I2C_PORT, MCU_I2C_SDA);
+        GPIO_ResetBits(devp->sdaport, devp->sdapin);
     }
     else
     {
@@ -126,15 +218,19 @@ static void mcu_i2c_sda(u8 sta)
  *@param[out]  无
  *@retval:     static
  */
-static void mcu_i2c_scl(u8 sta)
+static void mcu_i2c_scl(VI2C_DEV dev, u8 sta)
 {
+	DevVi2cIO *devp;
+
+	devp = DevVi2cIOList[dev];
+
     if(sta == 1)
     {
-        GPIO_SetBits(MCU_I2C_PORT, MCU_I2C_SCL);    
+        GPIO_SetBits(devp->sclport, devp->sclpin);    
     }
     else if(sta == 0)
     {
-        GPIO_ResetBits(MCU_I2C_PORT, MCU_I2C_SCL);
+        GPIO_ResetBits(devp->sclport, devp->sclpin);
     }
     else
     {
@@ -148,18 +244,18 @@ static void mcu_i2c_scl(u8 sta)
  *@param[out]  无
  *@retval:     static
  */
-static void mcu_i2c_start(void)
+static void mcu_i2c_start(VI2C_DEV dev)
 {
-    mcu_i2c_sda_output();
+    mcu_i2c_sda_output(dev);
     
-    mcu_i2c_sda(1);  
-    mcu_i2c_scl(1);
+    mcu_i2c_sda(dev, 1);  
+    mcu_i2c_scl(dev, 1);
 
     mcu_i2c_delay();
-    mcu_i2c_sda(0);
+    mcu_i2c_sda(dev, 0);
 
     mcu_i2c_delay();
-    mcu_i2c_scl(0);
+    mcu_i2c_scl(dev, 0);
 }
 /**
  *@brief:      mcu_i2c_stop
@@ -168,18 +264,18 @@ static void mcu_i2c_start(void)
  *@param[out]  无
  *@retval:     static
  */
-static void mcu_i2c_stop(void)
+static void mcu_i2c_stop(VI2C_DEV dev)
 {
-    mcu_i2c_sda_output();
+    mcu_i2c_sda_output(dev);
 
-    mcu_i2c_scl(0);
-    mcu_i2c_sda(0);   
+    mcu_i2c_scl(dev, 0);
+    mcu_i2c_sda(dev, 0);   
     mcu_i2c_delay();
     
-    mcu_i2c_scl(1);
+    mcu_i2c_scl(dev, 1);
     mcu_i2c_delay();
     
-    mcu_i2c_sda(1);
+    mcu_i2c_sda(dev, 1);
     mcu_i2c_delay();
 }
 
@@ -190,16 +286,16 @@ static void mcu_i2c_stop(void)
  *@param[out]  无
  *@retval:     static
  */
-static s32 mcu_i2c_wait_ack(void)
+static s32 mcu_i2c_wait_ack(VI2C_DEV dev)
 {
     u8 time_out = 0;
     
     //sda转输入
-    mcu_i2c_sda_input();
-    mcu_i2c_sda(1);
+    mcu_i2c_sda_input(dev);
+    mcu_i2c_sda(dev, 1);
     mcu_i2c_delay();
     
-    mcu_i2c_scl(1);
+    mcu_i2c_scl(dev, 1);
     mcu_i2c_delay();
     
     while(1)
@@ -207,18 +303,18 @@ static s32 mcu_i2c_wait_ack(void)
         time_out++;
         if(time_out > MCU_I2C_TIMEOUT)
         {
-            mcu_i2c_stop();
+            mcu_i2c_stop(dev);
             wjq_log(LOG_INFO, "i2c:wait ack time out!\r\n");
             return 1;
         }
 
-        if(0 == mcu_i2c_readsda())
+        if(0 == mcu_i2c_readsda(dev))
         {   
             break;
         }
     }
     
-    mcu_i2c_scl(0);
+    mcu_i2c_scl(dev, 0);
     
     return 0;
 }
@@ -229,18 +325,18 @@ static s32 mcu_i2c_wait_ack(void)
  *@param[out]  无
  *@retval:     static
  */
-static void mcu_i2c_ack(void)
+static void mcu_i2c_ack(VI2C_DEV dev)
 {
-    mcu_i2c_scl(0);
-    mcu_i2c_sda_output();
+    mcu_i2c_scl(dev, 0);
+    mcu_i2c_sda_output(dev);
     
-    mcu_i2c_sda(0);
+    mcu_i2c_sda(dev, 0);
     mcu_i2c_delay();
     
-    mcu_i2c_scl(1);
+    mcu_i2c_scl(dev, 1);
     mcu_i2c_delay();
     
-    mcu_i2c_scl(0);
+    mcu_i2c_scl(dev, 0);
 }
 /**
  *@brief:      mcu_i2c_writebyte
@@ -249,32 +345,32 @@ static void mcu_i2c_ack(void)
  *@param[out]  无
  *@retval:     static
  */
-static s32 mcu_i2c_writebyte(u8 data)
+static s32 mcu_i2c_writebyte(VI2C_DEV dev, u8 data)
 {
     u8 i = 0;
 
-    mcu_i2c_sda_output();
+    mcu_i2c_sda_output(dev);
 
-    mcu_i2c_scl(0);
+    mcu_i2c_scl(dev, 0);
     
     while(i<8)
     {
     
         if((0x80 & data) == 0x80)
         {
-            mcu_i2c_sda(1);   
+            mcu_i2c_sda(dev, 1);   
         }
         else
         {
-            mcu_i2c_sda(0);
+            mcu_i2c_sda(dev, 0);
         }
         
         mcu_i2c_delay();
 
-        mcu_i2c_scl(1);
+        mcu_i2c_scl(dev, 1);
         mcu_i2c_delay();
         
-        mcu_i2c_scl(0);
+        mcu_i2c_scl(dev, 0);
         mcu_i2c_delay();
         
         data = data <<1;
@@ -289,23 +385,23 @@ static s32 mcu_i2c_writebyte(u8 data)
  *@param[out]  无
  *@retval:     static
  */
-static u8 mcu_i2c_readbyte(void)
+static u8 mcu_i2c_readbyte(VI2C_DEV dev)
 {
     u8 i = 0;
     u8 data = 0;
 
-    mcu_i2c_sda_input();
+    mcu_i2c_sda_input(dev);
     
     while(i<8)
     {
-        mcu_i2c_scl(0);
+        mcu_i2c_scl(dev, 0);
         mcu_i2c_delay();
         
-        mcu_i2c_scl(1);
+        mcu_i2c_scl(dev, 1);
 
         data = (data <<1);
 
-        if(1 == mcu_i2c_readsda())
+        if(1 == mcu_i2c_readsda(dev))
         {
             data =data|0x01;    
         }
@@ -331,7 +427,7 @@ static u8 mcu_i2c_readbyte(void)
  *@param[out]  无
  *@retval:     
  */
-s32 mcu_i2c_transfer(u8 addr, u8 rw, u8* data, s32 datalen)
+s32 mcu_i2c_transfer(VI2C_DEV dev, u8 addr, u8 rw, u8* data, s32 datalen)
 {
     s32 i;
     u8 ch;
@@ -350,7 +446,7 @@ s32 mcu_i2c_transfer(u8 addr, u8 rw, u8* data, s32 datalen)
     #endif
     
     //发送起始
-    mcu_i2c_start();
+    mcu_i2c_start(dev);
     //发送地址+读写标志
     //处理ADDR
     if(rw == MCU_I2C_MODE_W)
@@ -364,8 +460,8 @@ s32 mcu_i2c_transfer(u8 addr, u8 rw, u8* data, s32 datalen)
         //uart_printf("read\r\n");
     }
     
-    mcu_i2c_writebyte(addr);
-    mcu_i2c_wait_ack();
+    mcu_i2c_writebyte(dev, addr);
+    mcu_i2c_wait_ack(dev);
 
     i = 0;
     while(i < datalen)
@@ -374,21 +470,21 @@ s32 mcu_i2c_transfer(u8 addr, u8 rw, u8* data, s32 datalen)
         if(rw == MCU_I2C_MODE_W)//写
         {
             ch = *(data+i);
-            mcu_i2c_writebyte(ch);
-            mcu_i2c_wait_ack();
+            mcu_i2c_writebyte(dev, ch);
+            mcu_i2c_wait_ack(dev);
             
         }
         else if(rw == MCU_I2C_MODE_R)//读
         {
-            ch = mcu_i2c_readbyte();  
-            mcu_i2c_ack();
+            ch = mcu_i2c_readbyte(dev);  
+            mcu_i2c_ack(dev);
             *(data+i) = ch;
         }
         i++;
     }
 
     //发送结束
-    mcu_i2c_stop();
+    mcu_i2c_stop(dev);
     return 0;
 }
 
@@ -402,20 +498,46 @@ s32 mcu_i2c_transfer(u8 addr, u8 rw, u8* data, s32 datalen)
 s32 mcu_i2c_init(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
-    
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
-    
-    GPIO_InitStructure.GPIO_Pin = MCU_I2C_SCL | MCU_I2C_SDA;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//普通输出模式   
-    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//上拉
-    GPIO_Init(MCU_I2C_PORT, &GPIO_InitStructure);//初始化
+	DevVi2cIO *devp;
+	u8 i = 1;
 
-    //初始化IO口状态
-    mcu_i2c_scl(1);
-    mcu_i2c_sda(1);
-	
+	while(1)
+	{
+		if(i>= sizeof(DevVi2cIOList)/sizeof(DevVi2cIO *))
+			break;
+		
+		{
+			devp = DevVi2cIOList[i];
+
+			wjq_log(LOG_INFO, "i2c init:%s!\r\n", devp->name);
+			
+	    	RCC_AHB1PeriphClockCmd(devp->sclrcc, ENABLE);
+	    
+	    	GPIO_InitStructure.GPIO_Pin = devp->sclpin;
+	    	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//普通输出模式   
+	    	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
+	    	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
+	    	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;//上拉
+	    	GPIO_Init(devp->sclport, &GPIO_InitStructure);//初始化
+
+			RCC_AHB1PeriphClockCmd(devp->sdarcc, ENABLE);
+	    
+	    	GPIO_InitStructure.GPIO_Pin = devp->sdapin;
+	    	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//普通输出模式   
+	    	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
+	    	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
+	    	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;//上拉
+	    	GPIO_Init(devp->sdaport, &GPIO_InitStructure);//初始化
+
+	   	 	//初始化IO口状态
+	   	 	GPIO_SetBits(devp->sdaport, devp->sdapin); 
+			GPIO_SetBits(devp->sclport, devp->sclpin); 
+
+		}
+
+		i++;
+	}
+	wjq_log(LOG_INFO, "i2c init finish!\r\n");
 	return 0;
 }
 

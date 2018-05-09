@@ -21,6 +21,7 @@
 */
 #include "stm32f4xx.h"
 #include "wujique_log.h"
+#include "wujique_sysconf.h"
 #include "dev_keypad.h"
 
 //#define DEV_KEYPAD_DEBUG
@@ -31,8 +32,6 @@
 #define KEYPAD_DEBUG(a, ...)
 #endif
 
-/*硬件上，矩阵按键跟VSPI2用相同的IO，同时只能做一种功能*/
-#define SYS_USE_KEYPAD 1
 /*
 
 	原则：

@@ -37,6 +37,8 @@
 
 #include "usb_conf.h"
 #include "wujique_log.h"
+#include "wujique_sysconf.h"
+
 
 /** @addtogroup USBH_USER
 * @{
@@ -265,19 +267,29 @@ static void Demo_Application (void)
   switch (demo.state)
   {
   case  DEMO_IDLE:
-    __disable_irq();
-    Demo_SelectItem (DEMO_main_menu, 0); 
-   __enable_irq();
+    //__disable_irq();
+    //Demo_SelectItem (DEMO_main_menu, 0); 
+   //__enable_irq();
     demo.state = DEMO_WAIT;
     demo.select = 0;
     break;    
 
-	/*选择HOST还是DEVICE*/
   case  DEMO_WAIT:
-	demo.state = DEMO_HOST;  
-    demo.Host_state = DEMO_HOST_IDLE;
-	//demo.state = DEMO_DEVICE;            
-    //demo.Device_state = DEMO_DEVICE_IDLE;   
+  	//wjq_log(LOG_DEBUG, "DEMO_WAIT");
+	/*
+		在这里进行OTG是HOST还是DEVICE的检测
+		如果都不是，就一直检测
+  	*/
+	if(1 == 1)
+	{
+		demo.state = DEMO_HOST;  
+    	demo.Host_state = DEMO_HOST_IDLE;	
+	}
+	else
+	{
+		//demo.state = DEMO_DEVICE;            
+    	//demo.Device_state = DEMO_DEVICE_IDLE;   
+	}
     break;
 	
   case  DEMO_HOST:  
@@ -285,12 +297,11 @@ static void Demo_Application (void)
     {
     case  DEMO_HOST_IDLE:
       DEMO_LOCK();
-      
       /* Init HS Core  : Demo start in host mode*/
 #ifdef USE_USB_OTG_HS
-      //uart_printf("> Initializing USB Host High speed...\n");    
+      wjq_log(LOG_DEBUG, "> Initializing USB Host High speed...\n");    
 #else
-      //uart_printf("> Initializing USB Host Full speed...\n");         
+      //wjq_log(LOG_DEBUG, "> Initializing USB Host Full speed...\n");         
 #endif
 
       USBH_Init(&USB_OTG_Core, 
@@ -308,11 +319,16 @@ static void Demo_Application (void)
       break;
 
     case  DEMO_HOST_WAIT:
-     
+
+	  /*
+	  	HOST 模式断开
+		流程会返回DEMO_IDLE
+		重新开始检测模式
+		*/	
       if (!HCD_IsDeviceConnected(&USB_OTG_Core))
       {
         Demo_HandleDisconnect();
-        //uart_printf("Please, connect a device and try again.\r\n");
+        //wjq_log(LOG_DEBUG, "Please, connect a device and try again.\r\n");
       }
 
 	  /*
@@ -797,10 +813,11 @@ void USB_ID_EXTIConfig(void)
   
 }
 
-
+s32 UsbGd = -2;
 
 s32 usb_app_init(void)
 {
+	#ifdef SYS_USE_USB
   usb_Demo_Init();
   wjq_log(LOG_INFO, "\nSystem Information :\r\n");  
   wjq_log(LOG_INFO, "_________________________\r\n\r\n");  
@@ -810,24 +827,55 @@ s32 usb_app_init(void)
   wjq_log(LOG_INFO, "USB Device Library v1.2.0.\r\n"); 
   wjq_log(LOG_INFO, "USB OTG Driver v2.2.0\r\n");  
   wjq_log(LOG_INFO, "STM32 Std Library v1.5.0.\r\n");
+  UsbGd = 0;
+  #else
+  wjq_log(LOG_INFO, ">-------USB APP NO INIT\r\n");
+  #endif 
 	return 0;
 }
 /**/
 s32 usb_loop_task(void)
 {
+	if(UsbGd != 0)
+		return -1;
+	
 	Demo_Process(); 
 	return 0;
 }
+
+/*
+	创建USB任务
+*/
+#include "FreeRtos.h"
+#define USB_TASK_STK_SIZE 1024
+#define USB_TASK_PRIO	2
+TaskHandle_t  UsbTaskHandle;
 
 void usb_main(void)
 {
 		   
   usb_app_init();	
 
-  while (1)
+  while(1)
   {
+  	//wjq_log(LOG_DEBUG, "USB TASK ");
+  	vTaskDelay(5);
     usb_loop_task();   
   }
+}
+
+
+
+s32 usb_task_create(void)
+{
+	xTaskCreate(	(TaskFunction_t) usb_main,
+					(const char *)"usb task",		/*lint !e971 Unqualified char types are allowed for strings and single characters only. */
+					(const configSTACK_DEPTH_TYPE) USB_TASK_STK_SIZE,
+					(void *) NULL,
+					(UBaseType_t) USB_TASK_PRIO,
+					(TaskHandle_t *) &UsbTaskHandle );	
+					
+					return 0;
 }
 
 /**

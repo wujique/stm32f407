@@ -26,6 +26,7 @@
 #include "tslib.h"
 #include "dev_touchscreen.h"
 #include "dev_xpt2046.h"
+#include "wujique_sysconf.h"
 
 
 #define DEV_TS_DEBUG

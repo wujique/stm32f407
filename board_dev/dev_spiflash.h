@@ -9,7 +9,7 @@ typedef struct
 	u32 MID;
 	/*容量，块数，块大小等信息*/
 	u32 sectornum;//总块数
-	u32 sector;//块大小
+	u32 sectorsize;//块大小
 	u32 structure;//总容量
 	
 }_strSpiFlash;
@@ -24,8 +24,6 @@ typedef struct
 }DevSpiFlash;
 
 
-extern s32 dev_spiflash_readmorebyte(DevSpiFlash *dev, u32 addr, u8 *dst, u32 len);
-extern s32 dev_spiflash_write(DevSpiFlash *dev, u8* pbuffer, u32 addr, u16 wlen);
 extern s32 dev_spiflash_sector_erase(DevSpiFlash *dev, u32 sector_addr);
 extern s32 dev_spiflash_sector_read(DevSpiFlash *dev, u32 sector, u8 *dst);	
 extern s32 dev_spiflash_sector_write(DevSpiFlash *dev, u32 sector, u8 *src);

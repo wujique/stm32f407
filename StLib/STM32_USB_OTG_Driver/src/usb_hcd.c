@@ -111,12 +111,14 @@ uint32_t HCD_Init(USB_OTG_CORE_HANDLE *pdev ,
   USB_OTG_SelectCore(pdev, coreID);
   
 #ifndef DUAL_ROLE_MODE_ENABLED
+	/*USB πÿ÷–∂œ? need fix*/
   USB_OTG_DisableGlobalInt(pdev);
-  USB_OTG_CoreInit(pdev);
 
+  USB_OTG_CoreInit(pdev);
   /* Force Host Mode*/
   USB_OTG_SetCurrentMode(pdev , HOST_MODE);
   USB_OTG_CoreInitHost(pdev);
+  
   USB_OTG_EnableGlobalInt(pdev);
 #endif
    

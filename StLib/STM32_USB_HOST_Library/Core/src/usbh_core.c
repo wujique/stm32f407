@@ -214,7 +214,8 @@ void USBH_Init(USB_OTG_CORE_HANDLE *pdev,
   phost->class_cb = class_cb;
   phost->usr_cb = usr_cb;  
     
-  /* Start the USB OTG core */     
+  /* Start the USB OTG core */  
+  	/*这里有很多延时*/
    HCD_Init(pdev , coreID);
    
   /* Upon Init call usr call back */

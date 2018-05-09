@@ -25,12 +25,14 @@
 #include "wujique_log.h"
 #include "alloc.h"
 
-/*串口缓冲 暂时通过定义数组，后续改为动态申请*/
+
 #define MCU_UART1_BUF_SIZE       1024
 #define MCU_UART2_BUF_SIZE       1024
-#define MCU_UART3_BUF_SIZE       1024
+/*调试信息串口*/
+#define MCU_UART3_BUF_SIZE       256
 
 #if 0
+/*串口缓冲 暂时通过定义数组，后续改为动态申请*/
 u8 McuUart1Buf[MCU_UART1_BUF_SIZE];
 u8 McuUart2Buf[MCU_UART2_BUF_SIZE];
 u8 McuUart3Buf[MCU_UART3_BUF_SIZE];

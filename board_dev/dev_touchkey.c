@@ -42,13 +42,15 @@
 
 
 #define DEV_TOUCHKEY_GATE (50)//确认状态变化的门限值，根据硬件性能调节本参数到合适灵敏度即可。
-#define DEV_TOUCHKEY_DATA_NUM (4)//一轮稳定状态需要的时间流个数，可以通过修改这个调节触摸扫描时间
+#define DEV_TOUCHKEY_DATA_NUM (50)//一轮稳定状态需要的时间流个数，可以通过修改这个调节触摸扫描时间
 static u16 TouchKeyLastCap = 0;//最后一次稳定的CAP平均值
 
 #define DEV_TOUCHKEY_BUF_SIZE (16)
 static u8 TouchKeyBuf[DEV_TOUCHKEY_BUF_SIZE];//触摸按键缓冲区，处理得到时间后就将时间放到这个缓冲区
 static u8 TouchKeyWrite = 0;
 static u8 TouchKeyRead = 0;
+
+s32 TouchKeyGd = -2;
 
 /**
  *@brief:      dev_touchkey_resetpad
@@ -101,17 +103,21 @@ static s32 dev_touchkey_iocap(void)
 
 s32 dev_touchkey_init(void)
 {
-
+	TouchKeyGd = -1;
 	return 0;
 }
 
 s32 dev_touchkey_open(void)
 {
+	if(TouchKeyGd != -1)
+		return -1;
+	TouchKeyGd = 0;
 	return 0;
 }
 
 s32 dev_touchkey_close(void)
 {
+	TouchKeyGd = -1;
 	return 0;
 }
 /**
@@ -125,6 +131,9 @@ s32 dev_touchkey_close(void)
 s32 dev_touchkey_read(u8 *buf, u32 count)
 {
 	u32 cnt = 0;
+
+	if(TouchKeyGd != 0)
+		return -1;
 	
 	while(1)
 	{
@@ -163,7 +172,7 @@ static s32 dev_touchkey_scan(u32 cap)
 	static u8 cap_cnt = 0;//有效捕获计数
 	static u8 last_dire = DEV_TOUCHKEY_IDLE;//上一个值的方向，1为变大,触摸；2为变小，松开
 	static u8 last_chg = NULL;
-
+	
 	TOUCHKEY_DEBUG(LOG_DEBUG, "--%08x-%04x-", cap, TouchKeyLastCap);
 	if(cap > TouchKeyLastCap + DEV_TOUCHKEY_GATE)
 	{
@@ -238,6 +247,8 @@ s32 dev_touchkey_task(void)
 	volatile u32 i = 0;
 	u32 cap;
 
+	if(TouchKeyGd != 0)
+		return -1;
 	//IO输出1，对电容充电
 	dev_touchkey_resetpad();
 	//延时一点，充电
@@ -265,6 +276,8 @@ s32 dev_touchkey_test(void)
 {
 	u8 tmp;
 	s32 res;
+
+	//dev_touchkey_open();
 	
 	res = dev_touchkey_read(&tmp, 1);
 	if(1 == res)

@@ -117,13 +117,21 @@ _lcd_drv *LcdProbDrv8080List[] = {
 	设备树定义
 	指明系统有多少个LCD设备，挂在哪个LCD总线上。
 */
-#define DEV_LCD_C 4//系统存在3个LCD设备
-LcdObj LcdObjList[DEV_LCD_C]=
+LcdObj DevLcdOled1	=	{"i2coledlcd",  LCD_BUS_VI2C1,  0X1315};
+//LcdObj DevLcdOled2	=	{"i2coledlcd2", LCD_BUS_VI2C2,  0X1315};
+//LcdObj DevLcdOled3	=	{"vspioledlcd", LCD_BUS_VSPI, 	0X1315};
+LcdObj DevLcdOled4	=	{"spioledlcd", 	LCD_BUS_SPI, 	0X1315};
+LcdObj DevLcdCOG1	=	{"spicoglcd", 	LCD_BUS_SPI, 	0X7565};
+//LcdObj DevLcdCOG2	=	{"vspicoglcd", 	LCD_BUS_VSPI, 	0X7565};
+LcdObj DevLcdtTFT	=	{"tftlcd", 		LCD_BUS_8080, 	NULL};
+
+
+#define DEV_LCD_C 3//系统存在3个LCD设备
+LcdObj* LcdObjList[DEV_LCD_C]=
 {
-	{"i2coledlcd",  LCD_BUS_I2C,  0X1315},
-	{"vspioledlcd", LCD_BUS_VSPI, 0X1315},
-	{"spicoglcd",   LCD_BUS_SPI,  0X7565},
-	{"tftlcd",      LCD_BUS_8080, NULL},
+	&DevLcdOled1,
+	&DevLcdCOG1,
+	&DevLcdtTFT,
 };
 
 
@@ -184,7 +192,7 @@ static _lcd_pra *dev_lcd_findpra(u16 id)
  *@param[out]  无
  *@retval:     _lcd_drv
  */
-_lcd_drv *dev_lcd_finddrv(u16 id)
+static _lcd_drv *dev_lcd_finddrv(u16 id)
 {
 	u8 i =0;
 	
@@ -285,7 +293,7 @@ s32 dev_lcd_init(void)
 	
 	while(1)
 	{	
-		pobj = &LcdObjList[i];
+		pobj = LcdObjList[i];
 		pdev = &DevLcdList[i];
 		
 		wjq_log(LOG_INFO, "\r\nlcd name:%s\r\n",pobj->name);
@@ -372,7 +380,7 @@ s32 dev_lcd_init(void)
 		
 
 		i++;
-		if(i >= sizeof(LcdObjList)/sizeof(LcdObj))
+		if(i >= sizeof(LcdObjList)/sizeof(LcdObj *))
 		{
 			wjq_log(LOG_INFO, "lcd init finish\r\n");
 			break;
@@ -414,7 +422,7 @@ DevLcd *dev_lcd_open(char *name)
 		}
 		
 		i++;
-		if(i>= sizeof(LcdObjList)/sizeof(LcdObj))
+		if(i>= sizeof(LcdObjList)/sizeof(LcdObj*))
 			return NULL;
 	}
 
@@ -864,6 +872,8 @@ void dev_lcd_test(void)
 	while(1);
 }
 
+extern void Delay(__IO uint32_t nTime);
+
 void dev_i2coledlcd_test(void)
 {
 
@@ -880,6 +890,24 @@ void dev_i2coledlcd_test(void)
 	dev_lcd_put_string(LcdOledI2C, FONT_SIYUAN_1616, 1,13, "这是LcdOledI2C", BLACK);
 	dev_lcd_put_string(LcdOledI2C, FONT_SONGTI_1212, 10,30, "www.wujique.com", BLACK);
 	dev_lcd_put_string(LcdOledI2C, FONT_SIYUAN_1616, 1,47, "屋脊雀工作室", BLACK);
+
+
+	LcdOledI2C = dev_lcd_open("i2coledlcd2");
+	if(LcdOledI2C==NULL)
+		wjq_log(LOG_FUN, "open oled i2c2 lcd err\r\n");
+	
+	/*打开背光*/
+	dev_lcd_backlight(LcdOledI2C, 1);
+	while(1)
+	{
+		dev_lcd_put_string(LcdOledI2C, FONT_SONGTI_1212, 10,1, "ABC-abc，", BLACK);
+		dev_lcd_put_string(LcdOledI2C, FONT_SIYUAN_1616, 1,13, "这是LcdOledI2C", BLACK);
+		dev_lcd_put_string(LcdOledI2C, FONT_SONGTI_1212, 10,30, "www.wujique.com", BLACK);
+		dev_lcd_put_string(LcdOledI2C, FONT_SIYUAN_1616, 1,47, "屋脊雀工作室", BLACK);
+		Delay(1000);
+		dev_lcd_color_fill(LcdOledI2C, 1, 1000, 1, 1000, WHITE);
+		Delay(1000);
+	}
 
 }
 

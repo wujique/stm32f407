@@ -670,6 +670,7 @@ s32 dev_dacsound_test(void)
 	DAC 播放声音，固定播放8K单声道16BIT的音源。
 
 */
+extern s32 fun_sound_set_free_buf(u8 index);
 
 u16 *DacSoundSampleP0;
 u16 *DacSoundSampleP1;

@@ -31,6 +31,7 @@
 	利用内存记录写到WM8978寄存器的值
 
 */
+#define DEV_WM8978_I2CBUS DEV_VI2C_1
 #define WM8978_SLAVE_ADDRESS    0x1A
 
 static u16 WM8978RegVaule[] = {
@@ -59,7 +60,7 @@ s32 dev_wm8978_writereg(u8 reg, u16 vaule)
 
 	data[0] = (reg<<1) | ((vaule>>8)&0x01);
 	data[1] = vaule & 0xff;
-	ret = mcu_i2c_transfer(WM8978_SLAVE_ADDRESS, MCU_I2C_MODE_W, data, 2);
+	ret = mcu_i2c_transfer(DEV_WM8978_I2CBUS, WM8978_SLAVE_ADDRESS, MCU_I2C_MODE_W, data, 2);
 	if(ret == 0)
 	{
 		WM8978RegVaule[reg] = vaule;
@@ -414,9 +415,9 @@ static s32 dev_wm8978_setting_init(void)
 	dev_wm8978_inout(WM8978_INPUT_NULL,
 						WM8978_OUTPUT_NULL);
 
-	dev_wm8978_set_mic_gain(50);
+	dev_wm8978_set_mic_gain(45);
 	dev_wm8978_set_phone_vol(40);
-	dev_wm8978_set_spk_vol(50);
+	dev_wm8978_set_spk_vol(40);
 	dev_wm8978_set_aux_gain(5);
 	return ret;
 }
@@ -435,15 +436,15 @@ s32 dev_wm8978_init(void)
 }
 /**
  *@brief:      dev_wm8978_open
- *@details:       打开WM8978，配置默认输入输出通道
- *@param[in]  void  
+ *@details:    打开WM8978，配置默认输入输出通道
+ *@param[in]   void  
  *@param[out]  无
  *@retval:     
  */
 s32 dev_wm8978_open(void)
 {
-	dev_wm8978_inout(WM8978_INPUT_DAC|WM8978_INPUT_LMIC|WM8978_INPUT_RMIC|WM8978_INPUT_ADC, 
-					WM8978_OUTPUT_SPK|WM8978_OUTPUT_PHONE);
+	dev_wm8978_inout(WM8978_INPUT_DAC|WM8978_INPUT_LMIC|WM8978_INPUT_RMIC|WM8978_INPUT_ADC,
+					WM8978_OUTPUT_PHONE|WM8978_OUTPUT_SPK);
 	return 0;
 }
 /**

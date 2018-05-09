@@ -20,9 +20,10 @@
 #include <stdarg.h>
 #include "stm32f4xx.h"
 #include "wujique_log.h"
+#include "dev_lcd.h"
 
-extern void put_cross(int x, int y, unsigned colidx);
-extern void put_string_center(int x, int y, char *s, unsigned colidx);
+extern void put_cross(DevLcd *lcd, int x, int y, unsigned colidx);
+extern void put_string_center(DevLcd *lcd, int x, int y, char *s, unsigned colidx);
 
 extern int getxy(struct tsdev *ts, int *x, int *y);
 /*
@@ -123,9 +124,9 @@ struct tsdev *ts_open_module(void)
 	unsigned int i;
 
 	wjq_log(LOG_DEBUG, "env Calibration constants: ");
-		for (i = 0; i < 7; i++) 
-			wjq_log(LOG_DEBUG, "%d ", cal.a [i]);
-		wjq_log(LOG_DEBUG, "\n");
+	for (i = 0; i < 7; i++) 
+		wjq_log(LOG_DEBUG, "%d ", cal.a [i]);
+	wjq_log(LOG_DEBUG, "\n");
 	
 	ts = ts_open(tsdevice,0);
 
@@ -141,7 +142,7 @@ struct tsdev *ts_open_module(void)
 	return ts;
 }
 
-int ts_calibrate(void)
+int ts_calibrate(DevLcd *lcd)
 {
 	struct tsdev *ts;
 	char *tsdevice = NULL;
@@ -167,31 +168,31 @@ int ts_calibrate(void)
 	int xres = 240;
 	int yres = 320;
 
-	put_string_center ( xres / 2, yres / 4,
+	put_string_center (lcd, xres / 2, yres / 4,
 			   "TSLIB calibration utility", 0xF800);
-	put_string_center ( xres / 2, yres / 4 + 20,
+	put_string_center (lcd,  xres / 2, yres / 4 + 20,
 			   "Touch crosshair to calibrate", 0xF800);
 
 	wjq_log(LOG_DEBUG, "xres = %d, yres = %d\n", xres, yres);
 	
 	//----校准过程，获取5个点的数据-------
-	put_cross( 50, 50, 2);
+	put_cross(lcd,  50, 50, 2);
 	get_sample (ts, &cal, 0, 50,        50,        "Top left");
 	wjq_log(LOG_DEBUG, "-----------------------Top left finish\r\n");
 
-	put_cross( xres - 50, 50, 2);
+	put_cross(lcd,  xres - 50, 50, 2);
 	get_sample (ts, &cal, 1, xres - 50, 50,        "Top right");
 	wjq_log(LOG_DEBUG, "-----------------------Top right finish\r\n");
 
-	put_cross( xres - 50, yres - 50, 2);
+	put_cross(lcd,  xres - 50, yres - 50, 2);
 	get_sample (ts, &cal, 2, xres - 50, yres - 50, "Bot right");
 	wjq_log(LOG_DEBUG, "-----------------------Bot right finish\r\n");
 
-	put_cross( 50,  yres - 50, 2);
+	put_cross(lcd,  50,  yres - 50, 2);
 	get_sample (ts, &cal, 3, 50,        yres - 50, "Bot left");
 	wjq_log(LOG_DEBUG, "-----------------------Bot left finish\r\n");
 
-	put_cross( xres / 2, yres / 2, 2);
+	put_cross(lcd,  xres / 2, yres / 2, 2);
 	get_sample (ts, &cal, 4, xres / 2,  yres / 2,  "Center");
 	wjq_log(LOG_DEBUG, "-----------------------Center\r\n");
 
@@ -213,6 +214,7 @@ int ts_calibrate(void)
 	return i;
 }
 
+#if 0
 extern s32 dev_lcd_drawpoint(u16 x, u16 y, u16 color);
 
 s32 ts_calibrate_test(void)
@@ -239,5 +241,5 @@ s32 ts_calibrate_test(void)
 		
 	}	
 }
-
+#endif
 

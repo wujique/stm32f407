@@ -27,6 +27,7 @@
 #include "mcu_spi.h"
 #include "dev_touchscreen.h"
 #include "mcu_timer.h"
+#include "wujique_sysconf.h"
 
 extern s32 dev_touchscreen_write(struct ts_sample *samp, int nr);
 

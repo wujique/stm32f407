@@ -7,8 +7,17 @@
 typedef enum{
 	LCD_BUS_NULL = 0,
 	LCD_BUS_SPI,
+
+	#ifdef SYS_USE_LCDBUS_VSPI
 	LCD_BUS_VSPI,
-	LCD_BUS_I2C,//OLED使用，只要两根线，背光也不需要控制，复位也不需要
+	#endif
+
+	LCD_BUS_VI2C1,//OLED使用，只要两根线，背光也不需要控制，复位也不需要
+
+	#ifdef SYS_USE_LCDBUS_VI2C2
+	LCD_BUS_VI2C2,
+	#endif
+	
 	LCD_BUS_8080,
 	LCD_BUS_MAX
 }LcdBusType;

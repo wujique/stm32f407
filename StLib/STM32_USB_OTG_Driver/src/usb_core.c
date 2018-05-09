@@ -404,7 +404,7 @@ USB_OTG_STS USB_OTG_CoreInit(USB_OTG_CORE_HANDLE *pdev)
     }
     
     USB_OTG_WRITE_REG32 (&pdev->regs.GREGS->GCCFG, gccfg.d32);
-    USB_OTG_BSP_mDelay(20);
+    USB_OTG_BSP_mDelay(10);
   }
   /* case the HS core is working in FS mode */
   if(pdev->cfg.dma_enable == 1)
@@ -566,7 +566,7 @@ USB_OTG_STS USB_OTG_SetCurrentMode(USB_OTG_CORE_HANDLE *pdev , uint8_t mode)
   }
   
   USB_OTG_WRITE_REG32(&pdev->regs.GREGS->GUSBCFG, usbcfg.d32);
-  USB_OTG_BSP_mDelay(50);
+  USB_OTG_BSP_mDelay(10);
   return status;
 }
 
@@ -772,7 +772,7 @@ void USB_OTG_DriveVbus (USB_OTG_CORE_HANDLE *pdev, uint8_t state)
     USB_OTG_WRITE_REG32(pdev->regs.HPRT0, hprt0.d32);
   }
   
-  USB_OTG_BSP_mDelay(200);
+  USB_OTG_BSP_mDelay(10);
 }
 /**
 * @brief  USB_OTG_EnableHostInt: Enables the Host mode interrupts

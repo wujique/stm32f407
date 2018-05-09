@@ -2,6 +2,7 @@
 #define _DEV_LCD_H_
 
 #include "dev_lcdbus.h"
+#include "font.h"
 
 typedef struct _strDevLcd DevLcd;
 /*
@@ -131,6 +132,16 @@ struct _strDevLcd
 
 extern DevLcd *dev_lcd_open(char *name);
 extern s32 dev_lcd_init(void);
+extern s32 dev_lcd_drawpoint(DevLcd *lcd, u16 x, u16 y, u16 color);
+extern s32 dev_lcd_prepare_display(DevLcd *lcd, u16 sx, u16 ex, u16 sy, u16 ey);
+extern s32 dev_lcd_fill(DevLcd *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color);
+extern s32 dev_lcd_color_fill(DevLcd *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 color);
+extern s32 dev_lcd_backlight(DevLcd *lcd, u8 sta);
+extern s32 dev_lcd_display_onoff(DevLcd *lcd, u8 sta);
+extern s32 dev_lcd_put_string(DevLcd *lcd, FontType font, int x, int y, char *s, unsigned colidx);
+
+extern void put_string_center(DevLcd *lcd, int x, int y, char *s, unsigned colidx);
+extern s32 dev_lcd_setdir(DevLcd *lcd, u8 dir, u8 scan_dir);
 
 #endif
 

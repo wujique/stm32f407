@@ -22,6 +22,7 @@
 #include "stm32f4xx.h"
 #include "wujique_log.h"
 #include "mcu_spi.h"
+#include "wujique_sysconf.h"
 
 #define MCU_SPI_DEBUG
 
@@ -412,7 +413,7 @@ typedef struct
 
 /*
 
-	外扩接口模拟SPI，可接OLED LCD或COG LCD
+	IO口模拟SPI控制器
 
 */
 #define VSPI1_CS_PORT GPIOB
@@ -807,22 +808,28 @@ s32 mcu_spi_init(void)
  */
 s32 mcu_spi_open(SPI_DEV dev, SPI_MODE mode, u16 pre)
 {
+	s32 res;
+	
 	switch(dev)
 	{
 		case DEV_SPI_3_1:
 		case DEV_SPI_3_2:
 		case DEV_SPI_3_3:
-			return mcu_hspi_open(dev, mode, pre);
-
+			res =  mcu_hspi_open(dev, mode, pre);
+			break;
+		
 		case DEV_VSPI_1:
 		case DEV_VSPI_2:
-			return mcu_vspi_open(dev, mode, pre);
+			res =  mcu_vspi_open(dev, mode, pre);
+			break;
 		
 		default:
 			return -1;
 		
 	}
 
+	/* 拉低CS*/
+	return res;
 }
 /**
  *@brief:      mcu_spi_close

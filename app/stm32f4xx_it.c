@@ -72,6 +72,11 @@ extern void mcu_tim7_IRQhandler(void);
 extern void mcu_adc_IRQhandler(void);
 extern void mcu_can1_rx0_IRQ(void);
 extern void mcu_i2sext_dma_process(void);
+
+extern void xPortPendSVHandler( void );
+extern void xPortSysTickHandler( void );
+extern void vPortSVCHandler( void );
+
 /******************************************************************************/
 /*            Cortex-M4 Processor Exceptions Handlers                         */
 /******************************************************************************/
@@ -153,6 +158,10 @@ void UsageFault_Handler(void)
   */
 void SVC_Handler(void)
 {
+    //uart_printf("SVC_Handler\r\n");
+    #ifdef SYS_USE_RTOS
+	vPortSVCHandler();
+	#endif
 }
 
 /**
@@ -172,6 +181,10 @@ void DebugMon_Handler(void)
   */
 void PendSV_Handler(void)
 {
+    //uart_printf("PendSV_Handler\r\n");
+    #ifdef SYS_USE_RTOS
+	xPortPendSVHandler();
+	#endif
 }
 
 /**
@@ -182,6 +195,12 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
   Time_Update();
+  /*
+	freertos的接口放在这里
+  */
+  #ifdef SYS_USE_RTOS
+  xPortSysTickHandler();
+  #endif
 }
 
 /******************************************************************************/

@@ -159,6 +159,7 @@ _lcd_bus BusSerialLcdSpi={
 	定义一个串行LCD接口2，使用模拟SPI。
 
 */
+#ifdef SYS_USE_LCDBUS_VSPI
 #define SERIALLCD_VSPI_A0_PORT GPIOF
 #define SERIALLCD_VSPI_A0_PIN GPIO_Pin_8
 	
@@ -272,9 +273,9 @@ _lcd_bus BusSerialLcdVSpi={
 		.writecmd =bus_seriallcd_vspi_write_cmd,
 		.bl =bus_seriallcd_vspi_bl,				
 };
-
+#endif
 /*
-	定义一个LCD串行总线，用模拟 I2C
+	定义一个LCD串行总线，用模拟 I2C1
 
 */
 static s32 bus_seriallcd_vi2c_init()
@@ -299,7 +300,7 @@ static s32 bus_seriallcd_vi2c_write_data(u8 *data, u16 len)
 	
 	tmp[0] = 0x40;
 	memcpy(&tmp[1], data, len);
-	mcu_i2c_transfer(0x3C, MCU_I2C_MODE_W, tmp, len+1);	
+	mcu_i2c_transfer(DEV_VI2C_1, 0x3C, MCU_I2C_MODE_W, tmp, len+1);	
 	return 0;
 }
 
@@ -309,7 +310,7 @@ static s32 bus_seriallcd_vi2c_write_cmd(u8 cmd)
 	
 	tmp[0] = 0x00;
 	tmp[1] = cmd;
-	mcu_i2c_transfer(0x3C, MCU_I2C_MODE_W, tmp, 2);	
+	mcu_i2c_transfer(DEV_VI2C_1, 0x3C, MCU_I2C_MODE_W, tmp, 2);	
 	return 0;
 }
 
@@ -320,7 +321,7 @@ static s32 bus_seriallcd_vi2c_bl(u8 sta)
 }
 
 
-_lcd_bus BusSerialLcdVI2C={
+_lcd_bus BusSerialLcdVI2C1={
 		.name = "BusSerivaLcdVI2C",
 		.init =bus_seriallcd_vi2c_init,
 		.open =bus_seriallcd_vi2c_open,
@@ -330,6 +331,66 @@ _lcd_bus BusSerialLcdVI2C={
 		.bl =bus_seriallcd_vi2c_bl,				
 };
 
+
+/*
+	定义一个LCD串行总线，用模拟 I2C2
+
+*/
+#ifdef SYS_USE_LCDBUS_VI2C2
+
+static s32 bus_seriallcd_vi2c2_init()
+{
+	return 0;
+}
+
+static s32 bus_seriallcd_vi2c2_open(void)
+{
+
+	return 0;
+}
+
+static s32 bus_seriallcd_vi2c2_close(void)
+{
+	return 0;
+}
+
+static s32 bus_seriallcd_vi2c2_write_data(u8 *data, u16 len)
+{
+	u8 tmp[256];
+	
+	tmp[0] = 0x40;
+	memcpy(&tmp[1], data, len);
+	mcu_i2c_transfer(DEV_VI2C_2, 0x3C, MCU_I2C_MODE_W, tmp, len+1);	
+	return 0;
+}
+
+static s32 bus_seriallcd_vi2c2_write_cmd(u8 cmd)
+{
+	u8 tmp[2];
+	
+	tmp[0] = 0x00;
+	tmp[1] = cmd;
+	mcu_i2c_transfer(DEV_VI2C_2, 0x3C, MCU_I2C_MODE_W, tmp, 2);	
+	return 0;
+}
+
+static s32 bus_seriallcd_vi2c2_bl(u8 sta)
+{
+
+	return 0;
+}
+
+
+_lcd_bus BusSerialLcdVI2C2={
+		.name = "BusSerivaLcdVI2C2",
+		.init =bus_seriallcd_vi2c2_init,
+		.open =bus_seriallcd_vi2c2_open,
+		.close =bus_seriallcd_vi2c2_close,
+		.writedata =bus_seriallcd_vi2c2_write_data,
+		.writecmd =bus_seriallcd_vi2c2_write_cmd,
+		.bl =bus_seriallcd_vi2c2_bl,				
+};
+#endif
 
 /*
 	定义一个LCD总线，空的，不存在
@@ -385,16 +446,19 @@ _lcd_bus BusSerialLcdNULL={
 */
 _lcd_bus *LcdBusList[] = {
 		&BusSerialLcdNULL,
+			
 		&BusSerialLcdSpi,
 
-		/*vspi跟矩阵按键冲突*/
-		#ifdef SYS_USE_VSPI2
+		/*SVPI2 跟 矩阵按键冲突*/
+		#ifdef SYS_USE_LCDBUS_VSPI
 		&BusSerialLcdVSpi,
-		#else
-		&BusSerialLcdNULL,
 		#endif
 		
-		&BusSerialLcdVI2C,
+		&BusSerialLcdVI2C1,
+		
+		#ifdef SYS_USE_LCDBUS_VI2C2
+		&BusSerialLcdVI2C2,
+		#endif
 	};
 
 /**

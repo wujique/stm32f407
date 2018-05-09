@@ -35,6 +35,7 @@
 
 #include "dev_lcd.h"
 #include "wujique_log.h"
+#include "wujique_sysconf.h"
 
 
 extern void Delay(__IO uint32_t nTime);
@@ -221,8 +222,11 @@ void OV2640_SpecialEffects(uint8_t index)
   }
 }
 
+s32 CameraGd = -2;
+
 s32 dev_camera_init(void)
 {
+	#ifdef SYS_USE_CAMERA
 	/* camera xclk use the MCO1 */
 	MCO1_Init();
 	DCMI_PWDN_RESET_Init();
@@ -231,14 +235,26 @@ s32 dev_camera_init(void)
 	BUS_DCMI_HW_Init();
 	
 	SCCB_GPIO_Config();
+	CameraGd = -1;
+	#else
+	wjq_log(LOG_INFO, ">---------sys no use camera\r\n");
+	#endif
 	return 0;
 }
 s32 dev_camera_open(void)
 {
+	if(CameraGd!= -1)
+		return -1;
+
+	CameraGd = 0;
 	return 0;	
 }
 s32 dev_camera_close(void)
 {
+	if(CameraGd!= 0)
+		return -1;
+
+	CameraGd = -1;
 	DMA_Cmd(DMA2_Stream1, DISABLE); 
 	DCMI_Cmd(DISABLE); 
 	/* Insert 100ms delay: wait 100ms */ 
@@ -257,13 +273,12 @@ OV2640_IDTypeDef  OV2640_Camera_ID;
 
 u16 *ov2640_data;
 
-extern void put_string_center(int x, int y, char *s, unsigned colidx);
-extern void dev_lcd_setdir(u8 dir, u8 scan_dir);
-extern s32 dev_lcd_prepare_display(u16 sx, u16 ex, u16 sy, u16 ey);
-
-s32 camera_test(void)
+s32 dev_camera_show(DevLcd *lcd)
 {
 	uint8_t abuffer[40];
+  
+	if(CameraGd!= 0)
+		return -1;
 
 	wjq_log(LOG_FUN, "camera test....\r\n");
 	/* Read the OV9655/OV2640 Manufacturer identifier */
@@ -284,13 +299,13 @@ s32 camera_test(void)
 	}
 	else
 	{
-		put_string_center(160, 120, (char *)"Check the Camera HW and try again", 0xf880);
+		put_string_center(lcd, 160, 120, (char *)"Check the Camera HW and try again", 0xf880);
 		wjq_log(LOG_FUN, "Check the Camera HW and try again\r\n");
 		Delay(1000);
 		return -1;  
 	}
 
-	put_string_center(160, 120, (char *)abuffer, 0xf880);
+	put_string_center(lcd, 160, 120, (char *)abuffer, 0xf880);
 	wjq_log(LOG_FUN, "%s\r\n", abuffer);
 	Delay(200);
 	
@@ -302,7 +317,7 @@ s32 camera_test(void)
 	Camera_Config();
 	
 	sprintf((char*)abuffer, " Image selected: %s", ImageForematArray[ImageFormat]);
-	put_string_center(160, 160, (char *)abuffer, 0xf880);
+	put_string_center(lcd, 160, 160, (char *)abuffer, 0xf880);
 
 	CameraFlag = 0;
 	
@@ -313,14 +328,14 @@ s32 camera_test(void)
 			没有设置结束
 		*/
 		/* LCD Display window */
-		dev_lcd_setdir(W_LCD, L2R_U2D);
-		dev_lcd_prepare_display(0, 159, 0, 119);
+		dev_lcd_setdir(lcd, W_LCD, L2R_U2D);
+		dev_lcd_prepare_display(lcd, 1, 160, 1, 120);
 	}
 	else if(ImageFormat == BMP_QVGA)
 	{
 		/* LCD Display window */
-		dev_lcd_setdir(W_LCD, L2R_U2D);
-		dev_lcd_prepare_display(0, 319, 0, 239);
+		dev_lcd_setdir(lcd, W_LCD, L2R_U2D);
+		dev_lcd_prepare_display(lcd, 1, 320, 1, 240);
 	}	
 
 	/* Enable DMA2 stream 1 and DCMI interface then start image capture */
