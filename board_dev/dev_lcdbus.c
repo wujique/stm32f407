@@ -23,11 +23,20 @@
 #include "stm32f4xx.h"
 #include "main.h"
 #include "wujique_log.h"
+#include "list.h"
 #include "mcu_spi.h"
 #include "mcu_i2c.h"
 #include "dev_lcdbus.h"
 
-extern s32 bus_8080interface_init(void);
+
+/*
+	写寄存器要两步
+	*LcdReg = LCD_Reg; //写入要写的寄存器序号
+	*LcdData = LCD_RegValue; //写入数据 
+*/
+
+volatile u16 *LcdReg = (u16*)0x6C000000;
+volatile u16 *LcdData = (u16*)0x6C010000;
 
 /*
 	一个LCD接口
@@ -35,431 +44,249 @@ extern s32 bus_8080interface_init(void);
 	还有其他不属于通信接口的信号
 */
 
-/*
-	串行LCD接口，使用真正的SPI控制
+/*LCD 总线设备节点根节点*/
+struct list_head DevBusLcdRoot = {&DevBusLcdRoot, &DevBusLcdRoot};	
 
-*/
-/* 命令数据控制*/
-#define SERIALLCD_SPI_A0_PORT GPIOG
-#define SERIALLCD_SPI_A0_PIN GPIO_Pin_4
-/*复位*/	
-#define SERIALLCD_SPI_RST_PORT GPIOG
-#define SERIALLCD_SPI_RST_PIN GPIO_Pin_7
-/* 背光*/	
-#define SERIALLCD_SPI_BL_PORT GPIOG
-#define SERIALLCD_SPI_BL_PIN GPIO_Pin_9
-
-//复位
-#define SERIALLCD_SPI_RST_Clr() GPIO_ResetBits(SERIALLCD_SPI_RST_PORT, SERIALLCD_SPI_RST_PIN)
-#define SERIALLCD_SPI_RST_Set() GPIO_SetBits(SERIALLCD_SPI_RST_PORT, SERIALLCD_SPI_RST_PIN)
-//命令
-#define SERIALLCD_SPI_RS_Clr() GPIO_ResetBits(SERIALLCD_SPI_A0_PORT, SERIALLCD_SPI_A0_PIN)
-#define SERIALLCD_SPI_RS_Set() GPIO_SetBits(SERIALLCD_SPI_A0_PORT, SERIALLCD_SPI_A0_PIN)
-
-static void bus_seriallcd_spi_IO_init(void) 
+static void bus_lcd_IO_init(DevLcdBus *dev) 
 {
 	GPIO_InitTypeDef  GPIO_InitStructure;
 
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOG, ENABLE);
-	//DC(A0)
+	if(dev->type == LCD_BUS_I2C)
+		return;
+
+	RCC_AHB1PeriphClockCmd(dev->A0rcc,  ENABLE);
+	RCC_AHB1PeriphClockCmd(dev->rstrcc, ENABLE);
+	RCC_AHB1PeriphClockCmd(dev->blrcc,  ENABLE);
+	
+	
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
 	
-	GPIO_InitStructure.GPIO_Pin = SERIALLCD_SPI_A0_PIN;
-	GPIO_Init(SERIALLCD_SPI_A0_PORT, &GPIO_InitStructure);
-	GPIO_SetBits(SERIALLCD_SPI_A0_PORT,SERIALLCD_SPI_A0_PIN);
+	//DC(A0)
+	
+	GPIO_InitStructure.GPIO_Pin = dev->A0pin;
+	GPIO_Init(dev->A0port,  &GPIO_InitStructure);
+	GPIO_SetBits(dev->A0port, dev->A0pin);
 
 	//RST
-	GPIO_InitStructure.GPIO_Pin = SERIALLCD_SPI_RST_PIN; //OUT推挽输出   RST
-	GPIO_Init(SERIALLCD_SPI_RST_PORT, &GPIO_InitStructure);
-	GPIO_SetBits(SERIALLCD_SPI_RST_PORT,SERIALLCD_SPI_RST_PIN);
+	GPIO_InitStructure.GPIO_Pin = dev->rstpin; //OUT推挽输出   RST
+	GPIO_Init(dev->rstport, &GPIO_InitStructure);
+	GPIO_SetBits(dev->rstport, dev->rstpin);
 
 	//bl
-	GPIO_InitStructure.GPIO_Pin = SERIALLCD_SPI_BL_PIN; //OUT推挽输出 
-	GPIO_Init(SERIALLCD_SPI_BL_PORT, &GPIO_InitStructure);
-	GPIO_SetBits(SERIALLCD_SPI_BL_PORT, SERIALLCD_SPI_BL_PIN);	
+	GPIO_InitStructure.GPIO_Pin = dev->blpin; //OUT推挽输出 
+	GPIO_Init(dev->blport, &GPIO_InitStructure);
+	GPIO_SetBits(dev->blport, dev->blpin);	
 
 }
 
-
-static s32 bus_seriallcd_spi_init()
-{
-	bus_seriallcd_spi_IO_init();
-	Delay(100);
-	SERIALLCD_SPI_RST_Clr();
-	Delay(100);
-	SERIALLCD_SPI_RST_Set();
-	Delay(100);
-	return 0;
-}
-
-static s32 bus_seriallcd_spi_open(void)
-{
-	s32 res;
-	res = mcu_spi_open(DEV_SPI_3_3, SPI_MODE_3, SPI_BaudRatePrescaler_4);
-	return res;
-}
-
-static s32 bus_seriallcd_spi_close(void)
-{
-	s32 res;
-	res = mcu_spi_close(DEV_SPI_3_3);
-	return res;
-}
-
-static s32 bus_seriallcd_spi_write_data(u8 *data, u16 len)
-{
-	SERIALLCD_SPI_RS_Set();	
-	mcu_spi_cs(DEV_SPI_3_3,0);
-	mcu_spi_transfer(DEV_SPI_3_3, data, NULL, len);
-	mcu_spi_cs(DEV_SPI_3_3,1);
-	return 0;
-}
-
-static s32 bus_seriallcd_spi_write_cmd(u8 cmd)
-{
-	u8 tmp[2];
-	
-	SERIALLCD_SPI_RS_Clr();
-	tmp[0] = cmd;
-	mcu_spi_cs(DEV_SPI_3_3,0);
-	mcu_spi_transfer(DEV_SPI_3_3, &tmp[0], NULL, 1);
-	mcu_spi_cs(DEV_SPI_3_3,1);
-	return 0;
-}
-
-static s32 bus_seriallcd_spi_bl(u8 sta)
+s32 bus_lcd_bl(DevLcdBusNode *node, u8 sta)
 {
 	if(sta ==1)
 	{
-		GPIO_SetBits(SERIALLCD_SPI_BL_PORT, SERIALLCD_SPI_BL_PIN);
+		GPIO_SetBits(node->dev.blport, node->dev.blpin);
 	}
 	else
 	{
-		GPIO_ResetBits(SERIALLCD_SPI_BL_PORT, SERIALLCD_SPI_BL_PIN);	
+		GPIO_ResetBits(node->dev.blport, node->dev.blpin);	
+	}
+	return 0;
+}
+
+s32 bus_lcd_rst(DevLcdBusNode *node, u8 sta)
+{
+	if(sta ==1)
+	{
+		GPIO_SetBits(node->dev.rstport, node->dev.rstpin);
+	}
+	else
+	{
+		GPIO_ResetBits(node->dev.rstport, node->dev.rstpin);	
+	}
+	return 0;
+}
+
+static s32 bus_lcd_a0(DevLcdBusNode *node, u8 sta)
+{
+	if(node->dev.type == LCD_BUS_8080)
+		return 0;
+	
+	if(sta ==1)
+	{
+		GPIO_SetBits(node->dev.A0port, node->dev.A0pin);
+	}
+	else
+	{
+		GPIO_ResetBits(node->dev.A0port, node->dev.A0pin);	
 	}
 	return 0;
 }
 
 
-_lcd_bus BusSerialLcdSpi={
-		.name = "BusSerivaLcdSpi",
-		.init =bus_seriallcd_spi_init,
-		.open =bus_seriallcd_spi_open,
-		.close =bus_seriallcd_spi_close,
-		.writedata =bus_seriallcd_spi_write_data,
-		.writecmd =bus_seriallcd_spi_write_cmd,
-		.bl =bus_seriallcd_spi_bl,				
-};
+DevLcdBusNode *bus_lcd_open(char *name)
+{
+	/*找设备*/
+	DevLcdBusNode *node;
+	struct list_head *listp;
+
+	//wjq_log(LOG_INFO, "lcd bus name:%s!\r\n", name);
+	
+	listp = DevBusLcdRoot.next;
+	node = NULL;
+	
+	while(1)
+	{
+		if(listp == &DevBusLcdRoot)
+			break;
+
+		node = list_entry(listp, DevLcdBusNode, list);
+		//wjq_log(LOG_INFO, "lcd bus name:%s!\r\n", node->dev.name);
 		
-/*
-
-	定义一个串行LCD接口2，使用模拟SPI。
-
-*/
-#ifdef SYS_USE_LCDBUS_VSPI
-#define SERIALLCD_VSPI_A0_PORT GPIOF
-#define SERIALLCD_VSPI_A0_PIN GPIO_Pin_8
-	
-#define SERIALLCD_VSPI_RST_PORT GPIOF
-#define SERIALLCD_VSPI_RST_PIN GPIO_Pin_13
-	
-#define SERIALLCD_VSPI_BL_PORT GPIOF
-#define SERIALLCD_VSPI_BL_PIN GPIO_Pin_14
-
-//复位
-#define SERIALLCD_VSPI_RST_Clr() GPIO_ResetBits(SERIALLCD_VSPI_RST_PORT, SERIALLCD_VSPI_RST_PIN)
-#define SERIALLCD_VSPI_RST_Set() GPIO_SetBits(SERIALLCD_VSPI_RST_PORT, SERIALLCD_VSPI_RST_PIN)
-//命令
-#define SERIALLCD_VSPI_RS_Clr() GPIO_ResetBits(SERIALLCD_VSPI_A0_PORT, SERIALLCD_VSPI_A0_PIN)
-#define SERIALLCD_VSPI_RS_Set() GPIO_SetBits(SERIALLCD_VSPI_A0_PORT, SERIALLCD_VSPI_A0_PIN)
-
-static void bus_seriallcd_vspi_IO_init(void) 
-{
-	GPIO_InitTypeDef  GPIO_InitStructure;
-
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOG, ENABLE);
-	//DC(A0)
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-	
-	GPIO_InitStructure.GPIO_Pin = SERIALLCD_VSPI_A0_PIN;
-	GPIO_Init(SERIALLCD_VSPI_A0_PORT, &GPIO_InitStructure);
-	GPIO_SetBits(SERIALLCD_VSPI_A0_PORT,SERIALLCD_VSPI_A0_PIN);
-
-	//RST
-	GPIO_InitStructure.GPIO_Pin = SERIALLCD_VSPI_RST_PIN; //OUT推挽输出   RST
-	GPIO_Init(SERIALLCD_VSPI_RST_PORT, &GPIO_InitStructure);
-	GPIO_SetBits(SERIALLCD_VSPI_RST_PORT,SERIALLCD_VSPI_RST_PIN);
-
-	//bl
-	GPIO_InitStructure.GPIO_Pin = SERIALLCD_VSPI_BL_PIN; //OUT推挽输出 
-	GPIO_Init(SERIALLCD_VSPI_BL_PORT, &GPIO_InitStructure);
-	GPIO_SetBits(SERIALLCD_VSPI_BL_PORT, SERIALLCD_VSPI_BL_PIN);	
-
-}
-
-
-static s32 bus_seriallcd_vspi_init()
-{
-	bus_seriallcd_vspi_IO_init();
-	Delay(100);
-	SERIALLCD_VSPI_RST_Clr();
-	Delay(100);
-	SERIALLCD_VSPI_RST_Set();
-	Delay(100);
-	return 0;
-}
-
-static s32 bus_seriallcd_vspi_open(void)
-{
-	s32 res;
-	res = mcu_spi_open(DEV_VSPI_2, SPI_MODE_3, SPI_BaudRatePrescaler_4);
-	return res;
-}
-
-static s32 bus_seriallcd_vspi_close(void)
-{
-	s32 res;
-	res = mcu_spi_close(DEV_VSPI_2);
-	return res;
-}
-
-static s32 bus_seriallcd_vspi_write_data(u8 *data, u16 len)
-{
-	SERIALLCD_VSPI_RS_Set();	
-	mcu_spi_cs(DEV_VSPI_2,0);
-	mcu_spi_transfer(DEV_VSPI_2, data, NULL, len);
-	mcu_spi_cs(DEV_VSPI_2,1);
-	return 0;
-}
-
-static s32 bus_seriallcd_vspi_write_cmd(u8 cmd)
-{
-	u8 tmp[2];
-	
-	SERIALLCD_VSPI_RS_Clr();
-	tmp[0] = cmd;
-	mcu_spi_cs(DEV_VSPI_2,0);
-	mcu_spi_transfer(DEV_VSPI_2, &tmp[0], NULL, 1);
-	mcu_spi_cs(DEV_VSPI_2,1);
-	return 0;
-}
-
-static s32 bus_seriallcd_vspi_bl(u8 sta)
-{
-	if(sta ==1)
-	{
-		GPIO_SetBits(SERIALLCD_VSPI_BL_PORT, SERIALLCD_VSPI_BL_PIN);
+		if(strcmp(name, node->dev.name) == 0)
+		{
+			break;
+		}
+		else
+		{
+			node = NULL;
+		}
+		
+		listp = listp->next;
 	}
-	else
+
+	if(node != NULL)
 	{
-		GPIO_ResetBits(SERIALLCD_VSPI_BL_PORT, SERIALLCD_VSPI_BL_PIN);	
-	}
-	return 0;
-}
-
-
-_lcd_bus BusSerialLcdVSpi={
-		.name = "BusSerivaLcdVSpi",
-		.init =bus_seriallcd_vspi_init,
-		.open =bus_seriallcd_vspi_open,
-		.close =bus_seriallcd_vspi_close,
-		.writedata =bus_seriallcd_vspi_write_data,
-		.writecmd =bus_seriallcd_vspi_write_cmd,
-		.bl =bus_seriallcd_vspi_bl,				
-};
-#endif
-/*
-	定义一个LCD串行总线，用模拟 I2C1
-
-*/
-static s32 bus_seriallcd_vi2c_init()
-{
-	return 0;
-}
-
-static s32 bus_seriallcd_vi2c_open(void)
-{
-
-	return 0;
-}
-
-static s32 bus_seriallcd_vi2c_close(void)
-{
-	return 0;
-}
-
-static s32 bus_seriallcd_vi2c_write_data(u8 *data, u16 len)
-{
-	u8 tmp[256];
-	
-	tmp[0] = 0x40;
-	memcpy(&tmp[1], data, len);
-	mcu_i2c_transfer(DEV_VI2C_1, 0x3C, MCU_I2C_MODE_W, tmp, len+1);	
-	return 0;
-}
-
-static s32 bus_seriallcd_vi2c_write_cmd(u8 cmd)
-{
-	u8 tmp[2];
-	
-	tmp[0] = 0x00;
-	tmp[1] = cmd;
-	mcu_i2c_transfer(DEV_VI2C_1, 0x3C, MCU_I2C_MODE_W, tmp, 2);	
-	return 0;
-}
-
-static s32 bus_seriallcd_vi2c_bl(u8 sta)
-{
-
-	return 0;
-}
-
-
-_lcd_bus BusSerialLcdVI2C1={
-		.name = "BusSerivaLcdVI2C",
-		.init =bus_seriallcd_vi2c_init,
-		.open =bus_seriallcd_vi2c_open,
-		.close =bus_seriallcd_vi2c_close,
-		.writedata =bus_seriallcd_vi2c_write_data,
-		.writecmd =bus_seriallcd_vi2c_write_cmd,
-		.bl =bus_seriallcd_vi2c_bl,				
-};
-
-
-/*
-	定义一个LCD串行总线，用模拟 I2C2
-
-*/
-#ifdef SYS_USE_LCDBUS_VI2C2
-
-static s32 bus_seriallcd_vi2c2_init()
-{
-	return 0;
-}
-
-static s32 bus_seriallcd_vi2c2_open(void)
-{
-
-	return 0;
-}
-
-static s32 bus_seriallcd_vi2c2_close(void)
-{
-	return 0;
-}
-
-static s32 bus_seriallcd_vi2c2_write_data(u8 *data, u16 len)
-{
-	u8 tmp[256];
-	
-	tmp[0] = 0x40;
-	memcpy(&tmp[1], data, len);
-	mcu_i2c_transfer(DEV_VI2C_2, 0x3C, MCU_I2C_MODE_W, tmp, len+1);	
-	return 0;
-}
-
-static s32 bus_seriallcd_vi2c2_write_cmd(u8 cmd)
-{
-	u8 tmp[2];
-	
-	tmp[0] = 0x00;
-	tmp[1] = cmd;
-	mcu_i2c_transfer(DEV_VI2C_2, 0x3C, MCU_I2C_MODE_W, tmp, 2);	
-	return 0;
-}
-
-static s32 bus_seriallcd_vi2c2_bl(u8 sta)
-{
-
-	return 0;
-}
-
-
-_lcd_bus BusSerialLcdVI2C2={
-		.name = "BusSerivaLcdVI2C2",
-		.init =bus_seriallcd_vi2c2_init,
-		.open =bus_seriallcd_vi2c2_open,
-		.close =bus_seriallcd_vi2c2_close,
-		.writedata =bus_seriallcd_vi2c2_write_data,
-		.writecmd =bus_seriallcd_vi2c2_write_cmd,
-		.bl =bus_seriallcd_vi2c2_bl,				
-};
-#endif
-
-/*
-	定义一个LCD总线，空的，不存在
-*/
-static s32 bus_seriallcd_null_init()
-{
-	return 0;
-}
-
-static s32 bus_seriallcd_null_open(void)
-{
-
-	return 0;
-}
-
-static s32 bus_seriallcd_null_close(void)
-{
-	return 0;
-}
-
-static s32 bus_seriallcd_null_write_data(u8 *data, u16 len)
-{
-	return 0;
-}
-
-static s32 bus_seriallcd_null_write_cmd(u8 cmd)
-{
-
-	return 0;
-}
-
-static s32 bus_seriallcd_null_bl(u8 sta)
-{
-
-	return 0;
-}
-
-
-_lcd_bus BusSerialLcdNULL={
-		.name = "NULL",
-		.init =bus_seriallcd_null_init,
-		.open =bus_seriallcd_null_open,
-		.close =bus_seriallcd_null_close,
-		.writedata =bus_seriallcd_null_write_data,
-		.writecmd =bus_seriallcd_null_write_cmd,
-		.bl =bus_seriallcd_null_bl,				
-};
-
-/*
-
-	顺序要跟LcdBusType枚举一致
-
-*/
-_lcd_bus *LcdBusList[] = {
-		&BusSerialLcdNULL,
+		if(node->gd == 0)
+		{
+			wjq_log(LOG_INFO, "lcd bus open err:using!\r\n");
+			node = NULL;
+		}
+		else
+		{
 			
-		&BusSerialLcdSpi,
+			if(node->dev.type == LCD_BUS_SPI)
+			{
+				node->basenode = (void *)mcu_spi_open(node->dev.basebus, SPI_MODE_3, SPI_BaudRatePrescaler_4);
 
-		/*SVPI2 跟 矩阵按键冲突*/
-		#ifdef SYS_USE_LCDBUS_VSPI
-		&BusSerialLcdVSpi,
-		#endif
+			}
+			else if(node->dev.type == LCD_BUS_I2C)
+			{
+				node->basenode = mcu_i2c_open(node->dev.basebus);
+			}
+			else if(node->dev.type == LCD_BUS_8080)
+			{
+				/*8080特殊处理*/
+				node->basenode = (void *)1;
+			}
+			
+			if(node->basenode == NULL)
+			{
+				wjq_log(LOG_INFO, "lcd bus open base bus err!\r\n");	
+				node =  NULL;
+			}
+			else
+			{
+				node->gd = 0;
+
+			}
+		}
+	}
+	else
+	{
+		wjq_log(LOG_INFO, "lcd bus open err:%s!\r\n", name);
+	}
+
+	return node;
+}
+
+s32 bus_lcd_close(DevLcdBusNode *node)
+{
+	if(node->gd != 0)
+		return -1;
+	
+	if(node->dev.type == LCD_BUS_SPI)
+	{
+		mcu_spi_close((DevSpiChNode *)node->basenode);
 		
-		&BusSerialLcdVI2C1,
+	}
+	else if(node->dev.type == LCD_BUS_I2C)
+	{
+		mcu_i2c_close((DevI2cNode *)node->basenode);	
+	}
+	else if(node->dev.type == LCD_BUS_8080)
+	{
+		/*8080特殊处理*/
+		node->basenode = NULL;
+	}
+	
+	node->gd = -1;
+	
+	return 0;
+}
+
+s32 bus_lcd_write_data(DevLcdBusNode *node, u8 *data, u16 len)
+{
+	/*可能有BUF，要根据len动态申请*/
+	u8 tmp[256];
+	u16 i;
+	
+	if(node->dev.type == LCD_BUS_SPI)
+	{
+		bus_lcd_a0(node, 1);	
+		mcu_spi_cs((DevSpiChNode *)node->basenode, 0);
+		mcu_spi_transfer((DevSpiChNode *)node->basenode,  data, NULL, len);
+		mcu_spi_cs((DevSpiChNode *)node->basenode, 1);
 		
-		#ifdef SYS_USE_LCDBUS_VI2C2
-		&BusSerialLcdVI2C2,
-		#endif
-	};
+	}
+	else if(node->dev.type == LCD_BUS_I2C)
+	{
+		
+		tmp[0] = 0x40;
+		memcpy(&tmp[1], data, len);
+		mcu_i2c_transfer((DevI2cNode *)node->basenode, 0x3C, MCU_I2C_MODE_W, tmp, len+1);
+		
+
+	}
+	else if(node->dev.type == LCD_BUS_8080)
+	{
+		u16 *p;
+		p = (u16 *)data;
+		for(i=0; i<len; i++)
+		{
+			*LcdData = *(p+i);	
+		}
+	}
+	return 0;
+}
+
+s32 bus_lcd_write_cmd(DevLcdBusNode *node, u8 cmd)
+{
+	u8 tmp[2];
+
+	if(node->dev.type == LCD_BUS_SPI)
+	{	
+		bus_lcd_a0(node, 0);
+		tmp[0] = cmd;
+		mcu_spi_cs((DevSpiChNode *)node->basenode, 0);
+		mcu_spi_transfer((DevSpiChNode *)node->basenode,  &tmp[0], NULL, 1);
+		mcu_spi_cs((DevSpiChNode *)node->basenode, 1);
+	}
+	else if(node->dev.type == LCD_BUS_I2C)
+	{	
+		tmp[0] = 0x00;
+		tmp[1] = cmd;
+		
+		mcu_i2c_transfer((DevI2cNode *)node->basenode, 0x3C, MCU_I2C_MODE_W, tmp, 2);
+	}
+	else if(node->dev.type == LCD_BUS_8080)
+	{
+		*LcdReg = cmd;	
+	}
+	return 0;
+}
+
 
 /**
  *@brief:      dev_lcdbus_init
@@ -468,33 +295,55 @@ _lcd_bus *LcdBusList[] = {
  *@param[out]  无
  *@retval:     
  */
-s32 dev_lcdbus_init(void)
+s32 dev_lcdbus_register(DevLcdBus *dev)
 {
-	bus_8080interface_init();
+	struct list_head *listp;
+	DevLcdBusNode *p;
+
+	wjq_log(LOG_INFO, "[register] lcd bus :%s, base on:%s!\r\n", dev->name, dev->basebus);
+
+	/*
+		先要查询当前，防止重名
+	*/
+	listp = DevBusLcdRoot.next;
+	while(1)
+	{
+		if(listp == &DevBusLcdRoot)
+			break;
+
+		p = list_entry(listp, DevLcdBusNode, list);
+
+		if(strcmp(dev->name, p->dev.name) == 0)
+		{
+			wjq_log(LOG_INFO, "bus lcd dev name err!\r\n");
+			return -1;
+		}
+		
+		listp = listp->next;
+	}
+
+	/* 
+		申请一个节点空间 
+		
+	*/
+	p = (DevLcdBusNode *)wjq_malloc(sizeof(DevLcdBusNode));
+	list_add(&(p->list), &DevBusLcdRoot);
+	/*复制设备信息*/
+	memcpy((u8 *)&p->dev, (u8 *)dev, sizeof(DevLcdBus));
+	p->gd = -1;
+
+	/*初始化*/
+	bus_lcd_IO_init(dev);
+
+	if(dev->type == LCD_BUS_8080)
+	{
+		//初始FSMC
+		mcu_fsmc_lcd_Init();
+	}
 	return 0;
 }
-/**
- *@brief:      dev_lcdbus_find
- *@details:    根据总线编号查找总线驱动
- *@param[in]   LcdBusType bus  
- *@param[out]  无
- *@retval:     _lcd_bus
- */
-_lcd_bus *dev_lcdbus_find(LcdBusType bus)
-{
-	u8 num;
 
-	num = (u8)LCD_BUS_MAX;
 
-	if(num > (sizeof(LcdBusList)/sizeof(_lcd_bus *)))
-		num = (sizeof(LcdBusList)/sizeof(_lcd_bus *));
-	
-	if(bus>= num)
-		return NULL;
-	else
-		return LcdBusList[bus];
-	
-}
 
 
 

@@ -139,7 +139,7 @@ int main(void)
  */
 void start_task(void *pvParameters)
 {
-	#if 0
+	#if 1
 	GPIO_InitTypeDef GPIO_InitStructure;
 	/*³õÊ¼»¯LED IO¿Ú*/
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOG, ENABLE);
@@ -156,19 +156,17 @@ void start_task(void *pvParameters)
 	wjq_log(LOG_INFO,"start task---\r\n");
 	
 	mcu_rtc_init();
-	mcu_i2c_init();
-	mcu_spi_init();
-	dev_lcdbus_init();
+	
+	sys_dev_init();
 	
 	dev_key_init();
 	dev_keypad_init();
 	dev_buzzer_init();
 	dev_tea5767_init();
 	dev_dacsound_init();
-	dev_spiflash_init();
+
 	dev_wm8978_init();
 	dev_rs485_init();
-	dev_lcd_init();
 	dev_touchscreen_init();
 	dev_touchkey_init();
 	dev_camera_init();

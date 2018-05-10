@@ -55,7 +55,7 @@ u8 emenu_get_key(void)
 	res = dev_keypad_read(&key, 1);
 	if(res == 1)
 	{
-		wjq_log(LOG_DEBUG,"key:%02x\r\n", key);
+		//wjq_log(LOG_DEBUG,"key:%02x\r\n", key);
 		
 		if((key & KEYPAD_PR_MASK)!= KEYPAD_PR_MASK  )
 		{
@@ -192,7 +192,7 @@ MENU *emunu_find_next(MENU *fp, u8 mode)
 	}
 }
 
-s32 emenu_display(DevLcd *lcd)
+s32 emenu_display(DevLcdNode *lcd)
 {
 	MENU *p;
 	u16 disy = 1;
@@ -598,7 +598,7 @@ s32 emenu_deal_key_2col(u8 key)
  *@param[out]  нч
  *@retval:     
  */
-s32 emenu_run(DevLcd *lcd, MENU *p, u16 len)
+s32 emenu_run(DevLcdNode *lcd, MENU *p, u16 len)
 {
 	u8 disflag = 1;
 	
@@ -641,7 +641,7 @@ s32 emenu_run(DevLcd *lcd, MENU *p, u16 len)
 		
 		if(key != 0)
 		{
-			wjq_log(LOG_DEBUG, "KEY:%02x\r\n", key);
+			//wjq_log(LOG_DEBUG, "KEY:%02x\r\n", key);
 			
 			if(menu_ctrl.fa->type == MENU_TYPE_LIST)
 			{

@@ -32,7 +32,7 @@
 extern s32 dev_touchscreen_write(struct ts_sample *samp, int nr);
 
 /*xpt 2046使用 模拟串口1*/
-#define XPT2046_SPI DEV_VSPI_1
+#define XPT2046_SPI "VSPI1_CH1"
 
 
 /*
@@ -68,6 +68,7 @@ extern s32 dev_touchscreen_write(struct ts_sample *samp, int nr);
 
 
 s32 DevXpt2046Gd = -2;
+DevSpiChNode *Xpt2046SpiCHNode;
 
 void dev_xpt2046_task(void);
 
@@ -83,9 +84,10 @@ s32 dev_xpt2046_init(void)
 	#ifdef SYS_USE_TS_IC_CASE
 	DevXpt2046Gd = -1;
 	
+	wjq_log(LOG_INFO, ">-----------xpt2046 init!\r\n");
 	mcu_timer7_init();
 	#else
-	wjq_log(LOG_INFO, ">>>>>>>>>xpt2046 not init!\r\n");
+	wjq_log(LOG_INFO, ">-----------xpt2046 not init!\r\n");
 
 	#endif
 
@@ -104,7 +106,10 @@ s32 dev_xpt2046_open(void)
 
 	if(DevXpt2046Gd != -1)
 		return -1;
-	mcu_spi_open(XPT2046_SPI, SPI_MODE_0, 2);
+
+	wjq_log(LOG_INFO, ">--------------xpt2046 open!\r\n");
+	
+	Xpt2046SpiCHNode = mcu_spi_open(XPT2046_SPI, SPI_MODE_0, 2);
 	mcu_tim7_start(100, dev_xpt2046_task, 0);
 	DevXpt2046Gd = 0;
 	return 0;
@@ -122,7 +127,7 @@ s32 dev_xpt2046_close(void)
 	if(DevXpt2046Gd != 0)
 		return -1;
 	
-	mcu_spi_close(XPT2046_SPI);
+	mcu_spi_close(Xpt2046SpiCHNode);
 	DevXpt2046Gd = -1;
 	return 0;
 }
@@ -169,29 +174,31 @@ void dev_xpt2046_task(void)
 	/*------------------------*/
 
 	stmp[0] = XPT2046_CMD_Z2;
-	mcu_spi_transfer(XPT2046_SPI, stmp, NULL, 1);
+	mcu_spi_transfer(Xpt2046SpiCHNode, stmp, NULL, 1);
 	//vspi_delay(100);
 	stmp[0] = 0x00;
 	stmp[1] = XPT2046_CMD_Z1;
-	mcu_spi_transfer(XPT2046_SPI, stmp, rtmp, 2);
+	mcu_spi_transfer(Xpt2046SpiCHNode, stmp, rtmp, 2);
+	wjq_log(LOG_DEBUG, "%d, %d- ", rtmp[0], rtmp[1]);
+	
 	pre_y = ((u16)(rtmp[0]&0x7f)<<5) + (rtmp[1]>>3);
 	/*------------------------*/
 	//vspi_delay(100);
 	stmp[0] = 0x00;
 	stmp[1] = XPT2046_CMD_X;
-	mcu_spi_transfer(XPT2046_SPI, stmp, rtmp, 2);
+	mcu_spi_transfer(Xpt2046SpiCHNode, stmp, rtmp, 2);
 	pre_x = ((u16)(rtmp[0]&0x7f)<<5) + (rtmp[1]>>3);
 	/*------------------------*/
 	//vspi_delay(100);
 	stmp[0] = 0x00;
 	stmp[1] = XPT2046_CMD_Y;
-	mcu_spi_transfer(XPT2046_SPI, stmp, rtmp, 2);
+	mcu_spi_transfer(Xpt2046SpiCHNode, stmp, rtmp, 2);
 	sample_x = ((u16)(rtmp[0]&0x7f)<<5) + (rtmp[1]>>3);
 	/*------------------------*/
 	//vspi_delay(100);
 	stmp[0] = 0x00;
 	stmp[1] = 0X00;
-	mcu_spi_transfer(XPT2046_SPI, stmp, rtmp, 2);
+	mcu_spi_transfer(Xpt2046SpiCHNode, stmp, rtmp, 2);
 	sample_y = ((u16)(rtmp[0]&0x7f)<<5) + (rtmp[1]>>3);
 
 	/*

@@ -34,7 +34,7 @@ extern void Delay(__IO uint32_t nTime);
 #define TEA5767_DEBUG(a, ...)
 #endif
 
-#define DEV_TEA5767_I2CBUS DEV_VI2C_1
+#define DEV_TEA5767_I2CBUS "VI2C1"
 #define DEV_TEA5767_I2CC_ADDR 0x60//110 0000b, 7位地址模式，在I2C驱动中会进行左移
 
 #define TEA5767_MAX_FREQ 108000
@@ -51,6 +51,25 @@ u8 tea5767_readbuf[5];
 //初始化要写入TEA5767的数据，见<TEA5767HN低功耗立体声收音机接收器>
 u8 tea5767_writebuf[5]={0x2a,0xb6,0x51,0x11,0x40};
 u8 tea5767_initbuf[5]={0xaa,0xb6,0x51,0x11,0x40};//静音，上电初始化
+
+
+static s32 dev_tea5767_readreg(u8* data)
+{
+	DevI2cNode *dev;
+	dev = mcu_i2c_open(DEV_TEA5767_I2CBUS);
+	mcu_i2c_transfer(dev, DEV_TEA5767_I2CC_ADDR, MCU_I2C_MODE_R, tea5767_readbuf, 5);
+	mcu_i2c_close(dev);	
+	return 0;
+}
+static s32 dev_tea5767_writereg(u8* data)
+{
+	DevI2cNode *dev;
+
+	dev = mcu_i2c_open(DEV_TEA5767_I2CBUS);
+    mcu_i2c_transfer(dev, DEV_TEA5767_I2CC_ADDR, MCU_I2C_MODE_W, tea5767_writebuf, 5);
+	mcu_i2c_close(dev);
+	return 0;	
+}
 
 /**
  *@brief:      dev_tea5767_fre2pll
@@ -117,6 +136,7 @@ static void dev_tea5767_getfre(void)
  */
 void dev_tea5767_setfre(unsigned long fre)
 {
+
     if(fre>TEA5767_MAX_FREQ)
         return;
     if(fre<TEA5767_MIN_FREQ)  
@@ -127,7 +147,8 @@ void dev_tea5767_setfre(unsigned long fre)
     
     tea5767_writebuf[0]=Tea5767Pll/256;
     tea5767_writebuf[1]=Tea5767Pll%256;
-    mcu_i2c_transfer(DEV_TEA5767_I2CBUS, DEV_TEA5767_I2CC_ADDR, MCU_I2C_MODE_W, tea5767_writebuf, 5);
+
+	dev_tea5767_writereg(tea5767_writebuf);
 }
 
 /**
@@ -162,8 +183,8 @@ s32 dev_tea5767_auto_search(u8 mode)
 	u8 if_counter = 0;
 	u32 flag = 0;
 	u8 adc;
-	
-	mcu_i2c_transfer(DEV_TEA5767_I2CBUS, DEV_TEA5767_I2CC_ADDR, MCU_I2C_MODE_R, tea5767_readbuf, 5);
+
+	dev_tea5767_readreg(tea5767_readbuf);
 	dev_tea5767_getfre();
 
     if(mode)
@@ -195,12 +216,10 @@ s32 dev_tea5767_auto_search(u8 mode)
 		tea5767_writebuf[0]=Tea5767Pll/256+0x40;//加0x40是将SM置为1 为自动搜索模式
 		tea5767_writebuf[1]=Tea5767Pll%256;   
 
-		mcu_i2c_transfer(DEV_TEA5767_I2CBUS, DEV_TEA5767_I2CC_ADDR, MCU_I2C_MODE_W, tea5767_writebuf, 5);
-
+		dev_tea5767_writereg(tea5767_writebuf);
 	    while(1)     
 	    {
-	        mcu_i2c_transfer(DEV_TEA5767_I2CBUS, DEV_TEA5767_I2CC_ADDR, MCU_I2C_MODE_R, tea5767_readbuf, 5);
-
+	        dev_tea5767_readreg(tea5767_readbuf);
 	        if(0x80 == (tea5767_readbuf[0]&0x80))//搜台成功标志
 	        {
 				dev_tea5767_getfre();
@@ -232,7 +251,9 @@ s32 dev_tea5767_auto_search(u8 mode)
 			}
 
 			if(flag == 1)
+			{
 				break;
+			}
 	    }  
 
 	}	
@@ -247,8 +268,9 @@ s32 dev_tea5767_auto_search(u8 mode)
 s32 dev_tea5767_search(u8 mode)
 {
 	u8 adc;
-	
-	mcu_i2c_transfer(DEV_TEA5767_I2CBUS, DEV_TEA5767_I2CC_ADDR, MCU_I2C_MODE_R, tea5767_readbuf, 5);
+
+	dev_tea5767_readreg(tea5767_readbuf);
+
 	dev_tea5767_getfre();
     TEA5767_DEBUG(LOG_DEBUG, "Tea5767Fre:%d\r\n", Tea5767Fre);
 
@@ -271,8 +293,7 @@ s32 dev_tea5767_search(u8 mode)
 		dev_tea5767_setfre(Tea5767Fre);
 		
 		Delay(2);
-		
-		mcu_i2c_transfer(DEV_TEA5767_I2CBUS, DEV_TEA5767_I2CC_ADDR, MCU_I2C_MODE_R, tea5767_readbuf, 5);
+		dev_tea5767_readreg(tea5767_readbuf);
 		adc = (tea5767_readbuf[3]>>4);
 		
 		if( adc >=7)
@@ -305,8 +326,9 @@ s32 dev_tea5767_search(u8 mode)
  */
 s32 dev_tea5767_init(void)
 {
-	mcu_i2c_transfer(DEV_TEA5767_I2CBUS, DEV_TEA5767_I2CC_ADDR, MCU_I2C_MODE_W, tea5767_initbuf, 5);
-    return 0;
+
+	dev_tea5767_writereg(tea5767_initbuf);
+	return 0;
 }
 /**
  *@brief:      dev_tea5767_open
@@ -317,8 +339,9 @@ s32 dev_tea5767_init(void)
  */
 s32 dev_tea5767_open(void)
 {
-    mcu_i2c_transfer(DEV_TEA5767_I2CBUS, DEV_TEA5767_I2CC_ADDR, MCU_I2C_MODE_W, tea5767_writebuf, 5);
-    return 0;
+
+	dev_tea5767_writereg(tea5767_writebuf);
+	return 0;
 }
 /**
  *@brief:      dev_tea5767_close
@@ -329,8 +352,8 @@ s32 dev_tea5767_open(void)
  */
 s32 dev_tea5767_close(void)
 {
-	mcu_i2c_transfer(DEV_TEA5767_I2CBUS, DEV_TEA5767_I2CC_ADDR, MCU_I2C_MODE_W, tea5767_initbuf, 5);
-    return 0;
+	dev_tea5767_writereg(tea5767_initbuf);
+	return 0;
 }
 
 /**

@@ -1,19 +1,93 @@
 #ifndef __MCU_SPI_H_
 #define __MCU_SPI_H_
 
+#include "list.h"
 
 typedef enum{
-	DEV_SPI_NULL = 0,
-		
-	DEV_SPI_3_1 = 0X31,//核心板上的SPI使用SPI3，定义为SPI_3_1
-	DEV_SPI_3_2,	//底板板上的SPI使用SPI3，定义为SPI_3_2
-	DEV_SPI_3_3,		//外扩的SPI定义为SPI_3_3
+	DEV_SPI_H = 1,//硬件SPI控制器
+	DEV_SPI_V = 2,//IO模拟SPI
+}DEV_SPI_TYPE;
 
-	DEV_VSPI_0 = 0XA0,	//空的，不用
-	DEV_VSPI_1 = 0XA1, //触摸屏XPT2046方案，用原来的ADC方案管脚模拟SPI
-	DEV_VSPI_2 = 0XA2, //外扩IO口模拟spi
-}SPI_DEV;
+/*
+	SPI 分两层，
+	1层是SPI控制器，不包含CS
+	2层是SPI通道，由控制器+CS组成
+	
+*/
+/*
 
+	SPI 设备定义
+
+*/
+typedef struct
+{
+	/*设备名称*/
+	char name[16];
+	/*设备类型，IO模拟 or 硬件控制器*/
+	DEV_SPI_TYPE type;
+	
+	u32 clkrcc;
+	GPIO_TypeDef *clkport;
+	u16 clkpin;
+
+	u32 mosircc;
+	GPIO_TypeDef *mosiport;
+	u16 mosipin;
+
+	u32 misorcc;
+	GPIO_TypeDef *misoport;
+	u16 misopin;
+
+}DevSpi;
+
+/*
+
+	SPI控制器设备节点
+	
+*/
+typedef struct
+{
+	/*句柄，空闲为-1，打开为0，spi控制器不能重复打开*/
+	s32 gd;
+	/*控制器硬件信息，初始化控制器时拷贝设备树的信息到此*/
+	DevSpi dev;	
+	/*链表*/
+	struct list_head list;
+}DevSpiNode;
+
+/*
+	SPI 通道定义
+	一个SPI通道，有一个SPI控制器+一根CS引脚组成
+
+*/
+typedef struct
+{
+	/*通道名称，相当于设备名称*/
+	char name[16];
+	/*SPI控制器名称*/
+	char spi[16];
+
+	/*cs脚*/
+	u32 csrcc;
+	GPIO_TypeDef *csport;
+	u16 cspin;
+}DevSpiCh;
+
+/*SPI通道节点*/
+typedef struct
+{
+	/**/
+	s32 gd;
+	DevSpiCh dev;	
+	DevSpiNode *spi;//控制器节点指针
+	struct list_head list;
+}DevSpiChNode;
+
+/*
+
+SPI模式
+
+*/
 typedef enum{
 	SPI_MODE_0 =0,
 	SPI_MODE_1,
@@ -22,11 +96,10 @@ typedef enum{
 	SPI_MODE_MAX
 }SPI_MODE;
 
-extern s32 mcu_spi_init(void);
-extern s32 mcu_spi_open(SPI_DEV dev, SPI_MODE mode, u16 pre);
-extern s32 mcu_spi_close(SPI_DEV dev);
-extern s32 mcu_spi_transfer(SPI_DEV dev, u8 *snd, u8 *rsv, s32 len);
-extern s32 mcu_spi_cs(SPI_DEV dev, u8 sta);
+extern DevSpiChNode *mcu_spi_open(char *name, SPI_MODE mode, u16 pre);
+extern s32 mcu_spi_close(DevSpiChNode * node);
+extern s32 mcu_spi_transfer(DevSpiChNode * node, u8 *snd, u8 *rsv, s32 len);
+extern s32 mcu_spi_cs(DevSpiChNode * node, u8 sta);
 
 
 #endif

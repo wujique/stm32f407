@@ -23,13 +23,14 @@
 #include "string.h"
 #include "stm32f4xx.h"
 #include "wujique_log.h"
+#include "list.h"
 #include "dev_lcdbus.h"
 #include "dev_lcd.h"
 #include "dev_ILI9341.h"
 #include "dev_str7565.h"
 #include "alloc.h"
 
-//#define DEV_LCD_DEBUG
+#define DEV_LCD_DEBUG
 
 #ifdef DEV_LCD_DEBUG
 #define LCD_DEBUG	wjq_log 
@@ -84,7 +85,9 @@ _lcd_pra LCD_Oled12864 ={
 		.height = 128, //LCD 高度
 };
 
-/*各种LCD列表*/
+/*
+	各种LCD列表
+*/
 _lcd_pra *LcdPraList[5]=
 			{
 				&LCD_IIL9341,		
@@ -113,53 +116,6 @@ _lcd_drv *LcdProbDrv8080List[] = {
 					&TftLcdILI9325Drv,
 };
 
-/*
-	设备树定义
-	指明系统有多少个LCD设备，挂在哪个LCD总线上。
-*/
-LcdObj DevLcdOled1	=	{"i2coledlcd",  LCD_BUS_VI2C1,  0X1315};
-//LcdObj DevLcdOled2	=	{"i2coledlcd2", LCD_BUS_VI2C2,  0X1315};
-//LcdObj DevLcdOled3	=	{"vspioledlcd", LCD_BUS_VSPI, 	0X1315};
-LcdObj DevLcdOled4	=	{"spioledlcd", 	LCD_BUS_SPI, 	0X1315};
-LcdObj DevLcdCOG1	=	{"spicoglcd", 	LCD_BUS_SPI, 	0X7565};
-//LcdObj DevLcdCOG2	=	{"vspicoglcd", 	LCD_BUS_VSPI, 	0X7565};
-LcdObj DevLcdtTFT	=	{"tftlcd", 		LCD_BUS_8080, 	NULL};
-
-
-#define DEV_LCD_C 3//系统存在3个LCD设备
-LcdObj* LcdObjList[DEV_LCD_C]=
-{
-	&DevLcdOled1,
-	&DevLcdCOG1,
-	&DevLcdtTFT,
-};
-
-
-/*LCD设备总结构体，初始化设备时初始化*/
-DevLcd DevLcdList[DEV_LCD_C];
-
-/**
- *@brief:      dev_lcd_cpydev
- *@details:    拷贝设备信息
- *@param[in]   DevLcd *src  
-               DevLcd *dst  
- *@param[out]  无
- *@retval:     
- */
-#if 0
-static s32 dev_lcd_cpydev(DevLcd *src, DevLcd *dst)
-{
-	src->gd = dst->gd;
-	src->dev = dst->dev;
-	src->pra = dst->pra;
-	src->drv = dst->drv;
-	src->dir = dst->dir;
-	src->scandir = dst->scandir;
-	src->width = dst->width;
-	src->height = dst->height;
-	return 0;
-}
-#endif
 /**
  *@brief:      dev_lcd_findpra
  *@details:    根据ID查找LCD参数
@@ -218,27 +174,27 @@ static _lcd_drv *dev_lcd_finddrv(u16 id)
  *@param[out]  无
  *@retval:     
  */
-s32 dev_lcd_setdir(DevLcd *lcd, u8 dir, u8 scan_dir)
+s32 dev_lcd_setdir(DevLcdNode *node, u8 dir, u8 scan_dir)
 {
 	u16 temp;
 	u8 scan_dir_tmp;
 
-	if(lcd == NULL)
+	if(node == NULL)
 		return -1;
 
 	
-	if(dir != lcd->dir)//切换屏幕方向	
+	if(dir != node->dir)//切换屏幕方向	
 	{
 		
-		lcd->dir = lcd->dir^0x01;
-		temp = lcd->width;
-		lcd->width = lcd->height;
-		lcd->height = temp;
-		LCD_DEBUG(LOG_DEBUG, "set dir w:%d, h:%d\r\n", lcd->width, lcd->height);
+		node->dir = node->dir^0x01;
+		temp = node->width;
+		node->width = node->height;
+		node->height = temp;
+		LCD_DEBUG(LOG_DEBUG, "set dir w:%d, h:%d\r\n", node->width, node->height);
 	}
 	
 	
-	if(lcd->dir == W_LCD)//横屏，扫描方向映射转换
+	if(node->dir == W_LCD)//横屏，扫描方向映射转换
 	{
 		/*
 			横屏	 竖屏
@@ -269,126 +225,144 @@ s32 dev_lcd_setdir(DevLcd *lcd, u8 dir, u8 scan_dir)
 		scan_dir_tmp = scan_dir;
 	}
 	
-	lcd->scandir = scan_dir_tmp;
+	node->scandir = scan_dir_tmp;
 	
-	lcd->drv->set_dir(lcd, lcd->scandir);
+	node->drv->set_dir(node, node->scandir);
 	
 	return 0;
 }
 
-/**
- *@brief:      dev_lcd_init
- *@details:    初始化LCD
- 			   根据设备树，初始化所有LCD
- *@param[in]   void  
- *@param[out]  无
- *@retval:     
- */
-s32 dev_lcd_init(void)
-{
-	s32 ret = -1;
-	u8 i = 0;
-	LcdObj *pobj;
-	DevLcd *pdev;
-	
-	while(1)
-	{	
-		pobj = LcdObjList[i];
-		pdev = &DevLcdList[i];
-		
-		wjq_log(LOG_INFO, "\r\nlcd name:%s\r\n",pobj->name);
+struct list_head DevLcdRoot = {&DevLcdRoot, &DevLcdRoot};	
 
-		pdev->dev = pobj;
-		pdev->gd = -99;//初始化成功就设置为-1；
-		ret = -1;
-		/*
-			根据ID找驱动跟参数
-		*/
-		if(pobj->id == NULL)
+s32 dev_lcd_register(DevLcd *dev)
+{
+	struct list_head *listp;
+	DevLcdNode *plcdnode;
+	s32 ret = -1;
+	
+	wjq_log(LOG_INFO, "[register] lcd :%s, base on:%s!\r\n", dev->name, dev->buslcd);
+
+	/*
+		先要查询当前，防止重名
+	*/
+	listp = DevLcdRoot.next;
+	while(1)
+	{
+		if(listp == &DevLcdRoot)
+			break;
+
+		plcdnode = list_entry(listp, DevLcdNode, list);
+
+		if(strcmp(dev->name, plcdnode->dev.name) == 0)
 		{
-			LCD_DEBUG(LOG_DEBUG, "prob LCD id\r\n");
-			if(pobj->bus == LCD_BUS_8080)
+			wjq_log(LOG_INFO, "lcd dev name err!\r\n");
+			return -1;
+		}
+
+		if(strcmp(dev->buslcd, plcdnode->dev.buslcd) == 0)
+		{
+			wjq_log(LOG_INFO, "one lcd bus just for one lcd!\r\n");
+			return -1;
+		}
+		
+		listp = listp->next;
+	}
+
+	/* 
+		申请一个节点空间 
+		
+	*/
+	plcdnode = (DevLcdNode *)wjq_malloc(sizeof(DevLcdNode));
+	list_add(&(plcdnode->list), &DevLcdRoot);
+	/*复制设备信息*/
+	memcpy((u8 *)&plcdnode->dev, (u8 *)dev, sizeof(DevLcd));
+	plcdnode->gd = -1;
+
+	/*初始化*/
+	if(dev->id == NULL)
+	{
+		LCD_DEBUG(LOG_DEBUG, "prob LCD id\r\n");
+
+		/*找到驱动跟规格后，初始化*/
+		u8 j = 0;
+
+		while(1)
+		{
+			ret = LcdProbDrv8080List[j]->init(plcdnode);
+			if(ret == 0)
+			{
+				LCD_DEBUG(LOG_DEBUG, "lcd drv prob ok!\r\n");	
+				plcdnode->drv = LcdProbDrv8080List[j];
+				/*
+					用驱动的ID找参数
+				*/
+				plcdnode->pra = dev_lcd_findpra(plcdnode->drv->id);
+				break;
+			}	
+			else
+			{
+				j++;
+				if(j >= sizeof(LcdProbDrv8080List)/sizeof(_lcd_drv *))
+				{
+					LCD_DEBUG(LOG_DEBUG, "lcd prob err\r\n");
+					break;
+				}
+			}
+		}
+
+	}
+	else
+	{
+		ret = -1;
+		
+		plcdnode->drv = dev_lcd_finddrv(dev->id);
+		if(plcdnode->drv != NULL)
+		{
+			
+			plcdnode->pra = dev_lcd_findpra(dev->id);
+			if(plcdnode->pra != NULL)
 			{
 				/*找到驱动跟规格后，初始化*/
-				u8 j = 0;
-
-				while(1)
-				{
-					ret = LcdProbDrv8080List[j]->init(pdev);
-					if(ret == 0)
-					{
-						LCD_DEBUG(LOG_DEBUG, "lcd drv prob ok!\r\n");	
-						pdev->drv = LcdProbDrv8080List[j];
-						/*
-							用驱动的ID找参数
-						*/
-						pdev->pra = dev_lcd_findpra(pdev->drv->id);
-						break;
-					}	
-					else
-					{
-						j++;
-						if(j >= sizeof(LcdProbDrv8080List)/sizeof(_lcd_drv *))
-						{
-							LCD_DEBUG(LOG_DEBUG, "lcd prob err\r\n");
-							break;
-						}
-					}
-				}
-			}
-		}
-		else
-		{
-			pdev->drv = dev_lcd_finddrv(pobj->id);
-			if(pdev->drv != NULL)
-			{
-				
-				pdev->pra = dev_lcd_findpra(pobj->id);
-				if(pdev->pra != NULL)
-				{
-					/*找到驱动跟规格后，初始化*/
-					ret = pdev->drv->init(pdev);
-				}
-				else
-					LCD_DEBUG(LOG_DEBUG, "lcd find drv fail!\r\n");
+				ret = plcdnode->drv->init(plcdnode);
 			}
 			else
-				LCD_DEBUG(LOG_DEBUG, "lcd find drv fail!\r\n");
-
-
-		}
-
-		if(ret == 0)
-		{
-			pdev->gd = -1;
-			
-			pdev->dir = H_LCD;
-			pdev->height = pdev->pra->height;
-			pdev->width = pdev->pra->width;
-			dev_lcd_setdir(pdev, W_LCD, L2R_U2D);
-			pdev->drv->onoff((pdev),1);//打开显示
-			pdev->drv->color_fill(pdev, 0, pdev->width, 0, pdev->height, BLUE);
-
-			pdev->drv->backlight(pdev, 1);
-
-			wjq_log(LOG_INFO, "lcd init OK\r\n");
+				LCD_DEBUG(LOG_DEBUG, "lcd find pra fail!\r\n");
 		}
 		else
 		{
-			wjq_log(LOG_INFO, "lcd drv init err!\r\n");
-		}
-		
-
-		i++;
-		if(i >= sizeof(LcdObjList)/sizeof(LcdObj *))
-		{
-			wjq_log(LOG_INFO, "lcd init finish\r\n");
-			break;
+			
+			LCD_DEBUG(LOG_DEBUG, "lcd find drv fail!\r\n");
 		}
 	}
 
+	if(ret == 0)
+	{
+		plcdnode->gd = -1;
+		
+		plcdnode->dir = H_LCD;
+		
+		plcdnode->height = plcdnode->pra->height;
+		plcdnode->width = plcdnode->pra->width;
+		
+		dev_lcd_setdir(plcdnode, W_LCD, L2R_U2D);
+		
+		plcdnode->drv->onoff((plcdnode),1);//打开显示
+		
+		plcdnode->drv->color_fill(plcdnode, 0, plcdnode->width, 0, plcdnode->height, BLUE);
+		
+		plcdnode->drv->backlight(plcdnode, 1);
+
+		wjq_log(LOG_INFO, "lcd init OK\r\n");
+	}
+	else
+	{
+		plcdnode->gd = -2;
+		wjq_log(LOG_INFO, "lcd drv init err!\r\n");
+	}
+	
 	return 0;
 }
+
 
 /**
  *@brief:      dev_lcd_open
@@ -397,36 +371,49 @@ s32 dev_lcd_init(void)
  *@param[out]  无
  *@retval:     DevLcd
  */
-DevLcd *dev_lcd_open(char *name)
+DevLcdNode *dev_lcd_open(char *name)
 {
-	DevLcd *p;
-	u8 i;
 
-	i = 0;
+	DevLcdNode *node;
+	struct list_head *listp;
+	
+	//LCD_DEBUG(LOG_INFO, "lcd open:%s!\r\n", name);
+
+	listp = DevLcdRoot.next;
+	node = NULL;
+	
 	while(1)
 	{
-		
-		p = &DevLcdList[i];
-		if(0 == strcmp(name, p->dev->name))
-		{
-			LCD_DEBUG(LOG_DEBUG, "find lcd\r\n");
-			
-			if(p->gd == -99)
-			{
-				LCD_DEBUG(LOG_DEBUG, "lcd dev no init!\r\n");
-				return NULL;
-			}
-			
-			return p;
+		if(listp == &DevLcdRoot)
+			break;
 
+		node = list_entry(listp, DevLcdNode, list);
+		//LCD_DEBUG(LOG_INFO, "lcd name:%s!\r\n", node->dev.name);
+		
+		if(strcmp(name, node->dev.name) == 0)
+		{
+			//LCD_DEBUG(LOG_INFO, "lcd dev get ok!\r\n");
+			break;
+		}
+		else
+		{
+			node = NULL;
 		}
 		
-		i++;
-		if(i>= sizeof(LcdObjList)/sizeof(LcdObj*))
-			return NULL;
+		listp = listp->next;
 	}
 
+	if(node != NULL)
+	{
+		if(node->gd > (-2))
+			node->gd++;
+		else
+			return NULL;
+	}
+	
+	return node;
 }
+
 /**
  *@brief:      dev_lcd_close
  *@details:    关闭LCD
@@ -434,13 +421,13 @@ DevLcd *dev_lcd_open(char *name)
  *@param[out]  无
  *@retval:     
  */
-s32 dev_lcd_close(DevLcd *dev)
+s32 dev_lcd_close(DevLcdNode *node)
 {
-	if(dev->gd <0)
+	if(node->gd <0)
 		return -1;
 	else
 	{
-		dev->gd = -1;
+		node->gd -= 1;
 		return 0;
 	}
 }
@@ -451,7 +438,7 @@ s32 dev_lcd_close(DevLcd *dev)
 到驱动就换为(0,0)，无论程序还是控制器显存，都是从（0，0）开始
 
 */
-s32 dev_lcd_drawpoint(DevLcd *lcd, u16 x, u16 y, u16 color)
+s32 dev_lcd_drawpoint(DevLcdNode *lcd, u16 x, u16 y, u16 color)
 {
 	if(lcd == NULL)
 		return -1;
@@ -459,7 +446,7 @@ s32 dev_lcd_drawpoint(DevLcd *lcd, u16 x, u16 y, u16 color)
 	return lcd->drv->draw_point(lcd, x-1, y-1, color);
 }
 
-s32 dev_lcd_prepare_display(DevLcd *lcd, u16 sx, u16 ex, u16 sy, u16 ey)
+s32 dev_lcd_prepare_display(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey)
 {
 	if(lcd == NULL)
 		return -1;
@@ -468,21 +455,21 @@ s32 dev_lcd_prepare_display(DevLcd *lcd, u16 sx, u16 ex, u16 sy, u16 ey)
 }
 
 
-s32 dev_lcd_fill(DevLcd *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
+s32 dev_lcd_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
 {	
 	if(lcd == NULL)
 		return -1;
 	
 	return lcd->drv->fill(lcd, sx-1,ex-1,sy-1,ey-1,color);
 }
-s32 dev_lcd_color_fill(DevLcd *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 color)
+s32 dev_lcd_color_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 color)
 {
 	if(lcd == NULL)
 		return -1;
 	
 	return lcd->drv->color_fill(lcd, sx-1,ex-1,sy-1,ey-1,color);
 }
-s32 dev_lcd_backlight(DevLcd *lcd, u8 sta)
+s32 dev_lcd_backlight(DevLcdNode *lcd, u8 sta)
 {
 	if(lcd == NULL)
 		return -1;
@@ -490,7 +477,7 @@ s32 dev_lcd_backlight(DevLcd *lcd, u8 sta)
 	lcd->drv->backlight(lcd, sta);
 	return 0;
 }
-s32 dev_lcd_display_onoff(DevLcd *lcd, u8 sta)
+s32 dev_lcd_display_onoff(DevLcdNode *lcd, u8 sta)
 {
 	if(lcd == NULL)
 		return -1;
@@ -515,7 +502,7 @@ s32 dev_lcd_display_onoff(DevLcd *lcd, u8 sta)
  *@param[out]  无
  *@retval:     
  */
-void line (DevLcd *lcd, int x1, int y1, int x2, int y2, unsigned colidx)
+void line (DevLcdNode *lcd, int x1, int y1, int x2, int y2, unsigned colidx)
 {
 	int tmp;
 	int dx = x2 - x1;
@@ -571,7 +558,7 @@ void line (DevLcd *lcd, int x1, int y1, int x2, int y2, unsigned colidx)
  *@param[out]  无
  *@retval:     
  */
-void put_cross(DevLcd *lcd, int x, int y, unsigned colidx)
+void put_cross(DevLcdNode *lcd, int x, int y, unsigned colidx)
 {
 	if(lcd == NULL)
 		return;
@@ -601,7 +588,7 @@ void put_cross(DevLcd *lcd, int x, int y, unsigned colidx)
  *@param[out]  无
  *@retval:     
  */
-void put_char(DevLcd *lcd, int x, int y, int c, int colidx)
+void put_char(DevLcdNode *lcd, int x, int y, int c, int colidx)
 {
 	int i,j,bits;
 	u8* p;
@@ -632,7 +619,7 @@ void put_char(DevLcd *lcd, int x, int y, int c, int colidx)
  *@param[out]  无
  *@retval:     
  */
-void put_string(DevLcd *lcd, int x, int y, char *s, unsigned colidx)
+void put_string(DevLcdNode *lcd, int x, int y, char *s, unsigned colidx)
 {
 	int i;
 	
@@ -652,7 +639,7 @@ void put_string(DevLcd *lcd, int x, int y, char *s, unsigned colidx)
  *@param[out]  无
  *@retval:     
  */
-void put_string_center(DevLcd *lcd, int x, int y, char *s, unsigned colidx)
+void put_string_center(DevLcdNode *lcd, int x, int y, char *s, unsigned colidx)
 {
 	int sl = strlen (s);
 	
@@ -674,7 +661,7 @@ void put_string_center(DevLcd *lcd, int x, int y, char *s, unsigned colidx)
  *@param[out]  无
  *@retval:     
  */
-void rect (DevLcd *lcd, int x1, int y1, int x2, int y2, unsigned colidx)
+void rect (DevLcdNode *lcd, int x1, int y1, int x2, int y2, unsigned colidx)
 {
 	if(lcd == NULL)
 		return;
@@ -692,7 +679,7 @@ void rect (DevLcd *lcd, int x1, int y1, int x2, int y2, unsigned colidx)
  *@param[out]  无
  *@retval:     	
  */
-s32 dev_lcd_put_string(DevLcd *lcd, FontType font, int x, int y, char *s, unsigned colidx)
+s32 dev_lcd_put_string(DevLcdNode *lcd, FontType font, int x, int y, char *s, unsigned colidx)
 {
 	u16 slen;
 	u16 xlen,ylen;
@@ -812,10 +799,10 @@ s32 dev_lcd_put_string(DevLcd *lcd, FontType font, int x, int y, char *s, unsign
  */
 void dev_lcd_test(void)
 {
-	DevLcd *LcdCog = NULL;
-	DevLcd *LcdOled = NULL;
-	DevLcd *LcdOledI2C = NULL;
-	DevLcd *LcdTft = NULL;
+	DevLcdNode *LcdCog = NULL;
+	DevLcdNode *LcdOled = NULL;
+	DevLcdNode *LcdOledI2C = NULL;
+	DevLcdNode *LcdTft = NULL;
 
 	/*  打开三个设备 */
 	LcdCog = dev_lcd_open("spicoglcd");
@@ -877,7 +864,7 @@ extern void Delay(__IO uint32_t nTime);
 void dev_i2coledlcd_test(void)
 {
 
-	DevLcd *LcdOledI2C = NULL;
+	DevLcdNode *LcdOledI2C = NULL;
 
 	LcdOledI2C = dev_lcd_open("i2coledlcd");
 	if(LcdOledI2C==NULL)

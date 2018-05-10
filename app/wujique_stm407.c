@@ -19,7 +19,7 @@
 
 #include "main.h"
 
-DevLcd * WJQTestLcd;
+DevLcdNode * WJQTestLcd;
 
 s32 wjq_wait_key(u8 key)
 {
@@ -59,7 +59,7 @@ s32 wjq_test_showstr(char *s)
  */
 s32 test_tft_display(void)
 {
-	DevLcd *lcd;
+	DevLcdNode *lcd;
 	u8 step = 0;
 	u8 dis = 1;
 	
@@ -120,7 +120,7 @@ s32 test_tft_display(void)
 
 s32 test_cogoled_lcd_display(char *name)
 {
-	DevLcd *lcd;
+	DevLcdNode *lcd;
 	u8 step = 0;
 	u8 dis = 1;
 	
@@ -312,7 +312,7 @@ s32 test_sound_rec(void)
 extern struct tsdev *ts_open_module(void);
 s32 test_tp_calibrate(void)
 {
-	DevLcd *lcd;
+	DevLcdNode *lcd;
 
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	/*顶行居中显示父菜单*/
@@ -336,7 +336,7 @@ s32 test_tp_calibrate(void)
 
 s32 test_tp_test(void)
 {
-	DevLcd *lcd;
+	DevLcdNode *lcd;
 
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	/*顶行居中显示父菜单*/
@@ -448,7 +448,7 @@ s32 test_key(void)
 
 s32 test_camera(void)
 {
-	DevLcd *lcd;
+	DevLcdNode *lcd;
 
 	//dev_lcd_color_fill(emenulcd, 1, 1000, 1, 1000, WHITE);
 	/*顶行居中显示父菜单*/

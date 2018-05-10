@@ -13,26 +13,12 @@
 #ifndef __WUJIQUE_SYSCONF__
 #define __WUJIQUE_SYSCONF__
 
-/* 
-	对外扩接口进行功能定义  
-*/
-#define SYS_USE_VSPI1	1
-/*
-	VSPI2 VI2C2 KEYPAD ,3者只能用一个
-*/
-//#define SYS_USE_VSPI2 	1
-//#define SYS_USE_VI2C2	1
-#define SYS_USE_KEYPAD	1
-
-//#define SYS_USE_LCDBUS_VSPI		1
-//#define SYS_USE_LCDBUS_VI2C2	1
 /*
 	选择触摸屏检测方案
 */
 
 #define SYS_USE_TS_IC_CASE		1
 //#define SYS_USE_TS_ADC_CASE 	1
-
 /*
 	RS485跟外扩串口设备共用。
 */
@@ -40,6 +26,18 @@
 //#define SYS_USE_EXUART	1
 #define SYS_USE_USB	1
 #define SYS_USE_CAMERA  1
+
+/* 
+	对外扩接口进行功能定义  
+*/
+
+/*
+	VSPI2 VI2C2 KEYPAD ,3者只能用一个
+*/
+//#define SYS_USE_VSPI2 1
+//#define SYS_USE_VI2C2	1
+#define SYS_USE_KEYPAD	1
+
 
 #if (defined(SYS_USE_EXUART) && defined(SYS_USE_RS485))
  #error "please not define SYS_USE_EXUART & SYS_USE_RS485 sametime!(in wujique_sysconf.h file)"
@@ -78,23 +76,10 @@
 #if defined(SYS_USE_TS_IC_CASE) && defined(SYS_USE_TS_ADC_CASE)
  #error "please just select one touch device!(in wujique_sysconf.h file)"
 #endif
+
 /*xpt2046方案基于VSPI1*/
 #ifdef SYS_USE_TS_IC_CASE
-	#if (!defined(SYS_USE_VSPI1))
-		#error "please define SYS_USE_VSPI1!(in wujique_sysconf.h file)"
-	#endif
-#endif
-/*使用VSPI2的LCD串行接口*/
-#ifdef SYS_USE_LCDBUS_VSPI
-	#if (!defined(SYS_USE_VSPI2))
-		#error "please define SYS_USE_VSPI2!(in wujique_sysconf.h file)"
-	#endif
-#endif
-/*使用I2C2的LCD串行接口*/
-#ifdef SYS_USE_LCDBUS_VI2C2
-	#if (!defined(SYS_USE_VI2C2))
-		#error "please define SYS_USE_VSPI2!(in wujique_sysconf.h file)"
-	#endif
+	#define SYS_USE_VSPI1	1
 #endif
 
 /*

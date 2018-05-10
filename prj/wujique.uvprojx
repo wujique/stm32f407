@@ -1341,6 +1341,11 @@
               <FileType>1</FileType>
               <FilePath>..\function\emenu_test.c</FilePath>
             </File>
+            <File>
+              <FileName>list.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\function\list.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

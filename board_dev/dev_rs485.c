@@ -56,7 +56,7 @@ s32 dev_rs485_init(void)
 
 	RS485Gd = -1;
 	#else
-	wjq_log(LOG_INFO, ">---------------RS485 IS NO ININT!\R\N");
+	wjq_log(LOG_INFO, ">---------------RS485 IS NO ININT!\r\n");
 	#endif
 	return 0;
 }

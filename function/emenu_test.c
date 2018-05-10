@@ -7,7 +7,7 @@
 #include "font.h"
 #include "mcu_uart.h"
 
-DevLcd *emenulcd;
+DevLcdNode *emenulcd;
 
 s32 test_wait_key(u8 key)
 {
@@ -279,7 +279,7 @@ const MENU EMenuListTest[]=
 
 
 
-s32 emenu_test(DevLcd *lcd)
+s32 emenu_test(DevLcdNode *lcd)
 {
 	emenulcd = lcd;
 	if(emenulcd == NULL)

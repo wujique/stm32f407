@@ -57,7 +57,7 @@ typedef struct _strMenu
 } MENU;
 
 #include "dev_lcd.h"
-extern s32 emenu_run(DevLcd *lcd, MENU *p, u16 len);
+extern s32 emenu_run(DevLcdNode *lcd, MENU *p, u16 len);
 
 
 #endif

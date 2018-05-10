@@ -1,44 +1,66 @@
 #ifndef _DEV_LCDBUS_H_
 #define _DEV_LCDBUS_H_
 
+
+#include "list.h"
 /*
-系统总共有三种LCD总线
-*/
+	系统总共有三种LCD总线, SPI,I2C,8080
+	*/
 typedef enum{
 	LCD_BUS_NULL = 0,
 	LCD_BUS_SPI,
-
-	#ifdef SYS_USE_LCDBUS_VSPI
-	LCD_BUS_VSPI,
-	#endif
-
-	LCD_BUS_VI2C1,//OLED使用，只要两根线，背光也不需要控制，复位也不需要
-
-	#ifdef SYS_USE_LCDBUS_VI2C2
-	LCD_BUS_VI2C2,
-	#endif
-	
+	LCD_BUS_I2C,
 	LCD_BUS_8080,
 	LCD_BUS_MAX
 }LcdBusType;
 
+typedef struct
+{
+	/*设备名称*/
+	char name[16];
+	/*总线类型：SPI or I2C or 8080*/
+	LcdBusType type;
+	/*总线名字*/
+	char basebus[16];
 
-/*
-	LCD接口定义
-*/
-typedef struct  
-{	
-	char * name;
+	/*
+		3根线：A0-命令数据，rst-复位，bl-背光
+		I2C总线的LCD不需要这三根线
+	*/
+	u32 A0rcc;
+	GPIO_TypeDef *A0port;
+	u16 A0pin;
+
+	u32 rstrcc;
+	GPIO_TypeDef *rstport;
+	u16 rstpin;
+
+	u32 blrcc;
+	GPIO_TypeDef *blport;
+	u16 blpin;
+
+}DevLcdBus;
+
+typedef struct
+{
+	s32 gd;
 	
-	s32 (*init)(void);
-	s32 (*open)(void);
-	s32 (*close)(void);
-	s32 (*writedata)(u8 *data, u16 len);
-	s32 (*writecmd)(u8 cmd);
-	s32 (*bl)(u8 sta);
-}_lcd_bus; 
+	DevLcdBus dev;
 
-extern _lcd_bus *dev_lcdbus_find(LcdBusType bus);
-extern s32 dev_lcdbus_init(void);
+	void *basenode;
+	
+	struct list_head list;
+}DevLcdBusNode;
+
+
+
+extern s32 bus_lcd_bl(DevLcdBusNode *node, u8 sta);
+extern s32 bus_lcd_rst(DevLcdBusNode *node, u8 sta);
+extern DevLcdBusNode *bus_lcd_open(char *name);
+extern s32 bus_lcd_close(DevLcdBusNode *node);
+extern s32 bus_lcd_write_data(DevLcdBusNode *node, u8 *data, u16 len);
+extern s32 bus_lcd_write_cmd(DevLcdBusNode *node, u8 cmd);
+extern s32 dev_lcdbus_register(DevLcdBus *dev);
+
 #endif
 

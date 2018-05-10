@@ -390,9 +390,9 @@ PG12 <-> FSMC_NE4 |
   GPIO_Init(GPIOG, &GPIO_InitStructure);
 
 /*-- FSMC Configuration ------------------------------------------------------*/
-  w.FSMC_AddressSetupTime = 15;
+  w.FSMC_AddressSetupTime = 6;
   w.FSMC_AddressHoldTime = 0;
-  w.FSMC_DataSetupTime = 15;
+  w.FSMC_DataSetupTime = 6;
   w.FSMC_BusTurnAroundDuration = 0;
   w.FSMC_CLKDivision = 0;
   w.FSMC_DataLatency = 0;

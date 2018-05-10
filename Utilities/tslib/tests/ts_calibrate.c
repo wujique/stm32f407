@@ -22,8 +22,8 @@
 #include "wujique_log.h"
 #include "dev_lcd.h"
 
-extern void put_cross(DevLcd *lcd, int x, int y, unsigned colidx);
-extern void put_string_center(DevLcd *lcd, int x, int y, char *s, unsigned colidx);
+extern void put_cross(DevLcdNode *lcd, int x, int y, unsigned colidx);
+extern void put_string_center(DevLcdNode *lcd, int x, int y, char *s, unsigned colidx);
 
 extern int getxy(struct tsdev *ts, int *x, int *y);
 /*
@@ -142,7 +142,7 @@ struct tsdev *ts_open_module(void)
 	return ts;
 }
 
-int ts_calibrate(DevLcd *lcd)
+int ts_calibrate(DevLcdNode *lcd)
 {
 	struct tsdev *ts;
 	char *tsdevice = NULL;
