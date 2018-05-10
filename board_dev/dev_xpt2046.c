@@ -110,6 +110,7 @@ s32 dev_xpt2046_open(void)
 	wjq_log(LOG_INFO, ">--------------xpt2046 open!\r\n");
 	
 	Xpt2046SpiCHNode = mcu_spi_open(XPT2046_SPI, SPI_MODE_0, 2);
+	
 	mcu_tim7_start(100, dev_xpt2046_task, 0);
 	DevXpt2046Gd = 0;
 	return 0;
@@ -179,7 +180,7 @@ void dev_xpt2046_task(void)
 	stmp[0] = 0x00;
 	stmp[1] = XPT2046_CMD_Z1;
 	mcu_spi_transfer(Xpt2046SpiCHNode, stmp, rtmp, 2);
-	wjq_log(LOG_DEBUG, "%d, %d- ", rtmp[0], rtmp[1]);
+	//wjq_log(LOG_DEBUG, "%d, %d- ", rtmp[0], rtmp[1]);
 	
 	pre_y = ((u16)(rtmp[0]&0x7f)<<5) + (rtmp[1]>>3);
 	/*------------------------*/

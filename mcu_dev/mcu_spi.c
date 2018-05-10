@@ -431,7 +431,13 @@ static s32 mcu_vspi_transfer(DevSpiNode *node, u8 *snd, u8 *rsv, s32 len)
 
 */
 struct list_head DevSpiRoot = {&DevSpiRoot, &DevSpiRoot};
-
+/**
+ *@brief:      mcu_spi_register
+ *@details:    注册SPI控制器设备
+ *@param[in]   DevSpi *dev      
+ *@param[out]  无
+ *@retval:     
+ */
 s32 mcu_spi_register(DevSpi *dev)
 {
 
@@ -480,7 +486,13 @@ s32 mcu_spi_register(DevSpi *dev)
 }
 
 struct list_head DevSpiChRoot = {&DevSpiChRoot, &DevSpiChRoot};
-
+/**
+ *@brief:      mcu_spich_register
+ *@details:    注册SPI通道
+ *@param[in]   DevSpiCh *dev     
+ *@param[out]  无
+ *@retval:     
+ */
 s32 mcu_spich_register(DevSpiCh *dev)
 {
 	struct list_head *listp;
@@ -571,7 +583,7 @@ DevSpiChNode *mcu_spi_open(char *name, SPI_MODE mode, u16 pre)
 	DevSpiChNode *node;
 	struct list_head *listp;
 	
-	SPI_DEBUG(LOG_INFO, "spi ch open:%s!\r\n", name);
+	//SPI_DEBUG(LOG_INFO, "spi ch open:%s!\r\n", name);
 
 	listp = DevSpiChRoot.next;
 	node = NULL;
@@ -620,7 +632,8 @@ DevSpiChNode *mcu_spi_open(char *name, SPI_MODE mode, u16 pre)
 			if(res == 0)
 			{
 				node->gd = 0;
-				SPI_DEBUG(LOG_INFO, "spi dev open ok: %s!\r\n", name);
+				//SPI_DEBUG(LOG_INFO, "spi dev open ok: %s!\r\n", name);
+				GPIO_ResetBits(node->dev.csport, node->dev.cspin);
 			}
 			else
 			{

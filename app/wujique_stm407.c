@@ -330,6 +330,10 @@ s32 test_tp_calibrate(void)
 		ts_calibrate(lcd);
 		dev_touchscreen_close();
 	}
+	
+	dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLUE);
+	dev_lcd_close(lcd);
+	
 	return 0;
 }
 

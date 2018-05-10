@@ -313,7 +313,6 @@ s32 sys_dev_init(void)
 	mcu_spich_register(&DevSpi3CH3);
 	
 	mcu_spich_register(&DevVSpi1CH1);
-
 	mcu_spich_register(&DevVSpi2CH1);
 	
 	/*×¢²áLCD×ÜÏß*/
