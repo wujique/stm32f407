@@ -2,6 +2,7 @@
 #define __MCU_SPI_H_
 
 #include "list.h"
+#include "mcu_bsp.h"
 
 typedef enum{
 	DEV_SPI_H = 1,//硬件SPI控制器
@@ -26,16 +27,13 @@ typedef struct
 	/*设备类型，IO模拟 or 硬件控制器*/
 	DEV_SPI_TYPE type;
 	
-	u32 clkrcc;
-	GPIO_TypeDef *clkport;
+	MCU_PORT clkport;
 	u16 clkpin;
 
-	u32 mosircc;
-	GPIO_TypeDef *mosiport;
+	MCU_PORT mosiport;
 	u16 mosipin;
 
-	u32 misorcc;
-	GPIO_TypeDef *misoport;
+	MCU_PORT misoport;
 	u16 misopin;
 
 }DevSpi;
@@ -68,8 +66,7 @@ typedef struct
 	char spi[16];
 
 	/*cs脚*/
-	u32 csrcc;
-	GPIO_TypeDef *csport;
+	MCU_PORT csport;
 	u16 cspin;
 }DevSpiCh;
 

@@ -33,21 +33,15 @@
 	WM8978、TEA5767、外扩I2C使用
 
 */
-#define MCU_I2C1_PORT GPIOD
-#define MCU_I2C1_SCL GPIO_Pin_6
-#define MCU_I2C1_SDA GPIO_Pin_7
-#define MCU_I2C1_RCC RCC_AHB1Periph_GPIOD
 
 DevI2c DevVi2c1={
 		.name = "VI2C1",
 		
-		.sclrcc = MCU_I2C1_RCC,
-		.sclport = MCU_I2C1_PORT,
-		.sclpin = MCU_I2C1_SCL,
+		.sclport = MCU_PORT_D,
+		.sclpin = GPIO_Pin_6,
 
-		.sdarcc = MCU_I2C1_RCC,
-		.sdaport = MCU_I2C1_PORT,
-		.sdapin = MCU_I2C1_SDA,
+		.sdaport = MCU_PORT_D,
+		.sdapin = GPIO_Pin_7,
 		};
 	
 /*
@@ -55,21 +49,14 @@ DevI2c DevVi2c1={
 	外扩IO口模拟I2C，和矩阵按键，模拟SPI冲突
 
 */		
-#define MCU_I2C2_PORT GPIOF
-#define MCU_I2C2_SCL GPIO_Pin_11
-#define MCU_I2C2_SDA GPIO_Pin_10
-#define MCU_I2C2_RCC RCC_AHB1Periph_GPIOF
-
 DevI2c DevVi2c2={
 		.name = "VI2C2",
 		
-		.sclrcc = MCU_I2C2_RCC,
-		.sclport = MCU_I2C2_PORT,
-		.sclpin = MCU_I2C2_SCL,
+		.sclport = MCU_PORT_F,
+		.sclpin = GPIO_Pin_11,
 
-		.sdarcc = MCU_I2C2_RCC,
-		.sdaport = MCU_I2C2_PORT,
-		.sdapin = MCU_I2C2_SDA,
+		.sdaport = MCU_PORT_F,
+		.sdapin = GPIO_Pin_10,
 		};	
 /*
 
@@ -80,38 +67,34 @@ DevI2c DevVi2c2={
 	VSPI1，使用触摸屏四线接口模拟SPI，用于XPT2046方案触摸处理，可读可写。
 */					
 DevSpi DevVSpi1IO={
-		"VSPI1",
-		DEV_SPI_V,
+		.name = "VSPI1",
+		.type = DEV_SPI_V,
 		
 		/*clk*/
-		RCC_AHB1Periph_GPIOB,
-		GPIOB,
-		GPIO_Pin_0,
+		.clkport = MCU_PORT_B,
+		.clkpin = GPIO_Pin_0,
 		/*mosi*/
-		RCC_AHB1Periph_GPIOD,
-		GPIOD,
-		GPIO_Pin_11,
+		.mosiport = MCU_PORT_D,
+		.mosipin = GPIO_Pin_11,
 		/*miso*/
-		RCC_AHB1Periph_GPIOD,
-		GPIOD,
-		GPIO_Pin_12,
+		.misoport = MCU_PORT_D,
+		.misopin = GPIO_Pin_12,
 	};
-		
+
+
+	
 /*  外扩接口模拟VSPI2， 与矩阵键盘，模拟I2C2冲突    */						
 DevSpi DevVspi2IO={
 		"VSPI2",
 		DEV_SPI_V,
 		
-		RCC_AHB1Periph_GPIOF,
-		GPIOF,
+		MCU_PORT_F,
 		GPIO_Pin_11,
 		
-		RCC_AHB1Periph_GPIOF,
-		GPIOF,
+		MCU_PORT_F,
 		GPIO_Pin_10,
 
-		RCC_AHB1Periph_GPIOF,
-		GPIOF,
+		MCU_PORT_F,
 		GPIO_Pin_9,
 
 	};
@@ -126,16 +109,13 @@ DevSpi DevSpi3IO={
 		"SPI3",
 		DEV_SPI_H,
 		
-		RCC_AHB1Periph_GPIOB,
-		GPIOB,
+		MCU_PORT_B,
 		GPIO_Pin_11,
 		
-		RCC_AHB1Periph_GPIOB,
-		GPIOB,
+		MCU_PORT_B,
 		GPIO_Pin_10,
 
-		RCC_AHB1Periph_GPIOB,
-		GPIOB,
+		MCU_PORT_B,
 		GPIO_Pin_9,
 	};
 
@@ -145,8 +125,7 @@ DevSpiCh DevSpi3CH1={
 		"SPI3_CH1",
 		"SPI3",
 		
-		RCC_AHB1Periph_GPIOB,
-		GPIOB,
+		MCU_PORT_B,
 		GPIO_Pin_14,
 		
 	};
@@ -155,8 +134,7 @@ DevSpiCh DevSpi3CH2={
 		"SPI3_CH2",
 		"SPI3",
 		
-		RCC_AHB1Periph_GPIOG,
-		GPIOG,
+		MCU_PORT_G,
 		GPIO_Pin_15,
 		
 	};
@@ -165,8 +143,7 @@ DevSpiCh DevSpi3CH3={
 		"SPI3_CH3",
 		"SPI3",
 		
-		RCC_AHB1Periph_GPIOG,
-		GPIOG,
+		MCU_PORT_G,
 		GPIO_Pin_6,
 		
 	};
@@ -175,8 +152,7 @@ DevSpiCh DevVSpi1CH1={
 		"VSPI1_CH1",
 		"VSPI1",
 		
-		RCC_AHB1Periph_GPIOB,
-		GPIOB,
+		MCU_PORT_B,
 		GPIO_Pin_1,
 		
 	};
@@ -185,8 +161,7 @@ DevSpiCh DevVSpi2CH1={
 		"VSPI2_CH1",
 		"VSPI2",
 		
-		RCC_AHB1Periph_GPIOF,
-		GPIOF,
+		MCU_PORT_F,
 		GPIO_Pin_12,
 		
 	};
@@ -200,16 +175,13 @@ DevLcdBus BusLcdSpi3={
 	.type = LCD_BUS_SPI,
 	.basebus = "SPI3_CH3",
 
-	.A0rcc = RCC_AHB1Periph_GPIOG,
-	.A0port = GPIOG,
+	.A0port = MCU_PORT_G,
 	.A0pin = GPIO_Pin_4,
 
-	.rstrcc = RCC_AHB1Periph_GPIOG,
-	.rstport = GPIOG,
+	.rstport = MCU_PORT_G,
 	.rstpin = GPIO_Pin_7,
 
-	.blrcc = RCC_AHB1Periph_GPIOG,
-	.blport = GPIOG,
+	.blport = MCU_PORT_G,
 	.blpin = GPIO_Pin_9,
 };
 
@@ -222,22 +194,20 @@ DevLcdBus BusLcdI2C1={
 	/*I2C接口的LCD总线，不需要其他IO*/
 
 };
+	
 DevLcdBus BusLcd8080={
 	.name = "BusLcd8080",
 	.type = LCD_BUS_8080,
 	.basebus = "8080",//不适用，8080操作直接嵌入在LCD BUS代码内
 
 	/*8080 不用A0脚，填背光进去*/
-	.A0rcc = RCC_AHB1Periph_GPIOB,
-	.A0port = GPIOB,
+	.A0port = MCU_PORT_B,
 	.A0pin = GPIO_Pin_15,
 
-	.rstrcc = RCC_AHB1Periph_GPIOA,
-	.rstport = GPIOA,
+	.rstport = MCU_PORT_A,
 	.rstpin = GPIO_Pin_15,
-
-	.blrcc = RCC_AHB1Periph_GPIOB,
-	.blport = GPIOB,
+	
+	.blport = MCU_PORT_B,
 	.blpin = GPIO_Pin_15,
 
 };
@@ -247,16 +217,13 @@ DevLcdBus BusLcdVSpi2CH1={
 	.type = LCD_BUS_SPI,
 	.basebus = "VSPI2_CH1",
 
-	.A0rcc = RCC_AHB1Periph_GPIOF,
-	.A0port = GPIOF,
+	.A0port = MCU_PORT_F,
 	.A0pin = GPIO_Pin_8,
 
-	.rstrcc = RCC_AHB1Periph_GPIOF,
-	.rstport = GPIOF,
+	.rstport = MCU_PORT_F,
 	.rstpin = GPIO_Pin_13,
 
-	.blrcc = RCC_AHB1Periph_GPIOF,
-	.blport = GPIOF,
+	.blport = MCU_PORT_F,
 	.blpin = GPIO_Pin_14,
 };
 
@@ -279,15 +246,19 @@ DevSpiFlash DevSpiFlashBoard={
 	指明系统有多少个LCD设备，挂在哪个LCD总线上。
 */
 DevLcd DevLcdOled1	=	{"i2coledlcd",  "BusLcdI2C1",  0X1315};
+
 //LcdObj DevLcdOled2	=	{"i2coledlcd2", LCD_BUS_VI2C2,  0X1315};
 //LcdObj DevLcdOled3	=	{"vspioledlcd", LCD_BUS_VSPI, 	0X1315};
-DevLcd DevLcdOled4	=	{"spioledlcd", 	"BusLcdSpi3", 	0X1315};
+//DevLcd DevLcdOled4	=	{"spioledlcd", 	"BusLcdSpi3", 	0X1315};
+
 DevLcd DevLcdCOG1	=	{"spicoglcd", 	"BusLcdSpi3", 	0X7565};
+
 //LcdObj DevLcdCOG2	=	{"vspicoglcd", 	LCD_BUS_VSPI, 	0X7565};
+
 DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	NULL};
 
 
-s32 sys_dev_init(void)
+s32 sys_dev_register(void)
 {
 	/*注册I2C总线*/
 	mcu_i2c_register(&DevVi2c1);

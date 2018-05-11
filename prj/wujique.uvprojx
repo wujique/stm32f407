@@ -696,6 +696,11 @@
               <FileType>1</FileType>
               <FilePath>..\mcu_dev\mcu_rtc.c</FilePath>
             </File>
+            <File>
+              <FileName>mcu_bsp_stm32.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mcu_dev\mcu_bsp_stm32.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

@@ -264,32 +264,17 @@ static s32 mcu_vspi_init(DevSpi *dev)
 	GPIO_InitTypeDef  GPIO_InitStructure;
 
 	wjq_log(LOG_DEBUG, "vspi init:%s\r\n", dev->name);
+
+	mcu_io_config_out(dev->clkport, dev->clkpin);
+	mcu_io_output_setbit(dev->clkport,dev->clkpin);
+
+	mcu_io_config_out(dev->mosiport, dev->mosipin);
+	mcu_io_output_setbit(dev->mosiport, dev->mosipin);
+
+
+	mcu_io_config_in(dev->misoport, dev->misopin);
+	mcu_io_output_setbit(dev->misoport, dev->misopin);
 	
-	RCC_AHB1PeriphClockCmd(dev->clkrcc, ENABLE);
-	RCC_AHB1PeriphClockCmd(dev->mosircc, ENABLE);
-	RCC_AHB1PeriphClockCmd(dev->misorcc, ENABLE);
-		
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-
-	GPIO_InitStructure.GPIO_Pin = dev->clkpin;	
-	GPIO_Init(dev->clkport, &GPIO_InitStructure);
-	GPIO_SetBits(dev->clkport,dev->clkpin);
-
-	GPIO_InitStructure.GPIO_Pin = dev->mosipin;
-	GPIO_Init(dev->mosiport, &GPIO_InitStructure);
-	GPIO_SetBits(dev->mosiport, dev->mosipin);
-
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-	
-	GPIO_InitStructure.GPIO_Pin = dev->misopin;
-	GPIO_Init(dev->misoport, &GPIO_InitStructure);
-	GPIO_SetBits(dev->misoport, dev->misopin);
-
 	return 0;
 }
 
@@ -389,19 +374,19 @@ static s32 mcu_vspi_transfer(DevSpiNode *node, u8 *snd, u8 *rsv, s32 len)
 		
 		for(i=0; i<8; i++)
 		{
-			GPIO_ResetBits(dev->clkport, dev->clkpin);
+			mcu_io_output_resetbit(dev->clkport, dev->clkpin);
 			vspi_delay(10);
 			
 			if(data&0x80)
-				GPIO_SetBits(dev->mosiport, dev->mosipin);
+				mcu_io_output_setbit(dev->mosiport, dev->mosipin);
 			else
-				GPIO_ResetBits(dev->mosiport, dev->mosipin);
+				mcu_io_output_resetbit(dev->mosiport, dev->mosipin);
 			
 			vspi_delay(10);
 			data<<=1;
-			GPIO_SetBits(dev->clkport, dev->clkpin);
+			mcu_io_output_setbit(dev->clkport, dev->clkpin);
 			
-			misosta = GPIO_ReadInputDataBit(dev->misoport, dev->misopin);
+			misosta = mcu_io_input_readbit(dev->misoport, dev->misopin);
 			if(misosta == Bit_SET)
 			{
 				data |=0x01;
@@ -553,15 +538,8 @@ s32 mcu_spich_register(DevSpiCh *dev)
 	p->spi = p_spi;
 
 	/* 初始化管脚 */
-	GPIO_InitTypeDef  GPIO_InitStructure;
-	RCC_AHB1PeriphClockCmd(dev->csrcc, ENABLE);
-    GPIO_InitStructure.GPIO_Pin = dev->cspin;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
-    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-    GPIO_Init(dev->csport, &GPIO_InitStructure);
-	GPIO_SetBits(dev->csport,dev->cspin);
+	mcu_io_config_out(dev->csport,dev->cspin);
+	mcu_io_output_setbit(dev->csport,dev->cspin);
 
 	return 0;
 }
@@ -633,7 +611,7 @@ DevSpiChNode *mcu_spi_open(char *name, SPI_MODE mode, u16 pre)
 			{
 				node->gd = 0;
 				//SPI_DEBUG(LOG_INFO, "spi dev open ok: %s!\r\n", name);
-				GPIO_ResetBits(node->dev.csport, node->dev.cspin);
+				mcu_io_output_resetbit(node->dev.csport, node->dev.cspin);
 			}
 			else
 			{
@@ -668,8 +646,7 @@ s32 mcu_spi_close(DevSpiChNode * node)
 		mcu_hspi_close(node->spi);
 	
 	/*拉高CS*/
-	GPIO_SetBits(node->dev.csport, node->dev.cspin);
-	
+	mcu_io_output_setbit(node->dev.csport, node->dev.cspin);
 	node->gd = -1;
  
 	return 0;
@@ -706,11 +683,11 @@ s32 mcu_spi_cs(DevSpiChNode * node, u8 sta)
 	switch(sta)
 	{
 		case 1:
-			GPIO_SetBits(node->dev.csport, node->dev.cspin);
+			mcu_io_output_setbit(node->dev.csport, node->dev.cspin);
 			break;
 			
 		case 0:
-			GPIO_ResetBits(node->dev.csport, node->dev.cspin);
+			mcu_io_output_resetbit(node->dev.csport, node->dev.cspin);
 			break;
 			
 		default:

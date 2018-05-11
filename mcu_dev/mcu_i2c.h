@@ -2,6 +2,7 @@
 #define __MCU_I2C_H__
 
 #include "list.h"
+#include "mcu_bsp.h"
 
 /*
 	i2c设备定义
@@ -14,12 +15,10 @@ typedef struct
 	char name[MCU_DEV_I2C_NAME_SIZE];
 
 	/*设备需要的资源，模拟I2C只需要两根IO口*/
-	u32 sclrcc;
-	GPIO_TypeDef *sclport;
+	MCU_PORT sclport;
 	u16 sclpin;
 
-	u32 sdarcc;
-	GPIO_TypeDef *sdaport;
+	MCU_PORT sdaport;
 	u16 sdapin;
 }DevI2c;
 

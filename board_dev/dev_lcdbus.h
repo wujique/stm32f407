@@ -3,6 +3,7 @@
 
 
 #include "list.h"
+#include "mcu_bsp.h"
 /*
 	系统总共有三种LCD总线, SPI,I2C,8080
 	*/
@@ -27,18 +28,15 @@ typedef struct
 		3根线：A0-命令数据，rst-复位，bl-背光
 		I2C总线的LCD不需要这三根线
 	*/
-	u32 A0rcc;
-	GPIO_TypeDef *A0port;
+
+	MCU_PORT A0port;
 	u16 A0pin;
 
-	u32 rstrcc;
-	GPIO_TypeDef *rstport;
+	MCU_PORT rstport;
 	u16 rstpin;
 
-	u32 blrcc;
-	GPIO_TypeDef *blport;
+	MCU_PORT blport;
 	u16 blpin;
-
 }DevLcdBus;
 
 typedef struct

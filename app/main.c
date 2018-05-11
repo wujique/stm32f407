@@ -105,6 +105,11 @@ int main(void)
   	RCC_GetClocksFreq(&RCC_Clocks);
   	SysTick_Config(RCC_Clocks.HCLK_Frequency / (1000/SYSTEMTICK_PERIOD_MS));
 	#endif
+
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOF, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOG, ENABLE);
 	
 	mcu_uart_init();
 	mcu_uart_open(PC_PORT);
@@ -157,7 +162,7 @@ void start_task(void *pvParameters)
 	
 	mcu_rtc_init();
 	
-	sys_dev_init();
+	sys_dev_register();
 	
 	dev_key_init();
 	dev_keypad_init();

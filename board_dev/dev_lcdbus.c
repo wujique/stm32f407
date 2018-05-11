@@ -54,31 +54,15 @@ static void bus_lcd_IO_init(DevLcdBus *dev)
 	if(dev->type == LCD_BUS_I2C)
 		return;
 
-	RCC_AHB1PeriphClockCmd(dev->A0rcc,  ENABLE);
-	RCC_AHB1PeriphClockCmd(dev->rstrcc, ENABLE);
-	RCC_AHB1PeriphClockCmd(dev->blrcc,  ENABLE);
-	
-	
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-	
-	//DC(A0)
-	
-	GPIO_InitStructure.GPIO_Pin = dev->A0pin;
-	GPIO_Init(dev->A0port,  &GPIO_InitStructure);
-	GPIO_SetBits(dev->A0port, dev->A0pin);
+	/* 初始化管脚 */
+	mcu_io_config_out(dev->A0port,dev->A0pin);
+	mcu_io_output_setbit(dev->A0port,dev->A0pin);
 
-	//RST
-	GPIO_InitStructure.GPIO_Pin = dev->rstpin; //OUT推挽输出   RST
-	GPIO_Init(dev->rstport, &GPIO_InitStructure);
-	GPIO_SetBits(dev->rstport, dev->rstpin);
-
-	//bl
-	GPIO_InitStructure.GPIO_Pin = dev->blpin; //OUT推挽输出 
-	GPIO_Init(dev->blport, &GPIO_InitStructure);
-	GPIO_SetBits(dev->blport, dev->blpin);	
+	mcu_io_config_out(dev->rstport,dev->rstpin);
+	mcu_io_output_setbit(dev->rstport,dev->rstpin);
+	
+	mcu_io_config_out(dev->blport,dev->blpin);
+	mcu_io_output_setbit(dev->blport,dev->blpin);
 
 }
 
@@ -86,11 +70,11 @@ s32 bus_lcd_bl(DevLcdBusNode *node, u8 sta)
 {
 	if(sta ==1)
 	{
-		GPIO_SetBits(node->dev.blport, node->dev.blpin);
+		mcu_io_output_setbit(node->dev.blport, node->dev.blpin);
 	}
 	else
 	{
-		GPIO_ResetBits(node->dev.blport, node->dev.blpin);	
+		mcu_io_output_resetbit(node->dev.blport, node->dev.blpin);	
 	}
 	return 0;
 }
@@ -99,11 +83,11 @@ s32 bus_lcd_rst(DevLcdBusNode *node, u8 sta)
 {
 	if(sta ==1)
 	{
-		GPIO_SetBits(node->dev.rstport, node->dev.rstpin);
+		mcu_io_output_setbit(node->dev.rstport, node->dev.rstpin);
 	}
 	else
 	{
-		GPIO_ResetBits(node->dev.rstport, node->dev.rstpin);	
+		mcu_io_output_resetbit(node->dev.rstport, node->dev.rstpin);	
 	}
 	return 0;
 }
@@ -115,11 +99,11 @@ static s32 bus_lcd_a0(DevLcdBusNode *node, u8 sta)
 	
 	if(sta ==1)
 	{
-		GPIO_SetBits(node->dev.A0port, node->dev.A0pin);
+		mcu_io_output_setbit(node->dev.A0port, node->dev.A0pin);
 	}
 	else
 	{
-		GPIO_ResetBits(node->dev.A0port, node->dev.A0pin);	
+		mcu_io_output_resetbit(node->dev.A0port, node->dev.A0pin);	
 	}
 	return 0;
 }

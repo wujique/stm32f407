@@ -61,13 +61,7 @@ static void mcu_i2c_delay(void)
  */
 void mcu_i2c_sda_input(DevI2c *dev)
 {
-    GPIO_InitTypeDef GPIO_InitStructure;
-
-    GPIO_InitStructure.GPIO_Pin = dev->sdapin;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;//输入模式  
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-    GPIO_Init(dev->sdaport, &GPIO_InitStructure);//初始化   
+	mcu_io_config_in(dev->sdaport, dev->sdapin);
 }
 /**
  *@brief:      mcu_i2c_sda_output
@@ -78,16 +72,7 @@ void mcu_i2c_sda_input(DevI2c *dev)
  */
 void mcu_i2c_sda_output(DevI2c *dev)
 {
-
-    GPIO_InitTypeDef GPIO_InitStructure;
-
-    GPIO_InitStructure.GPIO_Pin = dev->sdapin;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//普通输出模式   
-    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;//上拉
-    GPIO_Init(dev->sdaport, &GPIO_InitStructure);//初始化
-
+	mcu_io_config_out(dev->sdaport, dev->sdapin);
 }
 /**
  *@brief:      mcu_i2c_readsda
@@ -99,7 +84,7 @@ void mcu_i2c_sda_output(DevI2c *dev)
 static s32 mcu_i2c_readsda(DevI2c *dev)
 {
 
-    if(Bit_SET == GPIO_ReadInputDataBit(dev->sdaport, dev->sdapin))
+    if(Bit_SET == mcu_io_input_readbit(dev->sdaport, dev->sdapin))
         return 1;
     else
         return 0;
@@ -116,16 +101,13 @@ static void mcu_i2c_sda(DevI2c *dev, u8 sta)
 
     if(sta == 1)
     {
-        GPIO_SetBits(dev->sdaport, dev->sdapin);    
+		mcu_io_output_setbit(dev->sdaport, dev->sdapin);
     }
     else if(sta == 0)
     {
-        GPIO_ResetBits(dev->sdaport, dev->sdapin);
+    	mcu_io_output_resetbit(dev->sdaport, dev->sdapin);
     }
-    else
-    {
-    
-    }
+
 }
 
 /**
@@ -138,18 +120,14 @@ static void mcu_i2c_sda(DevI2c *dev, u8 sta)
 static void mcu_i2c_scl(DevI2c *dev, u8 sta)
 {
 
-    if(sta == 1)
+	if(sta == 1)
     {
-        GPIO_SetBits(dev->sclport, dev->sclpin);    
+		mcu_io_output_setbit(dev->sclport, dev->sclpin);
     }
     else if(sta == 0)
     {
-        GPIO_ResetBits(dev->sclport, dev->sclpin);
+    	mcu_io_output_resetbit(dev->sclport, dev->sclpin);
     }
-    else
-    {
-    
-    }    
 }
 /**
  *@brief:      mcu_i2c_start
@@ -465,44 +443,19 @@ s32 mcu_i2c_register(DevI2c * dev)
 	*/
 	p = (DevI2cNode *)wjq_malloc(sizeof(DevI2cNode));
 	list_add(&(p->list), &DevI2cGdRoot);
-
+	
 	/*
 		初始化设备节点
-
 	*/
-	memcpy(p->dev.name, dev->name, MCU_DEV_I2C_NAME_SIZE);
-	p->dev.sclrcc = dev->sclrcc;
-	p->dev.sclport = dev->sclport;
-	p->dev.sclpin = dev->sclpin;
-	p->dev.sdarcc = dev->sdarcc;
-	p->dev.sdaport = dev->sdaport;
-	p->dev.sdapin = dev->sdapin;
+	memcpy((u8 *)&p->dev, (u8 *)dev, sizeof(DevI2c));
 	p->gd = -1;
 
+	/*初始化IO口状态*/
+	mcu_io_config_out(dev->sclport, dev->sclpin);
+	mcu_io_config_out(dev->sdaport, dev->sdapin);
 
-	/*初始化硬件，不同CPU需要修改*/
-	GPIO_InitTypeDef GPIO_InitStructure;
-	RCC_AHB1PeriphClockCmd(dev->sclrcc, ENABLE);
-
-	GPIO_InitStructure.GPIO_Pin = dev->sclpin;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//普通输出模式   
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;//上拉
-	GPIO_Init(dev->sclport, &GPIO_InitStructure);//初始化
-
-	RCC_AHB1PeriphClockCmd(dev->sdarcc, ENABLE);
-
-	GPIO_InitStructure.GPIO_Pin = dev->sdapin;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//普通输出模式   
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;//上拉
-	GPIO_Init(dev->sdaport, &GPIO_InitStructure);//初始化
-
-	 //初始化IO口状态
-	GPIO_SetBits(dev->sdaport, dev->sdapin); 
-	GPIO_SetBits(dev->sclport, dev->sclpin); 
+	mcu_io_output_setbit(dev->sdaport, dev->sdapin);
+	mcu_io_output_setbit(dev->sclport, dev->sclpin); 
 
 	return 0;
 }
