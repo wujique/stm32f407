@@ -105,7 +105,7 @@ int main(void)
   	RCC_GetClocksFreq(&RCC_Clocks);
   	SysTick_Config(RCC_Clocks.HCLK_Frequency / (1000/SYSTEMTICK_PERIOD_MS));
 	#endif
-
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOF, ENABLE);
@@ -183,8 +183,11 @@ void start_task(void *pvParameters)
 	wujique_407test_init();
 	
 	/* Ä¬ÈÏ¿ªÆôÍøÂç²âÊÔ*/
-	//eth_app_init();
+	eth_app_init();
+
+	mcu_adc_temprate_init();
 	
+	u16 tmp = 0;
 	while (1)
 	{
 		/*Çý¶¯ÂÖÑ¯*/
@@ -197,6 +200,12 @@ void start_task(void *pvParameters)
 		vTaskDelay(2);
 		dev_touchkey_task();
 
+		tmp++;
+		if( tmp>=500 )
+		{
+			tmp = 0;
+			mcu_tempreate_get_tempreate();
+		}
 	}
 }
 

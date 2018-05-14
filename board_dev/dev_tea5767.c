@@ -57,7 +57,7 @@ static s32 dev_tea5767_readreg(u8* data)
 {
 	DevI2cNode *dev;
 	dev = mcu_i2c_open(DEV_TEA5767_I2CBUS);
-	mcu_i2c_transfer(dev, DEV_TEA5767_I2CC_ADDR, MCU_I2C_MODE_R, tea5767_readbuf, 5);
+	mcu_i2c_transfer(dev, DEV_TEA5767_I2CC_ADDR, MCU_I2C_MODE_R, data, 5);
 	mcu_i2c_close(dev);	
 	return 0;
 }
@@ -66,7 +66,7 @@ static s32 dev_tea5767_writereg(u8* data)
 	DevI2cNode *dev;
 
 	dev = mcu_i2c_open(DEV_TEA5767_I2CBUS);
-    mcu_i2c_transfer(dev, DEV_TEA5767_I2CC_ADDR, MCU_I2C_MODE_W, tea5767_writebuf, 5);
+    mcu_i2c_transfer(dev, DEV_TEA5767_I2CC_ADDR, MCU_I2C_MODE_W, data, 5);
 	mcu_i2c_close(dev);
 	return 0;	
 }

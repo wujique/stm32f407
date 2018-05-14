@@ -26,7 +26,7 @@
 #endif
 
 #ifdef ALLOC_USE_ARRAY
-#define AllocArraySize (75*1024)
+#define AllocArraySize (70*1024)
 
 __align(4)//保证内存池四字节对齐
 char AllocArray[AllocArraySize];
