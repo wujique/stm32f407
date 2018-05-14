@@ -196,7 +196,7 @@ static s32 mcu_i2c_wait_ack(DevI2c *dev)
         if(time_out > MCU_I2C_TIMEOUT)
         {
             mcu_i2c_stop(dev);
-            wjq_log(LOG_ERR, "i2c:wait ack time out!\r\n");
+            //wjq_log(LOG_ERR, "i2c:wait ack time out!\r\n");
             return 1;
         }
 
@@ -324,6 +324,8 @@ s32 mcu_i2c_transfer(DevI2cNode *node, u8 addr, u8 rw, u8* data, s32 datalen)
     s32 i;
     u8 ch;
 	DevI2c *dev;
+	s32 res;
+	
     #if 0//测试IO口是否连通
     while(1)
     {
@@ -359,8 +361,11 @@ s32 mcu_i2c_transfer(DevI2cNode *node, u8 addr, u8 rw, u8* data, s32 datalen)
     }
     
     mcu_i2c_writebyte(dev, addr);
-    mcu_i2c_wait_ack(dev);
-
+	
+    res = mcu_i2c_wait_ack(dev);
+	if(res == 1)
+		return 1;
+	
     i = 0;
 
     //数据传输
@@ -370,7 +375,10 @@ s32 mcu_i2c_transfer(DevI2cNode *node, u8 addr, u8 rw, u8* data, s32 datalen)
 	 	{
             ch = *(data+i);
             mcu_i2c_writebyte(dev, ch);
-            mcu_i2c_wait_ack(dev);
+            res = mcu_i2c_wait_ack(dev);
+			if(res == 1)
+				return 1;
+			
 			i++;
 	    }
     }

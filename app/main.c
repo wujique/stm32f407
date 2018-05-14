@@ -49,7 +49,7 @@
 #include "eth_app.h"
 #include "dev_lcd.h"
 #include "dev_keypad.h"
-
+#include "dev_htu21d.h"
 #include "FreeRTos.h"
 /** @addtogroup Template_Project
   * @{
@@ -183,9 +183,11 @@ void start_task(void *pvParameters)
 	wujique_407test_init();
 	
 	/* 默认开启网络测试*/
-	eth_app_init();
+	//eth_app_init();
 
+	/* stm32 内部ADC 测量温度 */
 	mcu_adc_temprate_init();
+	dev_htu21d_init();
 	
 	u16 tmp = 0;
 	while (1)
@@ -204,7 +206,8 @@ void start_task(void *pvParameters)
 		if( tmp>=500 )
 		{
 			tmp = 0;
-			mcu_tempreate_get_tempreate();
+			//mcu_tempreate_get_tempreate();
+			dev_htu21d_read(HTU21D_READ_TEMP);
 		}
 	}
 }

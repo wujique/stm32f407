@@ -811,6 +811,11 @@
               <FileType>1</FileType>
               <FilePath>..\board_dev\dev_esp8266.c</FilePath>
             </File>
+            <File>
+              <FileName>dev_htu21d.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\board_dev\dev_htu21d.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
