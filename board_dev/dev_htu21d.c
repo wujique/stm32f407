@@ -93,8 +93,10 @@ s32 dev_htu21d_read(u8 type)
 	/**/
 	wjq_log(LOG_INFO, "-%02x %02x %02x\r\n", tmp[0], tmp[1], tmp[2]);
 	//计算CRC校验
+	
 	//计算温湿度
-	data = tmp[0]*256+((tmp[1]>>2)&0x3f);
+	data = tmp[0]*256+(tmp[1]&0xfc);
+	
 	if((tmp[1] & 0x02) == 0x00)//温度测量
 	{
 		temp = ((17572*data)>>16)-4685;
