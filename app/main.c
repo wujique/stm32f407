@@ -176,6 +176,9 @@ void start_task(void *pvParameters)
 	dev_touchkey_init();
 	dev_camera_init();
 	dev_8266_init();
+	/* stm32 内部ADC 测量温度 */
+	mcu_adc_temprate_init();
+	dev_htu21d_init();
 	
 	fun_mount_sd();
 	usb_task_create();
@@ -185,11 +188,8 @@ void start_task(void *pvParameters)
 	/* 默认开启网络测试*/
 	//eth_app_init();
 
-	/* stm32 内部ADC 测量温度 */
-	mcu_adc_temprate_init();
-	dev_htu21d_init();
+	fun_cmd_init();
 	
-	u16 tmp = 0;
 	while (1)
 	{
 		/*驱动轮询*/
@@ -201,14 +201,6 @@ void start_task(void *pvParameters)
 		fun_rec_task();
 		vTaskDelay(2);
 		dev_touchkey_task();
-
-		tmp++;
-		if( tmp>=500 )
-		{
-			tmp = 0;
-			//mcu_tempreate_get_tempreate();
-			dev_htu21d_read(HTU21D_READ_TEMP);
-		}
 	}
 }
 

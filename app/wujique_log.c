@@ -126,4 +126,24 @@ void PrintFormat(u8 *wbuf, s32 wlen)
     uart_printf("\r\n");
 }
 
+void cmd_uart_printf(s8 *fmt,...)
+{
+    s32 length = 0;
+    va_list ap;
+
+    s8 *pt;
+    
+    va_start(ap,fmt);
+    vsprintf((char *)string,(const char *)fmt,ap);
+    pt = &string[0];
+    while(*pt!='\0')
+    {
+        length++;
+        pt++;
+    }
+    
+    mcu_uart_write(PC_PORT, (u8*)&string[0], length);  //Ð´´®¿Ú
+    
+    va_end(ap);
+}
 

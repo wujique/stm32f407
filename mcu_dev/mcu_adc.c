@@ -333,7 +333,7 @@ u32 mcu_tempreate_get_tempreate(void)
 
 	adcx=mcu_tempreate_get_adc_value();	
 	adcx = adcx*4125/128-27900;			
-	wjq_log(LOG_DEBUG, "%d-\r\n", adcx);
+	//wjq_log(LOG_DEBUG, "%d-\r\n", adcx);
 	
 	return adcx;
 }
