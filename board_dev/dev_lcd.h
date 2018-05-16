@@ -47,9 +47,9 @@ typedef struct
 */
 typedef struct
 {
-	char name[16]; //设备名字
+	char name[DEV_NAME_SIZE]; //设备名字
 	
-	char buslcd[16]; //挂在那条LCD总线上
+	char buslcd[DEV_NAME_SIZE]; //挂在那条LCD总线上
 	
 	u16 id;
 }DevLcd;
@@ -135,6 +135,7 @@ struct _strDevLcdNode
 #define LGRAYBLUE        0XA651 //浅灰蓝色(中间层颜色)
 #define LBBLUE           0X2B12 //浅棕蓝色(选择条目的反色)
 
+extern s32 dev_lcd_register(const DevLcd *dev);
 extern DevLcdNode *dev_lcd_open(char *name);
 extern s32 dev_lcd_drawpoint(DevLcdNode *lcd, u16 x, u16 y, u16 color);
 extern s32 dev_lcd_prepare_display(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey);

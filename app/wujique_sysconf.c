@@ -34,7 +34,7 @@
 
 */
 
-DevI2c DevVi2c1={
+const DevI2c DevVi2c1={
 		.name = "VI2C1",
 		
 		.sclport = MCU_PORT_D,
@@ -49,7 +49,7 @@ DevI2c DevVi2c1={
 	外扩IO口模拟I2C，和矩阵按键，模拟SPI冲突
 
 */		
-DevI2c DevVi2c2={
+const DevI2c DevVi2c2={
 		.name = "VI2C2",
 		
 		.sclport = MCU_PORT_F,
@@ -66,7 +66,7 @@ DevI2c DevVi2c2={
 /*
 	VSPI1，使用触摸屏四线接口模拟SPI，用于XPT2046方案触摸处理，可读可写。
 */					
-DevSpi DevVSpi1IO={
+const DevSpi DevVSpi1IO={
 		.name = "VSPI1",
 		.type = DEV_SPI_V,
 		
@@ -84,7 +84,7 @@ DevSpi DevVSpi1IO={
 
 	
 /*  外扩接口模拟VSPI2， 与矩阵键盘，模拟I2C2冲突    */						
-DevSpi DevVspi2IO={
+const DevSpi DevVspi2IO={
 		"VSPI2",
 		DEV_SPI_V,
 		
@@ -105,7 +105,7 @@ DevSpi DevVspi2IO={
 	SPI驱动暂时支持SPI3，
 	如果添加其他控制器，请修改mcu_spi.c中的硬件SPI控制器初始化代码
 	*/
-DevSpi DevSpi3IO={
+const DevSpi DevSpi3IO={
 		"SPI3",
 		DEV_SPI_H,
 		
@@ -121,7 +121,7 @@ DevSpi DevSpi3IO={
 
 /* SPI通道*/
 /* FLASH*/
-DevSpiCh DevSpi3CH1={
+const DevSpiCh DevSpi3CH1={
 		"SPI3_CH1",
 		"SPI3",
 		
@@ -130,7 +130,7 @@ DevSpiCh DevSpi3CH1={
 		
 	};
 		
-DevSpiCh DevSpi3CH2={
+const DevSpiCh DevSpi3CH2={
 		"SPI3_CH2",
 		"SPI3",
 		
@@ -139,7 +139,7 @@ DevSpiCh DevSpi3CH2={
 		
 	};
 /*外扩SPI*/		
-DevSpiCh DevSpi3CH3={
+const DevSpiCh DevSpi3CH3={
 		"SPI3_CH3",
 		"SPI3",
 		
@@ -148,7 +148,7 @@ DevSpiCh DevSpi3CH3={
 		
 	};
 /* 触摸屏IO模拟SPI*/
-DevSpiCh DevVSpi1CH1={
+const DevSpiCh DevVSpi1CH1={
 		"VSPI1_CH1",
 		"VSPI1",
 		
@@ -157,7 +157,7 @@ DevSpiCh DevVSpi1CH1={
 		
 	};
 /*外扩IO*/
-DevSpiCh DevVSpi2CH1={
+const DevSpiCh DevVSpi2CH1={
 		"VSPI2_CH1",
 		"VSPI2",
 		
@@ -170,7 +170,7 @@ DevSpiCh DevVSpi2CH1={
 	串行LCD接口，使用真正的SPI控制
 
 */
-DevLcdBus BusLcdSpi3={
+const DevLcdBus BusLcdSpi3={
 	.name = "BusLcdSpi3",
 	.type = LCD_BUS_SPI,
 	.basebus = "SPI3_CH3",
@@ -186,7 +186,7 @@ DevLcdBus BusLcdSpi3={
 };
 
 
-DevLcdBus BusLcdI2C1={
+const DevLcdBus BusLcdI2C1={
 	.name = "BusLcdI2C1",
 	.type = LCD_BUS_I2C,
 	.basebus = "VI2C1",
@@ -195,7 +195,7 @@ DevLcdBus BusLcdI2C1={
 
 };
 	
-DevLcdBus BusLcd8080={
+const DevLcdBus BusLcd8080={
 	.name = "BusLcd8080",
 	.type = LCD_BUS_8080,
 	.basebus = "8080",//不适用，8080操作直接嵌入在LCD BUS代码内
@@ -212,7 +212,7 @@ DevLcdBus BusLcd8080={
 
 };
 
-DevLcdBus BusLcdVSpi2CH1={
+const DevLcdBus BusLcdVSpi2CH1={
 	.name = "BusLcdVSpi2CH1",
 	.type = LCD_BUS_SPI,
 	.basebus = "VSPI2_CH1",
@@ -228,14 +228,14 @@ DevLcdBus BusLcdVSpi2CH1={
 };
 
 
-DevSpiFlash DevSpiFlashCore={
+const DevSpiFlash DevSpiFlashCore={
 	/*有一个叫做board_spiflash的SPI FLASH挂在DEV_SPI_3_2上，型号未知*/
 	"board_spiflash", 
 	"SPI3_CH2", 
 	NULL
 };
 
-DevSpiFlash DevSpiFlashBoard={
+const DevSpiFlash DevSpiFlashBoard={
 	"core_spiflash",  
 	"SPI3_CH1", 
 	NULL
@@ -245,17 +245,17 @@ DevSpiFlash DevSpiFlashBoard={
 	设备树定义
 	指明系统有多少个LCD设备，挂在哪个LCD总线上。
 */
-DevLcd DevLcdOled1	=	{"i2coledlcd",  "BusLcdI2C1",  0X1315};
+const DevLcd DevLcdOled1	=	{"i2coledlcd",  "BusLcdI2C1",  0X1315};
 
 //LcdObj DevLcdOled2	=	{"i2coledlcd2", LCD_BUS_VI2C2,  0X1315};
 //LcdObj DevLcdOled3	=	{"vspioledlcd", LCD_BUS_VSPI, 	0X1315};
 //DevLcd DevLcdOled4	=	{"spioledlcd", 	"BusLcdSpi3", 	0X1315};
 
-DevLcd DevLcdCOG1	=	{"spicoglcd", 	"BusLcdSpi3", 	0X7565};
+const DevLcd DevLcdCOG1	=	{"spicoglcd", 	"BusLcdSpi3", 	0X7565};
 
 //LcdObj DevLcdCOG2	=	{"vspicoglcd", 	LCD_BUS_VSPI, 	0X7565};
 
-DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	NULL};
+const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	NULL};
 
 
 s32 sys_dev_register(void)

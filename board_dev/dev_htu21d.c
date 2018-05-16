@@ -38,12 +38,24 @@
 #define HTU21D_CMD_WREG 	0XE6//Ğ´ÓÃ»§¼Ä´æÆ÷
 #define HTU21D_CMD_RREG 	0XE7//¶ÁÓÃ»§¼Ä´æÆ÷
 #define HTU21D_CMD_RESET 	0XFE//Èí¸´Î»
-
+/**
+ *@brief:     
+ *@details:   
+ *@param[in]    
+ *@param[out]  
+ *@retval:     
+ */
 s32 dev_htu21d_open(void)
 {
-	
+		return 0;
 }
-
+/**
+ *@brief:     
+ *@details:   
+ *@param[in]    
+ *@param[out]  
+ *@retval:     
+ */
 s32 dev_htu21d_init(void)
 {
 	DevI2cNode *dev;
@@ -56,11 +68,25 @@ s32 dev_htu21d_init(void)
 	mcu_i2c_close(dev);
 	return 0;	
 }
+/**
+ *@brief:     
+ *@details:   
+ *@param[in]    
+ *@param[out]  
+ *@retval:     
+ */
 
 s32 dev_htu21d_colse(void)
 {
-
+	return 0;
 }
+/**
+ *@brief:     
+ *@details:   
+ *@param[in]    
+ *@param[out]  
+ *@retval:     
+ */
 
 s32 dev_htu21d_read(u8 type)
 {

@@ -63,7 +63,7 @@ const _strSpiModeSet SpiModeSet[SPI_MODE_MAX]=
  *@param[out]  无
  *@retval:     
  */
-static s32 mcu_hspi_init(DevSpi *dev)
+static s32 mcu_hspi_init(const DevSpi *dev)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
     SPI_InitTypeDef SPI_InitStruct;
@@ -259,9 +259,8 @@ static s32 mcu_hspi_transfer(DevSpiNode *node, u8 *snd, u8 *rsv, s32 len)
  *@param[out]  无
  *@retval:     
  */
-static s32 mcu_vspi_init(DevSpi *dev)
+static s32 mcu_vspi_init(const DevSpi *dev)
 {
-	GPIO_InitTypeDef  GPIO_InitStructure;
 
 	wjq_log(LOG_DEBUG, "vspi init:%s\r\n", dev->name);
 
@@ -423,7 +422,7 @@ struct list_head DevSpiRoot = {&DevSpiRoot, &DevSpiRoot};
  *@param[out]  无
  *@retval:     
  */
-s32 mcu_spi_register(DevSpi *dev)
+s32 mcu_spi_register(const DevSpi *dev)
 {
 
 	struct list_head *listp;
@@ -478,7 +477,7 @@ struct list_head DevSpiChRoot = {&DevSpiChRoot, &DevSpiChRoot};
  *@param[out]  无
  *@retval:     
  */
-s32 mcu_spich_register(DevSpiCh *dev)
+s32 mcu_spich_register(const DevSpiCh *dev)
 {
 	struct list_head *listp;
 	DevSpiChNode *p;
@@ -556,7 +555,7 @@ s32 mcu_spich_register(DevSpiCh *dev)
  */
 DevSpiChNode *mcu_spi_open(char *name, SPI_MODE mode, u16 pre)
 {
-	u8 i;
+
 	s32 res;
 	DevSpiChNode *node;
 	struct list_head *listp;
@@ -643,7 +642,7 @@ s32 mcu_spi_close(DevSpiChNode * node)
 		mcu_hspi_close(node->spi);
 	}
 	else
-		mcu_hspi_close(node->spi);
+		mcu_vspi_close(node->spi);
 	
 	/*拉高CS*/
 	mcu_io_output_setbit(node->dev.csport, node->dev.cspin);

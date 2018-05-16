@@ -414,11 +414,9 @@ struct list_head DevI2cGdRoot = {&DevI2cGdRoot, &DevI2cGdRoot};
  *@param[out]  нч
  *@retval:     
  */
-s32 mcu_i2c_register(DevI2c * dev)
+s32 mcu_i2c_register(const DevI2c * dev)
 {
     
-	u8 i;
-	s32 res;
 	struct list_head *listp;
 	DevI2cNode *p;
 	
@@ -470,7 +468,7 @@ s32 mcu_i2c_register(DevI2c * dev)
 
 DevI2cNode *mcu_i2c_open(char *name)
 {
-	u8 i;
+
 	DevI2cNode *node;
 	struct list_head *listp;
 	

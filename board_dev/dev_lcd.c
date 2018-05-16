@@ -234,7 +234,7 @@ s32 dev_lcd_setdir(DevLcdNode *node, u8 dir, u8 scan_dir)
 
 struct list_head DevLcdRoot = {&DevLcdRoot, &DevLcdRoot};	
 
-s32 dev_lcd_register(DevLcd *dev)
+s32 dev_lcd_register(const DevLcd *dev)
 {
 	struct list_head *listp;
 	DevLcdNode *plcdnode;

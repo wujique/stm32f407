@@ -25,7 +25,7 @@
 #include "wujique_log.h"
 #include "mcu_bsp.h"
 
-GPIO_TypeDef *Stm32PortList[16] = { GPIOA,  GPIOB, GPIOC, GPIOD,
+const GPIO_TypeDef *Stm32PortList[16] = { GPIOA,  GPIOB, GPIOC, GPIOD,
 									GPIOE, GPIOF, GPIOG, GPIOH,
 									GPIOI, GPIOJ, GPIOK, NULL};
 
@@ -37,7 +37,7 @@ void mcu_io_config_in(MCU_PORT port, u16 pin)
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;//输入模式  
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
     GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-    GPIO_Init(Stm32PortList[port], &GPIO_InitStructure);//初始化  	
+    GPIO_Init((GPIO_TypeDef *)Stm32PortList[port], &GPIO_InitStructure);//初始化  	
 }
 
 
@@ -49,22 +49,22 @@ void mcu_io_config_out(MCU_PORT port, u16 pin)
 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;//上拉
-	GPIO_Init(Stm32PortList[port], &GPIO_InitStructure);//初始化
+	GPIO_Init((GPIO_TypeDef *)Stm32PortList[port], &GPIO_InitStructure);//初始化
 }
 
 void mcu_io_output_setbit(MCU_PORT port, u16 pin)
 {
-	GPIO_SetBits(Stm32PortList[port], pin);
+	GPIO_SetBits((GPIO_TypeDef *)Stm32PortList[port], pin);
 }
 
 void mcu_io_output_resetbit(MCU_PORT port, u16 pin)
 {
-	GPIO_ResetBits(Stm32PortList[port], pin);
+	GPIO_ResetBits((GPIO_TypeDef *)Stm32PortList[port], pin);
 }		
 
 u8 mcu_io_input_readbit(MCU_PORT port, u16 pin)
 {
-	return GPIO_ReadInputDataBit(Stm32PortList[port], pin);
+	return GPIO_ReadInputDataBit((GPIO_TypeDef *)Stm32PortList[port], pin);
 }
 
 

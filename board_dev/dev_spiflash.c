@@ -327,8 +327,7 @@ struct list_head DevSpiFlashRoot = {&DevSpiFlashRoot, &DevSpiFlashRoot};
  */
 DevSpiFlashNode *dev_spiflash_open(char* name)
 {
-	u8 i;
-	s32 res;
+
 	DevSpiFlashNode *node;
 	struct list_head *listp;
 	
@@ -399,11 +398,11 @@ s32 dev_spiflash_close(DevSpiFlashNode *node)
 
 
 
-s32 dev_spiflash_register(DevSpiFlash *dev)
+s32 dev_spiflash_register(const DevSpiFlash *dev)
 {
 	struct list_head *listp;
 	DevSpiFlashNode *node;
-	s32 res;
+
 	u32 JID = 0;
 	u32 MID = 0;
 	u8 index = 0;
@@ -462,6 +461,7 @@ s32 dev_spiflash_register(DevSpiFlash *dev)
 		}
 		mcu_spi_close(node->spichnode);
 	}
+	return 0;
 }
 
 #include "alloc.h"
@@ -484,7 +484,6 @@ void dev_spiflash_test_fun(char *name)
 
 	DevSpiFlashNode *node;
 	
-	s32 res;
 	
     wjq_log(LOG_FUN, ">:-------dev_spiflash_test-------\r\n");
     node = dev_spiflash_open(name);
@@ -558,8 +557,7 @@ void dev_spiflash_test_chipcheck(char *name)
 
 	DevSpiFlashNode *node;
 	
-	s32 res;
-	
+
     wjq_log(LOG_FUN, ">:-------dev_spiflash_test-------\r\n");
     node = dev_spiflash_open(name);
 	wjq_log(LOG_FUN, ">:-------%s-------\r\n", node->dev.name);

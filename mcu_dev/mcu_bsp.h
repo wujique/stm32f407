@@ -1,6 +1,8 @@
 #ifndef _MCU_BSP_H_
 #define _MCU_BSP_H_
 
+#define DEV_NAME_SIZE	16
+
 typedef enum{
 	MCU_PORT_A = 0x00,
 	MCU_PORT_B,

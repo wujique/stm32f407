@@ -398,7 +398,6 @@ static s32 drv_ILI9341_drawpoint(DevLcdNode *lcd, u16 x, u16 y, u16 color)
 	u16 sc,ec,sp,ep;
 
 	drv_ILI9341_xy2cp(lcd, x, x, y, y, &sc,&ec,&sp,&ep);
-	
 	drv_ILI9341_set_cp_addr(lcd, sc, ec, sp, ep);
 	
 	*LcdData = color; 
@@ -431,19 +430,39 @@ s32 drv_ILI9341_color_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 colo
 	
 	//uart_printf("ili9341 width:%d, height:%d\r\n", width, height);
 
-	GPIO_ResetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
-	
-	for(i=0; i<height; i++)
+	DevLcdBusNode * node;
+#define TMP_BUF_SIZE 32
+	u16 tmp[TMP_BUF_SIZE];
+	u32 cnt;
+
+	for(cnt = 0; cnt < TMP_BUF_SIZE; cnt ++)
 	{
-		//uart_printf("x:%d, y:%d\r\n", sx, sy+i);
-		for(j=0; j<width; j++)
+		tmp[cnt] = color;
+	}
+	
+	cnt = height*width;
+	
+	node = bus_lcd_open(lcd->dev.buslcd);
+
+	while(1)
+	{
+		if(cnt < TMP_BUF_SIZE)
 		{
-			//Delay(1);
-			*LcdData = color;//写入数据 
+			bus_lcd_write_data(node, (u8 *)tmp, cnt);
+			cnt -= cnt;
 		}
-		//uart_printf("\r\n");
-	}	 
-	GPIO_SetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
+		else
+		{
+			bus_lcd_write_data(node, (u8 *)tmp, TMP_BUF_SIZE);
+			cnt -= TMP_BUF_SIZE;
+		}
+
+		if(cnt <= 0)
+			break;
+	}
+	
+	bus_lcd_close(node);
+
 	return 0;
 
 }
@@ -473,13 +492,11 @@ s32 drv_ILI9341_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
 	width=(ec+1)-sc;//得到填充的宽度 +1是因为坐标从0开始
 	height=(ep+1)-sp;//高度
 	
-	//uart_printf("ili9341 width:%d, height:%d\r\n", width, height);
-	j = width*height;
-	
-	for(i=0; i<j; i++)
-	{
-		*LcdData = *(color+i);//写入数据 
-	}	 
+	DevLcdBusNode * node;
+
+	node = bus_lcd_open(lcd->dev.buslcd);
+	bus_lcd_write_data(node, (u8 *)color, height*width);	
+	bus_lcd_close(node);	 
 
 	return 0;
 
@@ -898,7 +915,6 @@ s32 drv_ILI9325_init(DevLcdNode *lcd)
 	*LcdReg = 0x00;
 	*LcdData = 0x0022;
 
-
 	bus_lcd_close(node);
 	return 0;
 }
@@ -996,50 +1012,42 @@ s32 drv_ILI9325_color_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 colo
 	height = vea - vsa + 1;//高度
 	
 	//uart_printf("ili9325 width:%d, height:%d\r\n", width, height);
-	GPIO_ResetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
-	/*
-		测试结果
-		*LcdData = color;
-		1 fsmc W时序，15-0-15， 15ms	
-		2 改为6-0-6  6.653ms
-		    w.FSMC_AddressSetupTime = 6;
-  			w.FSMC_AddressHoldTime = 0;
-  			w.FSMC_DataSetupTime = 6;
-  		3 改为函数方式，26ms，差距很大，无法接受
-	*/
-	for(i=0; i<height; i++)
-	{
-		//uart_printf("x:%d, y:%d\r\n", sx, sy+i);
-		for(j=0; j<width; j++)
-		{
-			//Delay(1);
-			*LcdData = color;//写入数据 
-		}
-		//uart_printf("\r\n");
-	}	 
+	//GPIO_ResetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
 	
-	#if 0/*总线函数方式*/
 	DevLcdBusNode * node;
-	u16 tmp[2];
-	tmp[0] = (color);
+	#define TMP_BUF_SIZE 32
+	u16 tmp[TMP_BUF_SIZE];
+	u32 cnt;
+
+	for(cnt = 0; cnt < TMP_BUF_SIZE; cnt ++)
+	{
+		tmp[cnt] = color;
+	}
+	
+	cnt = height*width;
 	
 	node = bus_lcd_open(lcd->dev.buslcd);
 
-	for(i=0; i<height; i++)
+	while(1)
 	{
-		//uart_printf("x:%d, y:%d\r\n", sx, sy+i);
-		for(j=0; j<width; j++)
+		if(cnt < TMP_BUF_SIZE)
 		{
-			//Delay(1);
-			*LcdData = color;//写入数据 
-			bus_lcd_write_data(node, (u8 *)tmp, 1);
+			bus_lcd_write_data(node, (u8 *)tmp, cnt);
+			cnt -= cnt;
 		}
-		//uart_printf("\r\n");
-	}	 
+		else
+		{
+			bus_lcd_write_data(node, (u8 *)tmp, TMP_BUF_SIZE);
+			cnt -= TMP_BUF_SIZE;
+		}
+
+		if(cnt <= 0)
+			break;
+	}
 	
 	bus_lcd_close(node);
-	#endif
-	GPIO_SetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
+
+	//GPIO_SetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
 	return 0;
 
 }
@@ -1069,18 +1077,16 @@ s32 drv_ILI9325_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
 	height=(vea +1) - vsa;//高度
 	
 	//uart_printf("ili9325 width:%d, height:%d\r\n", width, height);
-	
-	for(i=0; i<height; i++)
-	{
-		//uart_printf("x:%d, y:%d\r\n", sx, sy+i);
-		for(j=0; j<width; j++)
-		{
-			//Delay(10);
-			*LcdData = *(color+i*width+j);//写入数据 
-		}
-		//uart_printf("\r\n");
-	}	 
+	//GPIO_ResetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
 
+	DevLcdBusNode * node;
+
+	node = bus_lcd_open(lcd->dev.buslcd);
+	bus_lcd_write_data(node, (u8 *)color, height*width);	
+	bus_lcd_close(node);
+
+	//GPIO_SetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
+	
 	return 0;
 
 } 

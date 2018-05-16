@@ -89,6 +89,8 @@ s32 test_tft_display(void)
 						break;
 					case 2:
 						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLUE);
+
+						dev_lcd_put_string(lcd, FONT_SONGTI_1616, 20, 20, "abcÎÝ¼¹È¸¹¤×÷ÊÒADC", RED);
 						break;
 					default:
 						break;

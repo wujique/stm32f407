@@ -23,7 +23,8 @@ typedef enum{
 typedef struct
 {
 	/*设备名称*/
-	char name[16];
+	char name[DEV_NAME_SIZE];
+	
 	/*设备类型，IO模拟 or 硬件控制器*/
 	DEV_SPI_TYPE type;
 	
@@ -61,9 +62,9 @@ typedef struct
 typedef struct
 {
 	/*通道名称，相当于设备名称*/
-	char name[16];
+	char name[DEV_NAME_SIZE];
 	/*SPI控制器名称*/
-	char spi[16];
+	char spi[DEV_NAME_SIZE];
 
 	/*cs脚*/
 	MCU_PORT csport;
@@ -75,8 +76,11 @@ typedef struct
 {
 	/**/
 	s32 gd;
-	DevSpiCh dev;	
+	
+	DevSpiCh dev;
+	
 	DevSpiNode *spi;//控制器节点指针
+	
 	struct list_head list;
 }DevSpiChNode;
 
@@ -92,6 +96,9 @@ typedef enum{
 	SPI_MODE_3,
 	SPI_MODE_MAX
 }SPI_MODE;
+
+extern s32 mcu_spi_register(const DevSpi *dev);
+extern s32 mcu_spich_register(const DevSpiCh *dev);
 
 extern DevSpiChNode *mcu_spi_open(char *name, SPI_MODE mode, u16 pre);
 extern s32 mcu_spi_close(DevSpiChNode * node);

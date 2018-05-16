@@ -18,11 +18,11 @@ typedef enum{
 typedef struct
 {
 	/*设备名称*/
-	char name[16];
+	char name[DEV_NAME_SIZE];
 	/*总线类型：SPI or I2C or 8080*/
 	LcdBusType type;
 	/*总线名字*/
-	char basebus[16];
+	char basebus[DEV_NAME_SIZE];
 
 	/*
 		3根线：A0-命令数据，rst-复位，bl-背光
@@ -58,7 +58,8 @@ extern DevLcdBusNode *bus_lcd_open(char *name);
 extern s32 bus_lcd_close(DevLcdBusNode *node);
 extern s32 bus_lcd_write_data(DevLcdBusNode *node, u8 *data, u16 len);
 extern s32 bus_lcd_write_cmd(DevLcdBusNode *node, u8 cmd);
-extern s32 dev_lcdbus_register(DevLcdBus *dev);
+extern s32 dev_lcdbus_register(const DevLcdBus *dev);
+
 
 #endif
 
