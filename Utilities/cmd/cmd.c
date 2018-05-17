@@ -120,12 +120,12 @@ void cli_main_loop (void* p)
 	s = cmd_getenv ("bootdelay");
 	bootdelay = s ? (int)simple_strtol(s, NULL, 10) : CONFIG_BOOTDELAY;
 
-	debug ("### cli_main_loop entered: bootdelay=%d\n\n", bootdelay);
+	debug ("### cli_main_loop entered: bootdelay=%d\r\n", bootdelay);
 
 
 		s = cmd_getenv ("bootcmd");
 
-	debug ("### cli_main_loop: bootcmd=\"%s\"\n", s ? s : "<UNDEFINED>");
+	debug ("### cli_main_loop: bootcmd=\"%s\"\r\n", s ? s : "<UNDEFINED>");
 
 	if (bootdelay >= 0 && s && !abortboot (bootdelay)) {
 
@@ -142,16 +142,27 @@ void cli_main_loop (void* p)
 	for (;;) {
 		len = readline (CONFIG_SYS_PROMPT);
 		flag = 0;	/* assume no special flags for now */
+
 		if (len > 0)
+		{
+			//printf("modify last command\r\n");
 			strcpy (lastcommand, console_buffer);
-		else if (len == 0)
-			flag |= CMD_FLAG_REPEAT;
-
-		if (len == -1)
-			puts ("<INTERRUPT>\n");
-		else
 			rc = run_command (lastcommand, flag);
-
+		}
+		else if (len == 0)
+		{
+			flag |= CMD_FLAG_REPEAT;
+		}
+		
+		if (len == -1)
+			puts ("<INTERRUPT>\r\n");
+		else
+		{
+			/*wujique mask :no repeat cmd*/
+			//rc = run_command (lastcommand, flag);
+			
+		}
+		
 		if (rc <= 0) {
 			/* invalid command or not repeatable, forget it */
 			lastcommand[0] = 0;

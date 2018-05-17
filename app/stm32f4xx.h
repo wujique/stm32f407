@@ -846,7 +846,6 @@ typedef uint32_t  uint32;
 typedef uint16_t uint16;
 typedef uint8_t  uint8;
 
-
 typedef const uint32_t uc32;  /*!< Read Only */
 typedef const uint16_t uc16;  /*!< Read Only */
 typedef const uint8_t uc8;   /*!< Read Only */

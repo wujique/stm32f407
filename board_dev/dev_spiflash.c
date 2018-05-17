@@ -27,7 +27,7 @@
 #include "mcu_spi.h"
 #include "dev_spiflash.h"
 
-#define DEV_SPIFLASH_DEBUG
+//#define DEV_SPIFLASH_DEBUG
 
 #ifdef DEV_SPIFLASH_DEBUG
 #define SPIFLASH_DEBUG	wjq_log 
@@ -109,6 +109,34 @@ static s32 dev_spiflash_waitwriteend(DevSpiFlashNode *node)
 		return 0;
 }
 /**
+ *@brief:      dev_spiflash_erase
+ *@details:    擦除一个sector
+ *@param[in]   u32 addr  地址，包含这个地址的sector将被擦除
+ *@param[out]  无
+ *@retval:     
+ */
+s32 dev_spiflash_erase(DevSpiFlashNode *node, u32 addr)
+{
+    s32 len = 4;
+    u8 command[4];
+
+    command[0] = SPIFLASH_SE;
+    command[1] = (u8)(addr>>16);
+    command[2] = (u8)(addr>>8);
+    command[3] = (u8)(addr);
+    
+    dev_spiflash_writeen(node);
+	
+	mcu_spi_cs(node->spichnode, 0);
+    mcu_spi_transfer(node->spichnode, command, NULL, len);
+	mcu_spi_cs(node->spichnode, 1);
+
+    dev_spiflash_waitwriteend(node);   
+
+return 0;	
+}
+
+/**
  *@brief:      dev_spiflash_readmorebyte
  *@details:    读随意长度FLASH数据
  *@param[in]   u32 addr  
@@ -117,7 +145,7 @@ static s32 dev_spiflash_waitwriteend(DevSpiFlashNode *node)
  *@param[out]  无
  *@retval:     
  */
-static s32 dev_spiflash_readmorebyte(DevSpiFlashNode *node, u32 addr, u8 *dst, u32 rlen)
+s32 dev_spiflash_read(DevSpiFlashNode *node, u32 addr, u32 rlen, u8 *dst)
 {
     
     s32 len = 4;
@@ -146,7 +174,7 @@ static s32 dev_spiflash_readmorebyte(DevSpiFlashNode *node, u32 addr, u8 *dst, u
  *@retval:     
  */
 
-static s32 dev_spiflash_write(DevSpiFlashNode *node, u8* pbuffer, u32 addr, u16 wlen)
+s32 dev_spiflash_write(DevSpiFlashNode *node,  u32 addr, u16 wlen, u8* src)
 {
     s32 len;
     u8 command[4];
@@ -167,17 +195,17 @@ static s32 dev_spiflash_write(DevSpiFlashNode *node, u8* pbuffer, u32 addr, u16 
         len = 256 - (addr & 0xff);
         if(len < wlen)
         {
-            mcu_spi_transfer(node->spichnode, pbuffer, NULL, len);
+            mcu_spi_transfer(node->spichnode, src, NULL, len);
             wlen -= len;
-            pbuffer += len;
+            src += len;
             addr += len;
         }
         else
         {
-            mcu_spi_transfer(node->spichnode, pbuffer, NULL, wlen);
+            mcu_spi_transfer(node->spichnode, src, NULL, wlen);
             wlen = 0;
             addr += wlen;
-            pbuffer += wlen;
+            src += wlen;
         }
 		
 		mcu_spi_cs(node->spichnode, 1);
@@ -191,35 +219,22 @@ static s32 dev_spiflash_write(DevSpiFlashNode *node, u8* pbuffer, u32 addr, u16 
 /**
  *@brief:      dev_spiflash_sector_erase
  *@details:    擦除一个sector
- *@param[in]   u32 sector_addr  sector内地址
+ *@param[in]   u32 sector  sector号
  *@param[out]  无
  *@retval:     
  */
 s32 dev_spiflash_sector_erase(DevSpiFlashNode *node, u32 sector)
 {
-    s32 len = 4;
-    u8 command[4];
 	u32 addr;
 
 	if(sector >= node->dev.pra->sectornum)
 		return -1;
 	
 	addr = sector*(node->dev.pra->sectorsize);
-	
-    command[0] = SPIFLASH_SE;
-    command[1] = (u8)(addr>>16);
-    command[2] = (u8)(addr>>8);
-    command[3] = (u8)(addr);
-    
-    dev_spiflash_writeen(node);
-	
-	mcu_spi_cs(node->spichnode, 0);
-    mcu_spi_transfer(node->spichnode, command, NULL, len);
-	mcu_spi_cs(node->spichnode, 1);
 
-    dev_spiflash_waitwriteend(node);   
-
-return 0;	
+	dev_spiflash_erase(node, addr);
+	
+	return 0;	
 }
 
 /**
@@ -236,7 +251,7 @@ s32 dev_spiflash_sector_read(DevSpiFlashNode *node, u32 sector, u8 *dst)
 	if(sector >= node->dev.pra->sectornum)
 		return -1;
 	
-	return dev_spiflash_readmorebyte(node, sector*(node->dev.pra->sectorsize), dst, node->dev.pra->sectorsize);
+	return dev_spiflash_read(node, sector*(node->dev.pra->sectorsize), node->dev.pra->sectorsize, dst);
 }
 /**
  *@brief:      dev_spiflash_sector_write
@@ -255,7 +270,7 @@ s32 dev_spiflash_sector_write(DevSpiFlashNode *node, u32 sector, u8 *src)
 		return -1;
 	
 	sector_size = node->dev.pra->sectorsize;
-	dev_spiflash_write(node, src, sector*sector_size, sector_size);
+	dev_spiflash_write(node, sector*sector_size, sector_size, src);
 	return 0;
 }
 /**
@@ -623,6 +638,62 @@ void dev_spiflash_test_chipcheck(char *name)
 	wjq_free(rbuf);
 	wjq_free(wbuf);
 }
+
+void dev_spiflash_test_chiperase(char *name)
+{
+    u32 addr;
+	u16 sector;
+    u16 tmp;
+    u8 i = 1;
+    u8 *rbuf;
+    u8 *wbuf;
+    u8 err_flag = 0;
+
+	DevSpiFlashNode *node;
+	
+    wjq_log(LOG_FUN, ">:-------dev_spiflash_test-------\r\n");
+    node = dev_spiflash_open(name);
+	wjq_log(LOG_FUN, ">:-------%s-------\r\n", node->dev.name);
+	if(node == NULL)
+	{
+		wjq_log(LOG_FUN, "open spi flash ERR\r\n");
+		while(1);
+	}
+	
+	rbuf = (u8*)wjq_malloc(node->dev.pra->sectorsize);
+
+	for(sector = 0; sector < node->dev.pra->sectornum; sector++)
+	{
+
+	    addr = sector * (node->dev.pra->sectorsize);
+		
+		wjq_log(LOG_FUN, ">:sector:%d, addr:0x%08x,", sector, addr);
+	    dev_spiflash_sector_erase(node, sector);
+	    wjq_log(LOG_FUN, "erase...");
+
+	    dev_spiflash_sector_read(node, sector, rbuf);;//读一页回来
+	    wjq_log(LOG_FUN, "read...");
+	    
+	    for(tmp = 0; tmp < node->dev.pra->sectorsize; tmp++)
+	    {
+	        if(rbuf[tmp] != 0xff)//擦除后全部都是0xff
+	        {
+	            //wjq_log(LOG_FUN, "%x=%02X ", tmp, rbuf[tmp]);//擦除后不等于0XFF,坏块    
+	            err_flag = 1;
+	        }
+	    }
+
+	    if(err_flag == 1)
+	        wjq_log(LOG_FUN, "bad sector\r\n");
+	    else
+	        wjq_log(LOG_FUN, "OK sector\r\n");
+	}
+	dev_spiflash_close(node);
+
+	wjq_free(rbuf);
+
+}
+
 
 s32 dev_spiflash_test(void)
 {

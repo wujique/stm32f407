@@ -47,7 +47,7 @@ int
 do_version (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	
-	printf ("\n%s\n", version_string);
+	printf ("\r\n%s\r\n", version_string);
 	return 0;
 }
 
@@ -82,14 +82,14 @@ do_echo (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	}
 
 	if (putnl)
-		putc('\n');
+		putc('\r\n');
 	return 0;
 }
 
 REGISTER_CMD(
 	echo,	CONFIG_SYS_MAXARGS,	1,	do_echo,
 	"echo args to console",
-	"[args..]\n"
+	"[args..]\r\n"
 	"    - echo args to console; \\c suppresses newline"
 );
 
@@ -213,7 +213,7 @@ do_test (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 	expr = !expr;
 
-	debug (": returns %d\n", expr);
+	debug (": returns %d\r\n", expr);
 
 	return expr;
 }
@@ -293,7 +293,7 @@ int _do_help (cmd_tbl_t *cmd_start, int cmd_items, cmd_tbl_t * cmdtp, int
 				return 1;
 			if (usage == NULL)
 				continue;
-			printf("%-*s- %s\n", CONFIG_SYS_HELP_CMD_WIDTH,
+			printf("%-*s- %s\r\n", CONFIG_SYS_HELP_CMD_WIDTH,
 			       cmd_array[i]->name, usage);
 		}
 		return 0;
@@ -307,7 +307,7 @@ int _do_help (cmd_tbl_t *cmd_start, int cmd_items, cmd_tbl_t * cmdtp, int
 		} else {
 			printf ("Unknown command '%s' - try 'help'"
 				" without arguments for list of all"
-				" known commands\n\n", argv[i]
+				" known commands\r\n\r\n", argv[i]
 					);
 			rcode = 1;
 		}
@@ -326,11 +326,11 @@ int do_help (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 REGISTER_CMD(
 	help,	CONFIG_SYS_MAXARGS,	1,	do_help,
 	"print online help",
-	"[command ...]\n"
-	"    - show help information (for 'command')\n"
-	"'help' prints online help for the monitor commands.\n\n"
-	"Without arguments, it prints a short usage message for all commands.\n\n"
-	"To get detailed help information for specific commands you can type\n"
+	"[command ...]\r\n"
+	"    - show help information (for 'command')\r\n"
+	"'help' prints online help for the monitor commands.\r\n\r\n"
+	"Without arguments, it prints a short usage message for all commands.\r\n\r\n"
+	"To get detailed help information for specific commands you can type\r\n"
 	"'help' with one or more command names as arguments."
 );
 
@@ -370,7 +370,7 @@ cmd_tbl_t *find_cmd_tbl (const char *cmd, cmd_tbl_t *table, int table_len)
 	     cmdtp != table + table_len;
 	     cmdtp++) {
 	     
-	     printf("cmd table:%s\r\n", cmdtp->name);
+	     //printf("cmd table:%s\r\n", cmdtp->name);
 		 
 		if (strncmp (cmd, cmdtp->name, len) == 0) {
 			if (len == strlen (cmdtp->name))
@@ -396,10 +396,10 @@ cmd_tbl_t *find_cmd (const char *cmd)
 
 int cmd_usage(cmd_tbl_t *cmdtp)
 {
-	printf("%s - %s\n\n", cmdtp->name, cmdtp->usage);
+	printf("%s - %s\r\n\r\n", cmdtp->name, cmdtp->usage);
 
 #ifdef	CONFIG_SYS_LONGHELP
-	printf("Usage:\n%s ", cmdtp->name);
+	printf("Usage:\r\n%s ", cmdtp->name);
 
 	if (!cmdtp->help) {
 		puts ("- No additional help available.\n");
@@ -407,7 +407,7 @@ int cmd_usage(cmd_tbl_t *cmdtp)
 	}
 
 	puts (cmdtp->help);
-	putc ('\n');
+	putc ('\r\n');
 #endif	/* CONFIG_SYS_LONGHELP */
 	return 0;
 }
@@ -560,7 +560,7 @@ static void print_argv(const char *banner, const char *leader, const char *sep, 
 	int len, i;
 
 	if (banner) {
-		puts("\n");
+		puts("\r\n");
 		puts(banner);
 	}
 
@@ -568,7 +568,7 @@ static void print_argv(const char *banner, const char *leader, const char *sep, 
 	while (*argv != NULL) {
 		len = strlen(*argv) + sl;
 		if (i + len >= linemax) {
-			puts("\n");
+			puts("\r\n");
 			if (leader)
 				puts(leader);
 			i = ll - sl;
@@ -577,7 +577,7 @@ static void print_argv(const char *banner, const char *leader, const char *sep, 
 		puts(*argv++);
 		i += len;
 	}
-	printf("\n");
+	printf("\r\n");
 }
 
 static int find_common_prefix(char *argv[])
@@ -798,9 +798,9 @@ long simple_strtol(const char *cp,char **endp,unsigned int base)
 int display_options (void)
 {
 #if defined(BUILD_TAG)
-	printf ("\n\n%s, Build: %s\n\n", version_string, BUILD_TAG);
+	printf ("\r\n\r\n%s, Build: %s\r\n\r\n", version_string, BUILD_TAG);
 #else
-	printf ("\n\n%s\n\n", version_string);
+	printf ("\r\n\r\n%s\r\n\r\n", version_string);
 #endif
 	return 0;
 }
@@ -904,7 +904,7 @@ int print_buffer (ulong addr, void* data, uint32 width, uint32 count, uint32 lin
 		puts("    ");
 		for (i = 0; i < linelen * width; i++)
 			putc(isprint(ucp[i]) && (ucp[i] < 0x80) ? ucp[i] : '.');
-		putc ('\n');
+		putc ('\r\n');
 
 		/* update references */
 		addr += linelen * width;

@@ -112,7 +112,7 @@ int do_disable_irq( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 }
 
 REGISTER_CMD(
-	disableirq,2,1,do_disable_irq,
+	disableirq, 2, 1, do_disable_irq,
 	"disableirq",
 	"\t disable system interrupts  "
 );

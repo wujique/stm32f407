@@ -506,17 +506,17 @@ REGISTER_CMD(
 REGISTER_CMD(
 	printenv, CONFIG_SYS_MAXARGS, 1,	do_printenv,
 	"print environment variables",
-	"\n    - print values of all environment variables\n"
-	"printenv name ...\n"
+	"\n    - print values of all environment variables\r\n"
+	"printenv name ...\r\n"
 	"    - print value of environment variable 'name'"
 );
 
 REGISTER_CMD(
 	setenv, CONFIG_SYS_MAXARGS, 0,	do_setenv,
 	"set environment variables",
-	"name value ...\n"
-	"    - set environment variable 'name' to 'value ...'\n"
-	"setenv name\n"
+	"name value ...\r\n"
+	"    - set environment variable 'name' to 'value ...'\r\n"
+	"setenv name\r\n"
 	"    - delete environment variable 'name'"
 );
 
@@ -525,13 +525,13 @@ REGISTER_CMD(
 REGISTER_CMD(
 	askenv,	CONFIG_SYS_MAXARGS,	1,	do_askenv,
 	"get environment variables from stdin",
-	"name [message] [size]\n"
-	"    - get environment variable 'name' from stdin (max 'size' chars)\n"
-	"askenv name\n"
-	"    - get environment variable 'name' from stdin\n"
-	"askenv name size\n"
-	"    - get environment variable 'name' from stdin (max 'size' chars)\n"
-	"askenv name [message] size\n"
+	"name [message] [size]\r\n"
+	"    - get environment variable 'name' from stdin (max 'size' chars)\r\n"
+	"askenv name\r\n"
+	"    - get environment variable 'name' from stdin\r\n"
+	"askenv name size\r\n"
+	"    - get environment variable 'name' from stdin (max 'size' chars)\r\n"
+	"askenv name [message] size\r\n"
 	"    - display 'message' string and get environment variable 'name'"
 	"from stdin (max 'size' chars)"
 );
@@ -542,7 +542,7 @@ int do_run (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 REGISTER_CMD(
 	run,	CONFIG_SYS_MAXARGS,	1,	do_run,
 	"run commands in an environment variable",
-	"var [...]\n"
+	"var [...]\r\n"
 	"    - run the commands in the environment variable(s) 'var'"
 );
 #endif
@@ -565,7 +565,7 @@ int do_recover_env (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 REGISTER_CMD(
 	recover_env, 1, 0,	do_recover_env,
 	"recover environment variables",
-	"    - recover environment variables\n"
+	"    - recover environment variables\r\n"
 );
 #endif
 

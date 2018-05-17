@@ -660,7 +660,7 @@ s32 test_spiflash_core(void)
 {
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
-	dev_spiflash_test_chipcheck("core_spiflash");
+	dev_spiflash_test_chiperase("core_spiflash");
 	wjq_wait_key(12);
 	return 0;
 }
