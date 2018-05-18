@@ -233,11 +233,11 @@ s32 bus_lcd_close(DevLcdBusNode *node)
  *@param[out]  
  *@retval:     
  */
-s32 bus_lcd_write_data(DevLcdBusNode *node, u8 *data, u16 len)
+s32 bus_lcd_write_data(DevLcdBusNode *node, u8 *data, u32 len)
 {
 	/*直接定义256字节，可能有BUG，要根据len动态申请*/
 	u8 tmp[256];
-	u16 i;
+	u32 i;
 
 	switch(node->dev.type)
 	{
@@ -271,6 +271,47 @@ s32 bus_lcd_write_data(DevLcdBusNode *node, u8 *data, u16 len)
 	}
 	
 	return 0;
+}
+/**
+ *@brief:     
+ *@details:   
+ *@param[in]    
+ *@param[out]  
+ *@retval:     
+ */
+s32 bus_lcd_read_data(DevLcdBusNode *node, u8 *data, u32 len)
+{
+	u32 i;
+	
+	switch(node->dev.type)
+	{
+		case LCD_BUS_SPI:
+		{	
+
+		}
+		break;
+		
+		case LCD_BUS_I2C:
+		{	
+
+		}
+		break;
+		
+		case LCD_BUS_8080:
+		{
+			u16 *p;
+			p = (u16 *)data;
+			
+			for(i=0; i<len; i++)
+			{
+				*(p+i) = *LcdData;	
+			}
+		}
+		break;
+		default:
+			break;
+	}
+	return 0;	
 }
 /**
  *@brief:     
