@@ -423,8 +423,8 @@ static s32 dev_wm8978_setting_init(void)
 
 	dev_wm8978_set_mic_gain(45);
 	dev_wm8978_set_phone_vol(40);
-	dev_wm8978_set_spk_vol(40);
-	dev_wm8978_set_aux_gain(5);
+	dev_wm8978_set_spk_vol(62);
+	dev_wm8978_set_aux_gain(7);
 	return ret;
 }
 /**
@@ -449,7 +449,7 @@ s32 dev_wm8978_init(void)
  */
 s32 dev_wm8978_open(void)
 {
-	dev_wm8978_inout(WM8978_INPUT_DAC|WM8978_INPUT_LMIC|WM8978_INPUT_RMIC|WM8978_INPUT_ADC,
+	dev_wm8978_inout(WM8978_INPUT_DAC|WM8978_INPUT_AUX|WM8978_INPUT_ADC,
 					WM8978_OUTPUT_PHONE|WM8978_OUTPUT_SPK);
 	return 0;
 }
