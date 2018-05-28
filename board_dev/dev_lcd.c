@@ -1053,6 +1053,7 @@ s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpF
 		break;
 		
     case 24://65K真彩色		
+    	GPIO_ResetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
         for(j=0; j<ylen;) //图片取模:横向,左高右低
         {
 
@@ -1096,6 +1097,7 @@ s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpF
 			//Delay(1000);
 			j += linecnt;
         }
+		GPIO_SetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
         break;
 
 	case 32:

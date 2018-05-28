@@ -127,7 +127,7 @@ void SD_LowLevel_DMA_TxConfig(uint32_t *BufferSRC, uint32_t BufferSize)
   SDDMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
   SDDMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
   SDDMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Word;
-  SDDMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Word;
+  SDDMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
   SDDMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
   SDDMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;
   SDDMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Enable;
@@ -169,7 +169,7 @@ void SD_LowLevel_DMA_RxConfig(uint32_t *BufferDST, uint32_t BufferSize)
   SDDMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
   SDDMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
   SDDMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Word;
-  SDDMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Word;
+  SDDMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
   SDDMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
   SDDMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;
   SDDMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Enable;
