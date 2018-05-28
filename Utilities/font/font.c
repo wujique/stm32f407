@@ -193,7 +193,7 @@ s32 font_get_hz(FontType type, u8 *ch, u8 *buf)
 	//uart_printf("adr:%08x\r\n", addr);
 	
 	fontp = (FIL*)FontList[type]->data;
-	if(fontp->fs == 0)
+	if(fontp->obj.fs == 0)
 	{
 		//uart_printf("no font\r\n");
 		return -1;

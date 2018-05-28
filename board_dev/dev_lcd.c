@@ -344,7 +344,7 @@ s32 dev_lcd_register(const DevLcd *dev)
 		plcdnode->height = plcdnode->pra->height;
 		plcdnode->width = plcdnode->pra->width;
 		
-		dev_lcd_setdir(plcdnode, W_LCD, L2R_U2D);
+		dev_lcd_setdir(plcdnode, W_LCD, L2R_D2U);
 		
 		plcdnode->drv->onoff((plcdnode),1);//打开显示
 		
@@ -789,7 +789,332 @@ s32 dev_lcd_put_string(DevLcdNode *lcd, FontType font, int x, int y, char *s, un
 
 	return 0;	
 }
+extern void Delay(__IO uint32_t nTime);
 
+#if 1
+typedef struct tagBITMAPFILEHEADER  //文件头  14B  
+{ 
+    u16  bfType;   //0x424d, "BM"
+    u32  bfSize;   //文件大小，包含文件头
+    u16  bfReserved1;   //保留字节
+    u16  bfReserved2;   //保留字节
+    u32  bfOffBits;   	//从文件头到实际位图数据的偏移
+} BITMAPFILEHEADER; 
+
+typedef struct tagBITMAPINFOHEADER  //位图信息头
+{ 
+    u32 biSize;   //本结构长度，也即是40
+    s32 biWidth;  //图像宽度   
+    s32 biHeight; //图像高度    
+    u16 biPlanes; //1  
+    u16 biBitCount;//1黑白二色图，4 16位色，8 256色，24 真彩色 
+    u32 biCompression;   //是否压缩
+    u32 biSizeImage;   //实际位图数据字节数
+    s32 biXPelsPerMeter;  //目标设备水平分辨率 
+    s32 biYPelsPerMeter;   //目标设备垂直分辨率
+    u32 biClrUsed;  //图像实际用到颜色数，如为0，则用到的颜色数为2的biBitCount次方
+    u32 biClrImportant;  //指定本图象中重要的颜色数，如果该值为零，则认为所有的颜色都是重要的
+} BITMAPINFOHEADER;
+
+/*调色板每个元素*/
+typedef struct tagRGBQUAD
+{ 
+	u8    rgbBlue; //蓝色分量  
+	u8    rgbGreen; //绿色分量    
+	u8    rgbRed;   //红色分量  
+	u8    rgbReserved;    
+} RGBQUAD; 
+
+#include "ff.h"
+
+#define WIDTHBYTES(i) ((i+31)/32*4)
+
+extern volatile u16 *LcdData;
+
+s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpFileName)
+{
+	BITMAPFILEHEADER    bf;
+    BITMAPINFOHEADER    bi;
+	
+	FRESULT res;
+	FIL bmpfile;
+	
+	u32 rlen;
+    u16 LineBytes;
+	u16 NumColors;
+    u32 ImgSize;
+	u16 buf[40];
+
+	u32 i,j;
+	u8 *palatte;
+	volatile u16 color;
+	u32 k;
+	u16 r,g,b;
+	
+	wjq_log(LOG_DEBUG, "bmp open file:%s\r\n", BmpFileName);
+	
+	res = f_open(&bmpfile, BmpFileName, FA_READ);
+	if(res != FR_OK)
+	{
+		wjq_log(LOG_DEBUG, "bmp open file err:%d\r\n", res);
+		return -1;
+	}
+
+    res = f_read(&bmpfile, (void *)buf, 14, &rlen);
+
+	bf.bfType      = buf[0];
+    bf.bfSize      = buf[2];
+    bf.bfSize = (bf.bfSize<<16)+buf[1];
+    bf.bfReserved1 = buf[3];
+    bf.bfReserved2 = buf[4];
+    bf.bfOffBits   = buf[6];
+    bf.bfOffBits = (bf.bfOffBits<<16)+buf[5];
+	
+	wjq_log(LOG_DEBUG, "bf.bfType:%x\r\n", bf.bfType);	
+	wjq_log(LOG_DEBUG, "bf.bfSize:%d\r\n", bf.bfSize);
+	wjq_log(LOG_DEBUG, "bf.bfOffBits:%d\r\n", bf.bfOffBits);
+
+	res = f_read(&bmpfile, (void *)buf, 40, &rlen);
+
+	bi.biSize           = (unsigned long) buf[0];
+    bi.biWidth          = (long) buf[2];
+    bi.biHeight         = (long) buf[4];
+    bi.biPlanes         = buf[6];
+    bi.biBitCount       = buf[7];
+    bi.biCompression    = (unsigned long) buf[8];
+    bi.biSizeImage      = (unsigned long) buf[10];
+    bi.biXPelsPerMeter  = (long) buf[12];
+    bi.biYPelsPerMeter  = (long) buf[14];
+    bi.biClrUsed        = (unsigned long) buf[16];
+    bi.biClrImportant   = (unsigned long) buf[18];
+
+	wjq_log(LOG_DEBUG, "bi.biSize:%d\r\n", bi.biSize);	
+	wjq_log(LOG_DEBUG, "bi.biWidth:%d\r\n", bi.biWidth);
+	wjq_log(LOG_DEBUG, "bi.biHeight:%d\r\n", bi.biHeight);
+	wjq_log(LOG_DEBUG, "bi.biPlanes:%d\r\n", bi.biPlanes);
+	wjq_log(LOG_DEBUG, "bi.biBitCount:%d\r\n", bi.biBitCount);
+	wjq_log(LOG_DEBUG, "bi.biCompression:%d\r\n", bi.biCompression);
+	wjq_log(LOG_DEBUG, "bi.biSizeImage:%d\r\n", bi.biSizeImage);
+	wjq_log(LOG_DEBUG, "bi.biXPelsPerMeter:%d\r\n", bi.biXPelsPerMeter);
+	wjq_log(LOG_DEBUG, "bi.biYPelsPerMeter:%d\r\n", bi.biYPelsPerMeter);
+	wjq_log(LOG_DEBUG, "bi.biClrUsed:%d\r\n", bi.biClrUsed);
+	wjq_log(LOG_DEBUG, "bi.biClrImportant:%d\r\n", bi.biClrImportant);
+
+	/*8个像素占用一个字节，不足一个字节补足一个字节*/
+	/*单色图片四字节对齐*/
+	LineBytes = WIDTHBYTES(bi.biWidth * bi.biBitCount);
+    ImgSize   = (unsigned long) LineBytes  * bi.biHeight;
+
+    wjq_log(LOG_DEBUG, "bmp w:%d,h:%d, bitcount:%d, linebytes:%d\r\n", bi.biWidth, bi.biHeight, bi.biBitCount, LineBytes);
+	
+	if(bi.biClrUsed!=0)
+		NumColors=(DWORD)bi.biClrUsed;//如果 bi.biClrUsed 不为零，就是本图象实际用到的颜色
+	else
+	{
+	    switch(bi.biBitCount)
+	    {
+	    case 1:
+	        NumColors=2;//黑白屏用到两个调色板，一个是黑一个是白
+	        break;
+	        
+	    case 4:
+	        NumColors=16;
+	        break;
+	        
+	    case 8:
+	        NumColors=256;
+	        break;
+	        
+	    case 24:
+	        NumColors=0;
+	        break;
+	        
+	    default:
+	        f_close(&bmpfile);
+	        return 2;
+	    }
+	}
+
+	/* 读调色板 */
+	if(NumColors != 0)
+	{
+		palatte = wjq_malloc(4*NumColors);
+		f_read(&bmpfile, (void *)palatte, 4*NumColors, &rlen);
+	}
+
+	if(xlen > bi.biWidth)
+        xlen = bi.biWidth;
+
+    //如果长度比图片小，咋办? fix
+    if(ylen > bi.biHeight)
+        ylen = bi.biHeight;
+
+	u8 *pdata;
+	u8 linecnt = 20;//一次读多行，加快速度
+	pdata = wjq_malloc(LineBytes*linecnt);
+
+	
+	dev_lcd_prepare_display(lcd, x, x+xlen-1, y, y+ylen-1);
+			
+    switch(bi.biBitCount)
+    {
+    case 1:
+		u8 c;
+		
+        for(j=0; j<ylen; j++) //图片取模:横向,左高右低
+        {
+			f_read(&bmpfile, (void *)pdata, LineBytes, &rlen);
+			
+            for(i=0; i<xlen; i++)
+            {
+            	/*
+            		一个字节8个像素，高位在前
+            		调色板有256种颜色
+				*/
+                c = pdata[(i/8)]&(0x80>>(i%8));
+                
+                if(c != 0)
+					*LcdData = WHITE;
+                else
+					*LcdData = BLACK;
+            }
+			
+        }
+        break;
+        
+    case 4:
+        for(j=0; j<ylen; j++) //图片取模:横向,左高右低
+        {
+			f_read(&bmpfile, (void *)pdata, LineBytes, &rlen);
+			if(rlen != LineBytes)
+			{
+				wjq_log(LOG_DEBUG, "bmp read data err!\r\n");
+			}
+			
+            for(i=0; i<xlen; i++)
+            {
+            	/*4个bit 1个像素，要进行对U16的转换
+					rgb565
+					#define BLUE         	 0x001F  
+					#define GREEN         	 0x07E0
+					#define RED           	 0xF800
+				*/
+				k = *(pdata+i/2);
+				if(i%2 == 0)
+					k = ((k>>4)&0x0f);
+				else
+					k = (k&0x0f);
+				k = k*4;
+				
+				r = (palatte[k+2] & 0xF8)>>3;
+                g = (palatte[k+1] & 0xFC)>>2;
+                b = (palatte[k] & 0xF8)>>3;
+                color = (r<<11)|(g<<5)|(b<<0);
+				
+				*LcdData = color;
+            }
+			//Delay(1000);
+        }
+        break;
+
+    case 8:
+		for(j=0; j<ylen; j++) //图片取模:横向,左高右低
+        {
+			f_read(&bmpfile, (void *)pdata, LineBytes, &rlen);
+			if(rlen != LineBytes)
+			{
+				wjq_log(LOG_DEBUG, "bmp read data err!\r\n");
+			}
+			
+            for(i=0; i<xlen; i++)
+            {
+            	/*1个字节1个像素，要进行对U16的转换
+					rgb565
+					#define BLUE         	 0x001F  
+					#define GREEN         	 0x07E0
+					#define RED           	 0xF800
+				*/
+				k = *(pdata+i);
+				k = k*4;
+				
+				r = (palatte[k+2] & 0xF8)>>3;
+                g = (palatte[k+1] & 0xFC)>>2;
+                b = (palatte[k] & 0xF8)>>3;
+                color = (r<<11)|(g<<5)|(b<<0);
+				
+				*LcdData = color;
+            }
+			//Delay(1000);
+        }
+        break;
+
+	case 16:
+
+		break;
+		
+    case 24://65K真彩色		
+        for(j=0; j<ylen;) //图片取模:横向,左高右低
+        {
+
+			res = f_read(&bmpfile, (void *)pdata, LineBytes*linecnt, &rlen);
+			
+			if(res != FR_OK)
+			{
+				wjq_log(LOG_DEBUG, "bmp read data err!\r\n");	
+			}
+			if(rlen != LineBytes*linecnt)
+			{
+				wjq_log(LOG_DEBUG, "bmp read data err!\r\n");
+			}
+			else
+			{
+				//wjq_log(LOG_DEBUG, "bmp read data:%d!\r\n", rlen);	
+				//PrintFormat(tdata, 960);
+			}
+			
+            for(i=0; i < xlen*linecnt; i++)
+            {
+            	/*3个字节1个像素，要进行对U16的转换
+					rgb565
+					#define BLUE         	 0x001F  
+					#define GREEN         	 0x07E0
+					#define RED           	 0xF800
+				*/
+				k = i*3;
+				
+				r = pdata[k+2];
+				g = pdata[k+1];
+				b = pdata[k];
+				
+				r = ((r<<8)&0xf800);
+				g = ((g<<3)&0x07e0);
+				b = ((b>>3)&0x001f);
+				color = r+g+b;
+
+				*LcdData = color;
+            }
+			//Delay(1000);
+			j += linecnt;
+        }
+        break;
+
+	case 32:
+		break;
+		
+    default:
+        break;
+    } 
+
+	wjq_free(pdata);
+	if(NumColors != 0)
+	{
+		wjq_free(palatte);
+	}
+	
+	f_close(&bmpfile);
+    return 0;
+}
+#endif
 /**
  *@brief:      dev_lcd_test
  *@details:    LCD测试函数
@@ -859,7 +1184,7 @@ void dev_lcd_test(void)
 	while(1);
 }
 
-extern void Delay(__IO uint32_t nTime);
+
 
 void dev_i2coledlcd_test(void)
 {

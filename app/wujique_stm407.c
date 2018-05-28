@@ -200,9 +200,31 @@ s32 test_spi_cog_display(void)
 }
 
 
-s32 test_lcd_bmp(void)
+s32 test_lcd_pic(void)
 {
+	DevLcdNode *lcd;
+	u8 step = 0;
+	u8 dis = 1;
+	
+	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
+	/*顶行居中显示父菜单*/
+	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
+	
+	lcd = dev_lcd_open("tftlcd");
+	if(lcd == NULL)
+	{
+		wjq_test_showstr("open lcd err!");	
+		return -1;
+	}
+	
 	wjq_test_showstr((char *)__FUNCTION__);
+	dev_lcd_show_bmp(lcd, 1, 1, 320, 240, "1:/pic/女人单色.bmp");
+	wjq_wait_key(16);
+	dev_lcd_show_bmp(lcd, 1, 1, 320, 240, "1:/pic/女人16色.bmp");//调色板
+	wjq_wait_key(16);
+	dev_lcd_show_bmp(lcd, 1, 1, 320, 240, "1:/pic/女人256色.bmp");//调色板
+	wjq_wait_key(16);
+	dev_lcd_show_bmp(lcd, 1, 1, 320, 240, "1:/pic/女人24位.bmp");//真彩色
 	return 0;
 }
 
@@ -854,7 +876,7 @@ const MENU WJQTestList[]=
 			"图片测试",//中文
 			"test BMP",	//英文
 			MENU_TYPE_FUN,//菜单类型
-			test_lcd_bmp,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			test_lcd_pic,//菜单函数，功能菜单才会执行，有子菜单的不会执行
 			
 			MENU_L_2,//菜单等级
 			"字库测试",//中文

@@ -2985,6 +2985,14 @@ SD_Error SD_HighSpeed (void)
 
 */
 #include "diskio.h"
+#include "alloc.h"
+
+/*
+
+	sd卡的操作都是以sector，一定要注意buff要4字节对齐
+
+*/
+
 
 /*-----------------------------------------------------------------------*/
 /* Initialize Disk Drive                                                 */
@@ -3030,30 +3038,79 @@ DRESULT SD_disk_read (
                      )
 {
 	SD_Error result;
+	DRESULT res;
+	u32 index = 0;
+	u32 sector_cnt = 0;
+	u16 i;
+	BYTE *SdDiskReadBuf;
+	//wjq_log(LOG_DEBUG, "SD_disk_read: %08x, sector:%d, count:%d\r\n", buff, sector, count);
 
-	//uart_printf("SD_disk_read: %08x, sector:%d, count:%d\r\n", buff, sector, count);
-	result = SD_ReadMultiBlocks(buff, sector*512, 512, count);
-	if(result == SD_OK)
+	/*
+		如果目标buf地址不是4字节对齐
+		就一块一块读
+	*/
+	if(((u32)buff &0x00000003) != 0)
 	{
-		result = SD_WaitReadOperation();
-		/* Wait until end of DMA transfer */
-		while(SD_GetStatus() != SD_TRANSFER_OK);
+		SdDiskReadBuf = (BYTE *)wjq_malloc(512);
+
+		while(1)
+		{
+			result = SD_ReadMultiBlocks(SdDiskReadBuf, (sector+sector_cnt)*512, 512, 1);
+			if(result == SD_OK)
+			{
+				result = SD_WaitReadOperation();
+				/* Wait until end of DMA transfer */
+				while(SD_GetStatus() != SD_TRANSFER_OK);
+			}
+				// translate the reslut code here
+			if(SD_OK == result)
+			{
+				
+				for(i = 0; i<512; i++)
+				{
+					*(buff+index) = SdDiskReadBuf[i];
+					index++;
+				}
+			}
+			else
+			{
+				res =  RES_ERROR;
+				break;
+			}
+
+			sector_cnt++;
+			if(sector_cnt >= count)
+			{
+				res = RES_OK;
+				break;
+			}
+		}
+		wjq_free(SdDiskReadBuf);
 	}
-	
-	// translate the reslut code here
-	if(SD_OK == result)
-		return RES_OK;
 	else
-		return RES_ERROR;
+	{
+		result = SD_ReadMultiBlocks(buff, sector*512, 512, count);
+		if(result == SD_OK)
+		{
+			result = SD_WaitReadOperation();
+			/* Wait until end of DMA transfer */
+			while(SD_GetStatus() != SD_TRANSFER_OK);
+		}
+			// translate the reslut code here
+		if(SD_OK == result)
+			res = RES_OK;
+		else
+			res =  RES_ERROR;
+	}
+
+	return res;
 }
-
-
 
 /*-----------------------------------------------------------------------*/
 /* Write Sector(s)                                                       */
 /*-----------------------------------------------------------------------*/
 
-#if _READONLY == 0
+
 DRESULT SD_disk_write (
                     BYTE pdrv,			/* Physical drive number (0) */
                     const BYTE *buff,	/* Pointer to the data to be written */
@@ -3062,20 +3119,75 @@ DRESULT SD_disk_write (
                       )
 {
 	SD_Error result;
-	result = SD_WriteMultiBlocks((uint8_t *)buff, sector*512, 512, count);
-	if(result == SD_OK)
+	DRESULT res;
+	u32 index = 0;
+	u32 sector_cnt = 0;
+	u16 i;
+	BYTE *SdDiskReadBuf;
+	/*
+		如果目标buf地址不是4字节对齐
+		就一块一块写
+	*/
+	if(((u32)buff &0x00000003) != 0)
 	{
-		/* Check if the Transfer is finished */
-    	result = SD_WaitWriteOperation();
-    	while(SD_GetStatus() != SD_TRANSFER_OK);
+		SdDiskReadBuf = (BYTE *)wjq_malloc(512);
+
+		while(1)
+		{
+			if(sector_cnt >= count)
+			{
+				res = RES_OK;
+				break;
+			}
+			
+			for(i = 0; i<512; i++)
+			{
+				SdDiskReadBuf[i] = *(buff+index);
+				index++;
+			}
+			
+			result = SD_WriteMultiBlocks((uint8_t *)SdDiskReadBuf, (sector+sector_cnt)*512, 512, 1);
+			if(result == SD_OK)
+			{
+				/* Check if the Transfer is finished */
+	    		result = SD_WaitWriteOperation();
+	    		while(SD_GetStatus() != SD_TRANSFER_OK);
+			}
+
+			if(SD_OK == result)
+			{
+				
+			}
+			else
+			{
+				res =  RES_ERROR;
+				break;
+			}
+
+			sector_cnt++;
+			
+		}
+		wjq_free(SdDiskReadBuf);
 	}
-	
-	if(SD_OK == result)
-  		return RES_OK;
 	else
-		return RES_ERROR;
+	{
+		result = SD_WriteMultiBlocks((uint8_t *)buff, sector*512, 512, count);
+		if(result == SD_OK)
+		{
+			/* Check if the Transfer is finished */
+	    	result = SD_WaitWriteOperation();
+	    	while(SD_GetStatus() != SD_TRANSFER_OK);
+		}
+		
+		if(SD_OK == result)
+	  		res = RES_OK;
+		else
+			res = RES_ERROR;
+		}
+
+	return res;
 }
-#endif /* _READONLY == 0 */
+
 
 DRESULT SD_disk_ioctl (
                     BYTE drv,		/* Physical drive number (0) */

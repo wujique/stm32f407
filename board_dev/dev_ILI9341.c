@@ -467,6 +467,7 @@ s32 drv_ILI9341_color_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 colo
 	//uart_printf("ili9341 width:%d, height:%d\r\n", width, height);
 
 	DevLcdBusNode * node;
+	
 #define TMP_BUF_SIZE 32
 	u16 tmp[TMP_BUF_SIZE];
 	u32 cnt;
@@ -522,12 +523,13 @@ s32 drv_ILI9341_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
 	u16 sc,ec,sp,ep;
 
 	drv_ILI9341_xy2cp(lcd, sx, ex, sy, ey, &sc,&ec,&sp,&ep);
-	
 	drv_ILI9341_set_cp_addr(lcd, sc, ec, sp, ep);
 
-	width=(ec+1)-sc;//得到填充的宽度 +1是因为坐标从0开始
-	height=(ep+1)-sp;//高度
+	width=(ec+1)-sc;
+	height=(ep+1)-sp;
 
+	wjq_log(LOG_DEBUG, "fill width:%d, height:%d\r\n", width, height);
+	
 	DevLcdBusNode * node;
 
 	node = bus_lcd_open(lcd->dev.buslcd);
@@ -541,8 +543,11 @@ s32 drv_ILI9341_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
 s32 drv_ILI9341_prepare_display(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey)
 {
 	u16 sc,ec,sp,ep;
-
+	
+	wjq_log(LOG_DEBUG, "XY:-%d-%d-%d-%d-\r\n", sx, ex, sy, ey);
 	drv_ILI9341_xy2cp(lcd, sx, ex, sy, ey, &sc,&ec,&sp,&ep);
+	
+	wjq_log(LOG_DEBUG, "cp:-%d-%d-%d-%d-\r\n", sc, ec, sp, ep);
 	drv_ILI9341_set_cp_addr(lcd, sc, ec, sp, ep);	
 	return 0;
 }
@@ -1214,7 +1219,12 @@ s32 drv_ILI9325_prepare_display(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey)
 {
 	u16 hsa,hea,vsa,vea;
 
+	wjq_log(LOG_DEBUG, "XY:-%d-%d-%d-%d-\r\n", sx, ex, sy, ey);
+
 	drv_ILI9325_xy2cp(lcd, sx, ex, sy, ey, &hsa,&hea,&vsa,&vea);
+
+	wjq_log(LOG_DEBUG, "HV:-%d-%d-%d-%d-\r\n", hsa, hea, vsa, vea);
+	
 	drv_ILI9325_set_cp_addr(lcd, hsa, hea, vsa, vea);	
 	return 0;
 }

@@ -94,7 +94,6 @@ DRESULT USB_disk_read (
 /* Write Sector(s)                                                       */
 /*-----------------------------------------------------------------------*/
 
-#if _READONLY == 0
 DRESULT USB_disk_write (
                     BYTE pdrv,			/* Physical drive number (0) */
                     const BYTE *buff,	/* Pointer to the data to be written */
@@ -131,7 +130,7 @@ DRESULT USB_disk_write (
     return RES_OK;
   return RES_ERROR;
 }
-#endif /* _READONLY == 0 */
+
 
 
 
@@ -139,7 +138,7 @@ DRESULT USB_disk_write (
 /* Miscellaneous Functions                                               */
 /*-----------------------------------------------------------------------*/
 
-#if _USE_IOCTL != 0
+
 DRESULT USB_disk_ioctl (
                     BYTE drv,		/* Physical drive number (0) */
                     BYTE ctrl,		/* Control code */
@@ -196,7 +195,5 @@ DWORD get_fattime(void)
 {
   return 0;
 }
-
-#endif /* _USE_IOCTL != 0 */
 
 
