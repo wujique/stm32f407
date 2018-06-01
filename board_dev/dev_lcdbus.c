@@ -243,10 +243,7 @@ s32 bus_lcd_write_data(DevLcdBusNode *node, u8 *data, u32 len)
 	{
 		case LCD_BUS_SPI:
 		{
-			mcu_io_output_setbit(node->dev.A0port, node->dev.A0pin);
-			mcu_spi_cs((DevSpiChNode *)node->basenode, 0);
 			mcu_spi_transfer((DevSpiChNode *)node->basenode,  data, NULL, len);
-			mcu_spi_cs((DevSpiChNode *)node->basenode, 1);
 		}
 		break;
 		case LCD_BUS_I2C:
@@ -330,9 +327,8 @@ s32 bus_lcd_write_cmd(DevLcdBusNode *node, u8 cmd)
 		{	
 			mcu_io_output_resetbit(node->dev.A0port, node->dev.A0pin);
 			tmp[0] = cmd;
-			mcu_spi_cs((DevSpiChNode *)node->basenode, 0);
 			mcu_spi_transfer((DevSpiChNode *)node->basenode,  &tmp[0], NULL, 1);
-			mcu_spi_cs((DevSpiChNode *)node->basenode, 1);
+			mcu_io_output_setbit(node->dev.A0port, node->dev.A0pin);
 		}
 		break;
 		
