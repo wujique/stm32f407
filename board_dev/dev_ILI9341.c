@@ -374,17 +374,17 @@ s32 drv_ILI9341_xy2cp(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey, u16 *sc, 
 	/*
 		显示XY轴范围
 	*/
-	if(sx > lcd->width)
-		sx = lcd->width;
+	if(sx >= lcd->width)
+		sx = lcd->width-1;
 	
-	if(ex > lcd->width)
-		ex = lcd->width;
+	if(ex >= lcd->width)
+		ex = lcd->width-1;
 	
-	if(sy > lcd->height)
-		sy = lcd->height;
+	if(sy >= lcd->height)
+		sy = lcd->height-1;
 	
-	if(ey > lcd->height)
-		ey = lcd->height;
+	if(ey >= lcd->height)
+		ey = lcd->height-1;
 	/*
 		XY轴，实物角度来看，方向取决于横屏还是竖屏
 		CP轴，是控制器显存角度，
