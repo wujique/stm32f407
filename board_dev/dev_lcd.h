@@ -19,6 +19,7 @@ typedef struct
 	s32 (*fill)(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color);
 	
 	s32 (*prepare_display)(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey);
+	s32 (*flush)(DevLcdNode *lcd, u16 *color, u32 len);
 	
 	s32 (*onoff)(DevLcdNode *lcd, u8 sta);
 	void (*set_dir)(DevLcdNode *lcd, u8 scan_dir);
@@ -77,6 +78,8 @@ struct _strDevLcdNode
 	u16 height;	//LCD 高度
 
 	void *pri;//私有数据，黑白屏跟OLED屏在初始化的时候会开辟显存
+
+	DevLcdBusNode *busnode;
 
 	struct list_head list;
 };

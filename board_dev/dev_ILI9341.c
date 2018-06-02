@@ -67,6 +67,8 @@ static s32 drv_ILI9341_display_onoff(DevLcdNode *lcd, u8 sta);
 s32 drv_ILI9341_prepare_display(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey);
 static void drv_ILI9341_scan_dir(DevLcdNode *lcd, u8 dir);
 void drv_ILI9341_lcd_bl(DevLcdNode *lcd, u8 sta);
+s32 drv_ILI9341_flush(DevLcdNode *lcd, u16 *color, u32 len);
+
 
 /*
 
@@ -82,6 +84,7 @@ _lcd_drv TftLcdILI9341Drv = {
 							.fill = drv_ILI9341_fill,
 							.onoff = drv_ILI9341_display_onoff,
 							.prepare_display = drv_ILI9341_prepare_display,
+							.flush = drv_ILI9341_flush,
 							.set_dir = drv_ILI9341_scan_dir,
 							.backlight = drv_ILI9341_lcd_bl
 							};
@@ -551,6 +554,15 @@ s32 drv_ILI9341_prepare_display(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey)
 	drv_ILI9341_set_cp_addr(lcd, sc, ec, sp, ep);	
 	return 0;
 }
+
+s32 drv_ILI9341_flush(DevLcdNode *lcd, u16 *color, u32 len)
+{
+	lcd->busnode = bus_lcd_open(lcd->dev.buslcd);
+	bus_lcd_write_data(lcd->busnode, (u8 *)color,  len);	
+	bus_lcd_close(lcd->busnode);
+	return 0;
+} 
+
 #endif
 
 //----------------------------------------------------------------------
@@ -601,6 +613,8 @@ static s32 drv_ILI9325_display_onoff(DevLcdNode *lcd, u8 sta);
 s32 drv_ILI9325_prepare_display(DevLcdNode *lcd, u16 sc, u16 ec, u16 sp, u16 ep);
 static void drv_ILI9325_scan_dir(DevLcdNode *lcd, u8 dir);
 void drv_ILI9325_lcd_bl(DevLcdNode *lcd, u8 sta);
+s32 drv_ILI9325_flush(DevLcdNode *lcd, u16 *color, u32 len);
+
 /*
 
 	9325Çı¶¯
@@ -613,8 +627,10 @@ _lcd_drv TftLcdILI9325Drv = {
 							.draw_point = drv_ILI9325_drawpoint,
 							.color_fill = drv_ILI9325_color_fill,
 							.fill = drv_ILI9325_fill,
-							.onoff = drv_ILI9325_display_onoff,
 							.prepare_display = drv_ILI9325_prepare_display,
+							.flush = drv_ILI9325_flush,
+							
+							.onoff = drv_ILI9325_display_onoff,
 							.set_dir = drv_ILI9325_scan_dir,
 							.backlight = drv_ILI9325_lcd_bl
 							};
@@ -1228,6 +1244,14 @@ s32 drv_ILI9325_prepare_display(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey)
 	drv_ILI9325_set_cp_addr(lcd, hsa, hea, vsa, vea);	
 	return 0;
 }
+s32 drv_ILI9325_flush(DevLcdNode *lcd, u16 *color, u32 len)
+{
+	lcd->busnode = bus_lcd_open(lcd->dev.buslcd);
+	bus_lcd_write_data(lcd->busnode, (u8 *)color,  len);	
+	bus_lcd_close(lcd->busnode);
+	return 0;
+} 
+
 #endif
 
 

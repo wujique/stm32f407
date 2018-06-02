@@ -57,6 +57,8 @@ static s32 drv_ST7565_display_onoff(DevLcdNode *lcd, u8 sta);
 s32 drv_ST7565_prepare_display(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey);
 static void drv_ST7565_scan_dir(DevLcdNode *lcd, u8 dir);
 void drv_ST7565_lcd_bl(DevLcdNode *lcd, u8 sta);
+s32 drv_ST7565_flush(DevLcdNode *lcd, u16 *color, u32 len);
+
 
 /*
 
@@ -73,7 +75,8 @@ _lcd_drv CogLcdST7565Drv = {
 							.onoff = drv_ST7565_display_onoff,
 							.prepare_display = drv_ST7565_prepare_display,
 							.set_dir = drv_ST7565_scan_dir,
-							.backlight = drv_ST7565_lcd_bl
+							.backlight = drv_ST7565_lcd_bl,
+							.flush = drv_ST7565_flush
 							};
 /*
 
@@ -521,6 +524,13 @@ s32 drv_ST7565_prepare_display(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey)
 {
 	return 0;
 }
+
+s32 drv_ST7565_flush(DevLcdNode *lcd, u16 *color, u32 len)
+{
+
+	return 0;
+} 
+
 #endif
 
 
@@ -634,7 +644,8 @@ _lcd_drv OledLcdSSD1615rv = {
 							.onoff = drv_ssd1615_display_onoff,
 							.prepare_display = drv_ST7565_prepare_display,
 							.set_dir = drv_ST7565_scan_dir,
-							.backlight = drv_ST7565_lcd_bl
+							.backlight = drv_ST7565_lcd_bl,
+							.flush = drv_ST7565_flush
 							};
 
 

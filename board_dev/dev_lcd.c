@@ -848,8 +848,13 @@ s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpF
 	u32 i,j;
 	u8 *palatte;
 	volatile u16 color;
-	u32 k;
+	u32 k, m;
 	u16 r,g,b;
+	u8 c;
+	u16 *pcc;
+	u8 *pdata;
+	u8 linecnt = 20;//一次读多行，加快速度
+	u8 l;
 	
 	wjq_log(LOG_DEBUG, "bmp open file:%s\r\n", BmpFileName);
 	
@@ -945,107 +950,218 @@ s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpF
 	if(xlen > bi.biWidth)
         xlen = bi.biWidth;
 
-    //如果长度比图片小，咋办? fix
     if(ylen > bi.biHeight)
         ylen = bi.biHeight;
 
-	u8 *pdata;
-	u8 linecnt = 20;//一次读多行，加快速度
 	pdata = wjq_malloc(LineBytes*linecnt);
-
 	
 	dev_lcd_prepare_display(lcd, x, x+xlen-1, y, y+ylen-1);
 			
     switch(bi.biBitCount)
     {
     case 1:
-		u8 c;
+		GPIO_ResetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
 		
-        for(j=0; j<ylen; j++) //图片取模:横向,左高右低
+		pcc = wjq_malloc(xlen*sizeof(u16));
+	
+		for(j=0; j<ylen;) //图片取模:横向,左高右低
         {
-			f_read(&bmpfile, (void *)pdata, LineBytes, &rlen);
-			
-            for(i=0; i<xlen; i++)
-            {
-            	/*
+			f_read(&bmpfile, (void *)pdata, LineBytes*linecnt, &rlen);
+			if(rlen != LineBytes*linecnt)
+			{
+				wjq_log(LOG_DEBUG, "bmp read data err!\r\n");
+			}
+			l = 0;
+			while(l < linecnt)
+			{
+				k = l*LineBytes;
+				#if 0//不用除法， 测试
+				i = 0;				
+				while(1)
+	            {
+					/*
             		一个字节8个像素，高位在前
             		调色板有256种颜色
-				*/
-                c = pdata[(i/8)]&(0x80>>(i%8));
-                
-                if(c != 0)
-					*LcdData = WHITE;
-                else
-					*LcdData = BLACK;
-            }
-			
+					*/
+		            c = pdata[k];
+					
+					m = 0;
+					while(m <8)
+					{
+						if((c &(0x80>>m)) != 0)
+	                		*(pcc+i)  = WHITE;
+						else
+							*(pcc+i)  = BLACK;	
+
+						i++;
+						if(i>= xlen)
+							break;
+						m++;
+					}
+					
+					if(i>= xlen)
+						break;
+
+					k++;
+	            }
+				#else
+				for(i=0; i<xlen; i++)
+		        {
+		        	/*
+		        		一个字节8个像素，高位在前
+		        		调色板有256种颜色
+					*/
+		            c = pdata[k+(i/8)]&(0x80>>(i%8));
+		            
+		            if(c != 0)
+						*(pcc+i) = WHITE;
+		            else
+						*(pcc+i) = BLACK;
+		        }
+				#endif
+				
+				lcd->drv->flush(lcd, pcc, xlen);
+				l++;
+			}
+
+			j += linecnt;
         }
+		wjq_free(pcc);
+		GPIO_SetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
         break;
         
     case 4:
-        for(j=0; j<ylen; j++) //图片取模:横向,左高右低
+		GPIO_ResetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
+		pcc = wjq_malloc(xlen*sizeof(u16));
+	
+		for(j=0; j<ylen;) //图片取模:横向,左高右低
         {
-			f_read(&bmpfile, (void *)pdata, LineBytes, &rlen);
-			if(rlen != LineBytes)
+			f_read(&bmpfile, (void *)pdata, LineBytes*linecnt, &rlen);
+			if(rlen != LineBytes*linecnt)
 			{
 				wjq_log(LOG_DEBUG, "bmp read data err!\r\n");
 			}
-			
-            for(i=0; i<xlen; i++)
-            {
-            	/*4个bit 1个像素，要进行对U16的转换
+			l = 0;
+			while(l < linecnt)
+			{
+				k = l*LineBytes;
+
+				#if 0//不用除法,测试
+				i = 0;
+				while(1)
+	            {
+					/*4个bit 1个像素，要进行对U16的转换
 					rgb565
 					#define BLUE         	 0x001F  
 					#define GREEN         	 0x07E0
 					#define RED           	 0xF800
-				*/
-				k = *(pdata+i/2);
-				if(i%2 == 0)
-					k = ((k>>4)&0x0f);
-				else
-					k = (k&0x0f);
-				k = k*4;
+					*/
+					c = *(pdata+k);
+					
+					m = ((c>>4)&0x0f)*4;
+					
+					b = (palatte[m++] & 0xF8)>>3;
+					g = (palatte[m++] & 0xFC)>>2;
+					r = (palatte[m] & 0xF8)>>3;
+	                                
+	                *(pcc+i) = (r<<11)|(g<<5)|(b<<0);
+					
+					i++;
+					if(i>= xlen)
+						break;
+					
+					m = (c&0x0f)*4;
+					
+					b = (palatte[m++] & 0xF8)>>3;
+					g = (palatte[m++] & 0xFC)>>2;
+					r = (palatte[m] & 0xF8)>>3;
+
+	                *(pcc+i) = (r<<11)|(g<<5)|(b<<0);
+					
+					i++;
+					if(i>= xlen)
+						break;
+					k++;
+	            }
+				#else
+				for(i=0; i < xlen; i++)
+				{
+									/*4个bit 1个像素，要进行对U16的转换
+					rgb565
+	#define BLUE			 0x001F  
+	#define GREEN			 0x07E0
+	#define RED 			 0xF800
+					*/
+					m = *(pdata+k+i/2);
+					
+					if(i%2 == 0)
+						m = ((m>>4)&0x0f);
+					else
+						m = (m&0x0f);
+					m = m*4;
+					
+					r = (palatte[m+2] & 0xF8)>>3;
+					g = (palatte[m+1] & 0xFC)>>2;
+					b = (palatte[m] & 0xF8)>>3;
+					
+					*(pcc+i) = (r<<11)|(g<<5)|(b<<0);
+				}
+				#endif
 				
-				r = (palatte[k+2] & 0xF8)>>3;
-                g = (palatte[k+1] & 0xFC)>>2;
-                b = (palatte[k] & 0xF8)>>3;
-                color = (r<<11)|(g<<5)|(b<<0);
-				
-				*LcdData = color;
-            }
-			//Delay(1000);
+				lcd->drv->flush(lcd, pcc, xlen);
+				l++;
+			}
+
+			j += linecnt;
         }
+		wjq_free(pcc);
+		GPIO_SetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
         break;
 
     case 8:
-		for(j=0; j<ylen; j++) //图片取模:横向,左高右低
+		GPIO_ResetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
+		pcc = wjq_malloc(xlen*sizeof(u16));	
+		for(j=0; j<ylen;) //图片取模:横向,左高右低
         {
-			f_read(&bmpfile, (void *)pdata, LineBytes, &rlen);
-			if(rlen != LineBytes)
+			f_read(&bmpfile, (void *)pdata, LineBytes*linecnt, &rlen);
+			if(rlen != LineBytes*linecnt)
 			{
 				wjq_log(LOG_DEBUG, "bmp read data err!\r\n");
 			}
 			
-            for(i=0; i<xlen; i++)
-            {
-            	/*1个字节1个像素，要进行对U16的转换
+			l = 0;
+			while(l < linecnt)
+			{
+				k = l*LineBytes;
+				
+            	for(i=0; i < xlen; i++)
+	            {
+					/*1个字节1个像素，要进行对U16的转换
 					rgb565
 					#define BLUE         	 0x001F  
 					#define GREEN         	 0x07E0
 					#define RED           	 0xF800
-				*/
-				k = *(pdata+i);
-				k = k*4;
+					*/
+					m = *(pdata+k);
+					k++;
+					m = m*4;
+					
+					r = (palatte[m+2] & 0xF8)>>3;
+	                g = (palatte[m+1] & 0xFC)>>2;
+	                b = (palatte[m] & 0xF8)>>3;
+					
+	                *(pcc+i)  = (r<<11)|(g<<5)|(b<<0);
+	            }
 				
-				r = (palatte[k+2] & 0xF8)>>3;
-                g = (palatte[k+1] & 0xFC)>>2;
-                b = (palatte[k] & 0xF8)>>3;
-                color = (r<<11)|(g<<5)|(b<<0);
+				lcd->drv->flush(lcd, pcc, xlen);
 				
-				*LcdData = color;
-            }
-			//Delay(1000);
+				l++;
+			}
+
+			j += linecnt;
         }
+		wjq_free(pcc);
+		GPIO_SetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
         break;
 
 	case 16:
@@ -1054,11 +1170,12 @@ s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpF
 		
     case 24://65K真彩色		
     	GPIO_ResetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
+		pcc = (u16 *)pdata;
+	
         for(j=0; j<ylen;) //图片取模:横向,左高右低
         {
 
 			res = f_read(&bmpfile, (void *)pdata, LineBytes*linecnt, &rlen);
-			
 			if(res != FR_OK)
 			{
 				wjq_log(LOG_DEBUG, "bmp read data err!\r\n");	
@@ -1067,37 +1184,40 @@ s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpF
 			{
 				wjq_log(LOG_DEBUG, "bmp read data err!\r\n");
 			}
-			else
-			{
-				//wjq_log(LOG_DEBUG, "bmp read data:%d!\r\n", rlen);	
-				//PrintFormat(tdata, 960);
-			}
 			
-            for(i=0; i < xlen*linecnt; i++)
-            {
-            	/*3个字节1个像素，要进行对U16的转换
-					rgb565
-					#define BLUE         	 0x001F  
-					#define GREEN         	 0x07E0
-					#define RED           	 0xF800
-				*/
-				k = i*3;
+			l = 0;
+			while(l < linecnt)
+			{
+				k = l*LineBytes;
 				
-				r = pdata[k+2];
-				g = pdata[k+1];
-				b = pdata[k];
-				
-				r = ((r<<8)&0xf800);
-				g = ((g<<3)&0x07e0);
-				b = ((b>>3)&0x001f);
-				color = r+g+b;
+            	for(i=0; i < xlen; i++)
+	            {
+	            	/*3个字节1个像素，要进行对U16的转换
+						rgb565
+						#define BLUE         	 0x001F  
+						#define GREEN         	 0x07E0
+						#define RED           	 0xF800
+					*/
+					b = pdata[k++];
+					g = pdata[k++];
+					r = pdata[k++];
+					
+					r = ((r<<8)&0xf800);
+					g = ((g<<3)&0x07e0);
+					b = ((b>>3)&0x001f);
+					*(pcc+i) = r+g+b;
 
-				*LcdData = color;
-            }
-			//Delay(1000);
+	            }
+				
+				lcd->drv->flush(lcd, pcc, xlen);
+				l++;
+			}
+
 			j += linecnt;
         }
+
 		GPIO_SetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
+			
         break;
 
 	case 32:
