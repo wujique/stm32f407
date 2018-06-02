@@ -167,6 +167,14 @@ const DevSpiCh DevVSpi1CH1={
 		GPIO_Pin_1,
 		
 	};
+/* SPI彩屏，跟触摸屏用相同的控制器*/		
+const DevSpiCh DevVSpi1CH2={
+		"VSPI1_CH2",
+		"VSPI1",
+		
+		MCU_PORT_D,
+		GPIO_Pin_14,
+	};
 /*外扩IO*/
 #if 0
 const DevSpiCh DevVSpi2CH1={
@@ -241,6 +249,21 @@ const DevLcdBus BusLcdVSpi2CH1={
 	.blpin = GPIO_Pin_14,
 };
 #endif
+const DevLcdBus BusLcdVSpi1CH2={
+	.name = "BusLcdVSpi1CH2",
+	.type = LCD_BUS_SPI,
+	.basebus = "VSPI1_CH2",
+
+	.A0port = MCU_PORT_D,
+	.A0pin = GPIO_Pin_15,
+
+	.rstport = MCU_PORT_A,
+	.rstpin = GPIO_Pin_15,
+
+	.blport = MCU_PORT_B,
+	.blpin = GPIO_Pin_15,
+};
+
 
 const DevSpiFlash DevSpiFlashCore={
 	/*有一个叫做board_spiflash的SPI FLASH挂在DEV_SPI_3_2上，型号未知*/
@@ -266,13 +289,13 @@ const DevLcd DevLcdOled1	=	{"i2coledlcd",  "BusLcdI2C1",  0X1315};
 //LcdObj DevLcdOled3	=	{"vspioledlcd", LCD_BUS_VSPI, 	0X1315};
 //DevLcd DevLcdOled4	=	{"spioledlcd", 	"BusLcdSpi3", 	0X1315};
 /*SPI接口的 COG LCD*/
-//const DevLcd DevLcdCOG1	=	{"spicoglcd", 	"BusLcdSpi3", 	0X7565};
+const DevLcd DevLcdCOG1	=	{"spicoglcd", 	"BusLcdSpi3", 	0X7565};
 //LcdObj DevLcdCOG2	=	{"vspicoglcd", 	LCD_BUS_VSPI, 	0X7565};
 /*fsmc接口的 tft lcd*/
-//const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	NULL};
+const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	NULL};
 /*SPI接口的 tft lcd*/
-const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcdSpi3", 	0x9342};
-
+//const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcdSpi3", 	0x9342};
+//const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcdVSpi1CH2", 	0x9342};
 
 
 s32 sys_dev_register(void)
@@ -302,14 +325,15 @@ s32 sys_dev_register(void)
 	mcu_spich_register(&DevSpi3CH4);
 	
 	mcu_spich_register(&DevVSpi1CH1);
+	//mcu_spich_register(&DevVSpi1CH2);
 	//mcu_spich_register(&DevVSpi2CH1);
 	
 	/*注册LCD总线*/
 	dev_lcdbus_register(&BusLcdSpi3);
 	dev_lcdbus_register(&BusLcdI2C1);
-	//dev_lcdbus_register(&BusLcd8080);
+	dev_lcdbus_register(&BusLcd8080);
 	//dev_lcdbus_register(&BusLcdVSpi2CH1);
-
+	//dev_lcdbus_register(&BusLcdVSpi1CH2);
 	/*
 		注册设备
 
@@ -320,7 +344,7 @@ s32 sys_dev_register(void)
 	/*注册LCD设备*/
 	dev_lcd_register(&DevLcdOled1);
 	dev_lcd_register(&DevLcdtTFT);
-	//dev_lcd_register(&DevLcdCOG1);
+	dev_lcd_register(&DevLcdCOG1);
 	
 	return 0;
 }

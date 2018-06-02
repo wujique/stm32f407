@@ -109,7 +109,7 @@ s32 dev_xpt2046_open(void)
 
 	wjq_log(LOG_INFO, ">--------------xpt2046 open!\r\n");
 	
-	Xpt2046SpiCHNode = mcu_spi_open(XPT2046_SPI, SPI_MODE_0, 2);
+	Xpt2046SpiCHNode = mcu_spi_open(XPT2046_SPI, SPI_MODE_0, 0);
 	
 	mcu_tim7_start(100, dev_xpt2046_task, 0);
 	DevXpt2046Gd = 0;

@@ -295,6 +295,9 @@ void vspi_delay(u32 delay)
 	}
 
 }
+
+u32 VspiDelay = 0;
+
 /**
  *@brief:      mcu_vspi_open
  *@details:    打开虚拟SPI
@@ -313,6 +316,7 @@ static s32 mcu_vspi_open(DevSpiNode *node, SPI_MODE mode, u16 pre)
 	if(node->gd != -1)
 		return -1;
 
+	node->clk = pre;
 	node->gd = 0;
 		
     return 0;
@@ -339,6 +343,8 @@ static s32 mcu_vspi_close(DevSpiNode *node)
                s32 len      
  *@param[out]  无
  *@retval:     
+
+ 		node->clk = 0, CLK时钟1.5M 2018.06.02
  */
 static s32 mcu_vspi_transfer(DevSpiNode *node, u8 *snd, u8 *rsv, s32 len)
 {
@@ -347,6 +353,8 @@ static s32 mcu_vspi_transfer(DevSpiNode *node, u8 *snd, u8 *rsv, s32 len)
 	s32 slen;
 	u8 misosta;
 
+	volatile u16 delay;
+	
 	DevSpi *dev;
 	
 	if(node == NULL)
@@ -374,16 +382,32 @@ static s32 mcu_vspi_transfer(DevSpiNode *node, u8 *snd, u8 *rsv, s32 len)
 		for(i=0; i<8; i++)
 		{
 			mcu_io_output_resetbit(dev->clkport, dev->clkpin);
-			vspi_delay(10);
+
+			delay = node->clk;
+			while(delay>0)
+			{
+				delay--;	
+			}
 			
 			if(data&0x80)
 				mcu_io_output_setbit(dev->mosiport, dev->mosipin);
 			else
 				mcu_io_output_resetbit(dev->mosiport, dev->mosipin);
 			
-			vspi_delay(10);
+			delay = node->clk;
+			while(delay>0)
+			{
+				delay--;	
+			}
+			
 			data<<=1;
 			mcu_io_output_setbit(dev->clkport, dev->clkpin);
+			
+			delay = node->clk;
+			while(delay>0)
+			{
+				delay--;	
+			}
 			
 			misosta = mcu_io_input_readbit(dev->misoport, dev->misopin);
 			if(misosta == Bit_SET)
@@ -394,7 +418,12 @@ static s32 mcu_vspi_transfer(DevSpiNode *node, u8 *snd, u8 *rsv, s32 len)
 			{
 				data &=0xfe;
 			}
-			vspi_delay(10);
+			
+			delay = node->clk;
+			while(delay>0)
+			{
+				delay--;	
+			}
 			
 		}
 

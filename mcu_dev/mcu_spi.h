@@ -50,6 +50,9 @@ typedef struct
 	s32 gd;
 	/*控制器硬件信息，初始化控制器时拷贝设备树的信息到此*/
 	DevSpi dev;	
+	
+	/*模拟SPI的时钟分频设置*/
+	u16 clk;
 	/*链表*/
 	struct list_head list;
 }DevSpiNode;
