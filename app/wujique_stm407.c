@@ -1101,7 +1101,7 @@ void wujique_stm407_test(void)
 	wjq_log(LOG_DEBUG,"run app\r\n");
 
 	
-	WJQTestLcd = dev_lcd_open("spicoglcd");
+	WJQTestLcd = dev_lcd_open("i2coledlcd");
 	if(WJQTestLcd == NULL)
 	{
 		wjq_log(LOG_DEBUG, "open oled lcd err\r\n");

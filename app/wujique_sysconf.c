@@ -49,6 +49,7 @@ const DevI2c DevVi2c1={
 	外扩IO口模拟I2C，和矩阵按键，模拟SPI冲突
 
 */		
+#if 0
 const DevI2c DevVi2c2={
 		.name = "VI2C2",
 		
@@ -58,6 +59,7 @@ const DevI2c DevVi2c2={
 		.sdaport = MCU_PORT_F,
 		.sdapin = GPIO_Pin_10,
 		};	
+#endif
 /*
 
 	IO口模拟SPI控制器
@@ -81,9 +83,8 @@ const DevSpi DevVSpi1IO={
 		.misopin = GPIO_Pin_12,
 	};
 
-
-	
-/*  外扩接口模拟VSPI2， 与矩阵键盘，模拟I2C2冲突    */						
+/*  外扩接口模拟VSPI2， 与矩阵键盘，模拟I2C2冲突    */			
+#if 0
 const DevSpi DevVspi2IO={
 		"VSPI2",
 		DEV_SPI_V,
@@ -98,7 +99,7 @@ const DevSpi DevVspi2IO={
 		GPIO_Pin_9,
 
 	};
-
+#endif
 /*
 
 	硬件SPI控制器：SPI3
@@ -120,7 +121,7 @@ const DevSpi DevSpi3IO={
 	};
 
 /* SPI通道*/
-/* FLASH*/
+/* FLASH 1*/
 const DevSpiCh DevSpi3CH1={
 		"SPI3_CH1",
 		"SPI3",
@@ -129,7 +130,7 @@ const DevSpiCh DevSpi3CH1={
 		GPIO_Pin_14,
 		
 	};
-		
+/* flash 2*/		
 const DevSpiCh DevSpi3CH2={
 		"SPI3_CH2",
 		"SPI3",
@@ -138,7 +139,7 @@ const DevSpiCh DevSpi3CH2={
 		GPIO_Pin_15,
 		
 	};
-/*外扩SPI*/		
+/*外扩SPI，可接COG、OLED、SPI TFT、RF24L01*/			
 const DevSpiCh DevSpi3CH3={
 		"SPI3_CH3",
 		"SPI3",
@@ -147,7 +148,17 @@ const DevSpiCh DevSpi3CH3={
 		GPIO_Pin_6,
 		
 	};
-/* 触摸屏IO模拟SPI*/
+/*外扩的SPI, 彩屏的触摸屏*/
+const DevSpiCh DevSpi3CH4={
+		"SPI3_CH4",
+		"SPI3",
+		
+		MCU_PORT_F,
+		GPIO_Pin_2,
+		
+	};
+
+/* 触摸屏, IO模拟SPI*/
 const DevSpiCh DevVSpi1CH1={
 		"VSPI1_CH1",
 		"VSPI1",
@@ -157,6 +168,7 @@ const DevSpiCh DevVSpi1CH1={
 		
 	};
 /*外扩IO*/
+#if 0
 const DevSpiCh DevVSpi2CH1={
 		"VSPI2_CH1",
 		"VSPI2",
@@ -165,10 +177,10 @@ const DevSpiCh DevVSpi2CH1={
 		GPIO_Pin_12,
 		
 	};
-	
+#endif	
 /*
 	串行LCD接口，使用真正的SPI控制
-
+	外扩SPI
 */
 const DevLcdBus BusLcdSpi3={
 	.name = "BusLcdSpi3",
@@ -212,6 +224,8 @@ const DevLcdBus BusLcd8080={
 
 };
 
+/* 模拟SPI2（外扩IO）*/
+#if 0
 const DevLcdBus BusLcdVSpi2CH1={
 	.name = "BusLcdVSpi2CH1",
 	.type = LCD_BUS_SPI,
@@ -226,7 +240,7 @@ const DevLcdBus BusLcdVSpi2CH1={
 	.blport = MCU_PORT_F,
 	.blpin = GPIO_Pin_14,
 };
-
+#endif
 
 const DevSpiFlash DevSpiFlashCore={
 	/*有一个叫做board_spiflash的SPI FLASH挂在DEV_SPI_3_2上，型号未知*/
@@ -245,17 +259,20 @@ const DevSpiFlash DevSpiFlashBoard={
 	设备树定义
 	指明系统有多少个LCD设备，挂在哪个LCD总线上。
 */
+/*I2C接口的 OLED*/
 const DevLcd DevLcdOled1	=	{"i2coledlcd",  "BusLcdI2C1",  0X1315};
-
 //LcdObj DevLcdOled2	=	{"i2coledlcd2", LCD_BUS_VI2C2,  0X1315};
+/*SPI接口的 OLED*/
 //LcdObj DevLcdOled3	=	{"vspioledlcd", LCD_BUS_VSPI, 	0X1315};
 //DevLcd DevLcdOled4	=	{"spioledlcd", 	"BusLcdSpi3", 	0X1315};
-
-const DevLcd DevLcdCOG1	=	{"spicoglcd", 	"BusLcdSpi3", 	0X7565};
-
+/*SPI接口的 COG LCD*/
+//const DevLcd DevLcdCOG1	=	{"spicoglcd", 	"BusLcdSpi3", 	0X7565};
 //LcdObj DevLcdCOG2	=	{"vspicoglcd", 	LCD_BUS_VSPI, 	0X7565};
+/*fsmc接口的 tft lcd*/
+//const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	NULL};
+/*SPI接口的 tft lcd*/
+const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcdSpi3", 	0x9342};
 
-const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	NULL};
 
 
 s32 sys_dev_register(void)
@@ -282,15 +299,17 @@ s32 sys_dev_register(void)
 	mcu_spich_register(&DevSpi3CH1);
 	mcu_spich_register(&DevSpi3CH2);
 	mcu_spich_register(&DevSpi3CH3);
+	mcu_spich_register(&DevSpi3CH4);
 	
 	mcu_spich_register(&DevVSpi1CH1);
-	mcu_spich_register(&DevVSpi2CH1);
+	//mcu_spich_register(&DevVSpi2CH1);
 	
 	/*注册LCD总线*/
 	dev_lcdbus_register(&BusLcdSpi3);
 	dev_lcdbus_register(&BusLcdI2C1);
-	dev_lcdbus_register(&BusLcd8080);
-	dev_lcdbus_register(&BusLcdVSpi2CH1);
+	//dev_lcdbus_register(&BusLcd8080);
+	//dev_lcdbus_register(&BusLcdVSpi2CH1);
+
 	/*
 		注册设备
 
@@ -301,7 +320,9 @@ s32 sys_dev_register(void)
 	/*注册LCD设备*/
 	dev_lcd_register(&DevLcdOled1);
 	dev_lcd_register(&DevLcdtTFT);
-	dev_lcd_register(&DevLcdCOG1);
+	//dev_lcd_register(&DevLcdCOG1);
+	
+	return 0;
 }
 
 

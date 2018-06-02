@@ -160,7 +160,7 @@ DevLcdBusNode *bus_lcd_open(char *name)
 			
 			if(node->dev.type == LCD_BUS_SPI)
 			{
-				node->basenode = (void *)mcu_spi_open(node->dev.basebus, SPI_MODE_3, SPI_BaudRatePrescaler_4);
+				node->basenode = (void *)mcu_spi_open(node->dev.basebus, SPI_MODE_3, SPI_BaudRatePrescaler_2);
 
 			}
 			else if(node->dev.type == LCD_BUS_I2C)
@@ -284,7 +284,7 @@ s32 bus_lcd_read_data(DevLcdBusNode *node, u8 *data, u32 len)
 	{
 		case LCD_BUS_SPI:
 		{	
-
+			mcu_spi_transfer((DevSpiChNode *)node->basenode,  NULL, data, len);
 		}
 		break;
 		

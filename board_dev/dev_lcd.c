@@ -54,6 +54,12 @@ _lcd_pra LCD_IIL9341 ={
 		.height = 320,	//LCD 高度
 };
 		
+/*SPI接口的lcd ,驱动芯片也是9341，改名9342*/
+_lcd_pra LCD_IIL9342 ={
+		.id	  = 0x9342,
+		.width = 240,	//LCD 宽度
+		.height = 320,	//LCD 高度
+};		
 _lcd_pra LCD_IIL9325 ={
 		.id   = 0x9325,
 		.width = 240,	//LCD 宽度
@@ -88,13 +94,14 @@ _lcd_pra LCD_Oled12864 ={
 /*
 	各种LCD列表
 */
-_lcd_pra *LcdPraList[5]=
+_lcd_pra *LcdPraList[6]=
 			{
 				&LCD_IIL9341,		
 				&LCD_IIL9325,
 				&LCD_R61408,
 				&LCD_Cog12864,
 				&LCD_Oled12864,
+				&LCD_IIL9342,
 };
 
 /*
@@ -105,6 +112,7 @@ _lcd_drv *LcdDrvList[] = {
 					&TftLcdILI9325Drv,
 					&CogLcdST7565Drv,
 					&OledLcdSSD1615rv,
+					&TftLcdILI9341_8_Drv,
 };
 /*
 
@@ -829,8 +837,18 @@ typedef struct tagRGBQUAD
 
 #define WIDTHBYTES(i) ((i+31)/32*4)
 
-extern volatile u16 *LcdData;
+/*
 
+	4种图片，刷屏时间
+
+			FSMC	SPI（其中，将U16拆为U8，花10ms）
+	1bit	53ms	316
+	4bit	74		340
+	8bit	79		344
+	24bit	111		378
+
+
+*/
 s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpFileName)
 {
 	BITMAPFILEHEADER    bf;

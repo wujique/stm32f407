@@ -4,6 +4,7 @@
 
 extern _lcd_drv TftLcdILI9341Drv;
 extern _lcd_drv TftLcdILI9325Drv;
+extern _lcd_drv TftLcdILI9341_8_Drv;
 
 #endif
 
