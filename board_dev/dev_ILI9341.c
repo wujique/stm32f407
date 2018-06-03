@@ -45,6 +45,8 @@ extern void Delay(__IO uint32_t nTime);
 
 */
 #define TFT_LCD_DRIVER_9341
+#define TFT_LCD_DRIVER_9341_8BIT
+
 #define TFT_LCD_DRIVER_9325
 
 /* ----------下面为不同LCD 驱动--------*/
@@ -559,10 +561,14 @@ s32 drv_ILI9341_prepare_display(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey)
 s32 drv_ILI9341_flush(DevLcdNode *lcd, u16 *color, u32 len)
 {
 	lcd->busnode = bus_lcd_open(lcd->dev.buslcd);
-	bus_lcd_write_data(lcd->busnode, (u8 *)color,  len);	
+	bus_lcd_flush_data(lcd->busnode, (u8 *)color,  len);	
 	bus_lcd_close(lcd->busnode);
 	return 0;
 } 
+#endif
+
+#ifdef TFT_LCD_DRIVER_9341_8BIT
+
 /*
 
 	定义一个TFT LCD，使用ILI9341驱动IC的设备
@@ -1016,7 +1022,7 @@ s32 drv_ILI9341_8_flush(DevLcdNode *lcd, u16 *color, u32 len)
 			break;
 	}
 
-	bus_lcd_write_data(node, tmp,  len*2);	
+	bus_lcd_flush_data(lcd->busnode, tmp,  len*2);	
 	bus_lcd_close(node);
 	
 	wjq_free(tmp);
@@ -1708,7 +1714,7 @@ s32 drv_ILI9325_prepare_display(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey)
 s32 drv_ILI9325_flush(DevLcdNode *lcd, u16 *color, u32 len)
 {
 	lcd->busnode = bus_lcd_open(lcd->dev.buslcd);
-	bus_lcd_write_data(lcd->busnode, (u8 *)color,  len);	
+	bus_lcd_flush_data(lcd->busnode, (u8 *)color,  len);	
 	bus_lcd_close(lcd->busnode);
 	return 0;
 } 

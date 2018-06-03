@@ -57,6 +57,8 @@ extern s32 bus_lcd_rst(DevLcdBusNode *node, u8 sta);
 extern DevLcdBusNode *bus_lcd_open(char *name);
 extern s32 bus_lcd_close(DevLcdBusNode *node);
 extern s32 bus_lcd_write_data(DevLcdBusNode *node, u8 *data, u32 len);
+extern s32 bus_lcd_flush_data(DevLcdBusNode *node, u8 *data, u32 len);
+extern s32 bus_lcd_flush_wait(DevLcdBusNode *node);
 extern s32 bus_lcd_read_data(DevLcdBusNode *node, u8 *data, u32 len);
 extern s32 bus_lcd_write_cmd(DevLcdBusNode *node, u8 cmd);
 extern s32 dev_lcdbus_register(const DevLcdBus *dev);

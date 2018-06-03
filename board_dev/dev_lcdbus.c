@@ -269,6 +269,144 @@ s32 bus_lcd_write_data(DevLcdBusNode *node, u8 *data, u32 len)
 	
 	return 0;
 }
+#if 1//FSMC尝试DMA
+#define FSMC_LCD_ADDRESS      0x6C010000
+
+void bus_lcd_fsmc_dma_init(u32 MemoryAddr,	u32 len)
+{
+	DMA_InitTypeDef  DMA_InitStructure;
+	
+	/* DMA2 Stream1 Configuration */
+	DMA_DeInit(DMA2_Stream0);
+	while (DMA_GetCmdStatus(DMA2_Stream0) != DISABLE)
+  	{
+  		//wjq_log(LOG_DEBUG, "W-");
+  	}
+	
+	DMA_InitStructure.DMA_Channel = DMA_Channel_0;	
+	DMA_InitStructure.DMA_PeripheralBaseAddr = MemoryAddr;   
+	DMA_InitStructure.DMA_Memory0BaseAddr = FSMC_LCD_ADDRESS;
+	DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToMemory;
+	DMA_InitStructure.DMA_BufferSize = len*2;
+	DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Enable;
+	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Disable;
+	DMA_InitStructure.DMA_PeripheralDataSize = DMA_MemoryDataSize_Byte;
+	DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord;
+	DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
+	DMA_InitStructure.DMA_Priority = DMA_Priority_High;
+	DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;
+	DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
+	DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
+	/* DMA2 IRQ channel Configuration */
+    DMA_Init(DMA2_Stream0, &DMA_InitStructure);
+	
+	DMA_Cmd(DMA2_Stream0, ENABLE); 
+
+	while ((DMA_GetCmdStatus(DMA2_Stream0) != ENABLE))
+  	{
+  		//wjq_log(LOG_DEBUG, "E-");
+  	}
+}
+
+
+/**
+ *@brief:     非阻塞方式发送数据
+ *@details:   
+ *@param[in]    
+ *@param[out]  
+ *@retval:     
+ 			测试8080非阻塞发送，对刷图性能提升不大，暂不启用。
+ */
+s32 bus_lcd_flush_data(DevLcdBusNode *node, u8 *data, u32 len)
+{
+	/*直接定义256字节，可能有BUG，要根据len动态申请*/
+	u8 tmp[256];
+	u32 i;
+
+	switch(node->dev.type)
+	{
+		case LCD_BUS_SPI:
+		{
+			mcu_spi_transfer((DevSpiChNode *)node->basenode,  data, NULL, len);
+		}
+		break;
+		
+		case LCD_BUS_I2C:
+		{
+			tmp[0] = 0x40;
+			memcpy(&tmp[1], data, len);
+			mcu_i2c_transfer((DevI2cNode *)node->basenode, 0x3C, MCU_I2C_MODE_W, tmp, len+1);
+		}
+		break;
+		
+		case LCD_BUS_8080:			
+		{
+			bus_lcd_fsmc_dma_init((u32)data, len);	
+			
+			while(1)
+			{
+				//wjq_log(LOG_DEBUG, "W");
+				if(SET == DMA_GetFlagStatus(DMA2_Stream0, DMA_FLAG_TCIF0))
+				{
+					DMA_ClearFlag(DMA2_Stream0, DMA_FLAG_TCIF0);
+					break;
+				}
+			}
+		}
+		break;
+		
+		default:
+			break;
+	}
+	
+	return 0;
+}
+/**
+ *@brief:  等待flush数据完成   
+ *@details:   
+ *@param[in]    
+ *@param[out]  
+ *@retval:     
+ */
+s32 bus_lcd_flush_wait(DevLcdBusNode *node)
+{
+	switch(node->dev.type)
+	{
+		case LCD_BUS_SPI:
+		{
+
+		}
+		break;
+		case LCD_BUS_I2C:
+		{
+
+		}
+		break;
+		case LCD_BUS_8080:			
+		{
+			if(DMA_GetCmdStatus(DMA2_Stream0) == DISABLE)
+			{
+				DMA_ClearFlag(DMA2_Stream0, DMA_FLAG_TCIF0);
+				return 0;
+			}
+			while(1)
+			{
+				//wjq_log(LOG_DEBUG, "W");
+				if(SET == DMA_GetFlagStatus(DMA2_Stream0, DMA_FLAG_TCIF0))
+				{
+					DMA_ClearFlag(DMA2_Stream0, DMA_FLAG_TCIF0);
+					break;
+				}
+			}			
+		}
+		break;
+		default:
+			break;
+	}
+	
+	return 0;
+}
+#endif
 /**
  *@brief:     
  *@details:   

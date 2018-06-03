@@ -839,15 +839,22 @@ typedef struct tagRGBQUAD
 
 /*
 
-	4种图片，刷屏时间
+	4种图片，刷屏时间，图片保存在SD卡
 
-			FSMC	SPI（其中，将U16拆为U8，花10ms）
-	1bit	53ms	316
-	4bit	74		340
-	8bit	79		344
-	24bit	111		378
+			FSMC	读数据		SPI（其中，将U16拆为U8，花10ms）
+	1bit	53ms 	30  	316
+	4bit	74	 	50		340
+	8bit	79	 	51		344
+	24bit	111	 	91		378
 
 
+	要提速，还可以有下面方法：
+	申请双缓冲，用DMA，启动DMA后，不等传输完成，
+	就出来准备下一包数据，发送下一包前，查询上一包是否发送完成。
+	这样，原来的时间：
+		数据准备时间+数据传输时间
+	现在时间变为：
+		数据准备时间/数据传输时间，两者较长的为需要时间。
 */
 s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpFileName)
 {
