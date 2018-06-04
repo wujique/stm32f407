@@ -271,6 +271,10 @@ s32 test_sound_fm(void)
 {
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
+
+	dev_wm8978_inout(WM8978_INPUT_DAC|WM8978_INPUT_AUX|WM8978_INPUT_ADC,
+					WM8978_OUTPUT_PHONE|WM8978_OUTPUT_SPK);
+	
 	dev_tea5767_open();
 	dev_tea5767_setfre(105700);
 	wjq_wait_key(12);
@@ -283,7 +287,7 @@ s32 test_sound_wm8978(void)
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
 	
-	fun_sound_play("2:/stereo_16bit_32k.wav", "wm8978");
+	fun_sound_play("1:/十送红军.wav", "wm8978");
 	wjq_wait_key(16);
 	fun_sound_stop();
 	wjq_log(LOG_DEBUG,"wm8978 test out\r\n");
@@ -510,7 +514,6 @@ s32 test_rs485_rec(void)
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
 
-	dev_rs485_init();
 	dev_rs485_open();
 
 	while(1)
@@ -545,7 +548,6 @@ s32 test_rs485_snd(void)
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
 	
-	dev_rs485_init();
 	dev_rs485_open();
 
 	while(1)
@@ -559,7 +561,7 @@ s32 test_rs485_snd(void)
 			}
 			else if(keyvalue == 16)
 			{
-				res = dev_rs485_write("rs485 test\r\n", 13);
+				res = dev_rs485_write("rs485 test\r\n", 14);
 				wjq_log(LOG_DEBUG, "dev rs485 write:%d\r\n", res);
 			}
 		}
@@ -1109,7 +1111,6 @@ void wujique_stm407_test(void)
 
 	dev_key_open();
 	dev_keypad_open();
-	dev_wm8978_open();
 
 	emenu_run(WJQTestLcd, (MENU *)&WJQTestList[0], sizeof(WJQTestList)/sizeof(MENU));	
 	while(1)
@@ -1134,5 +1135,175 @@ s32 wujique_407test_init(void)
 	return 0;
 }
 
+/*
+
+生产测试
+
+*/
+
+s32 test_tft_lcd(void)
+{
+	DevLcdNode *lcd;
+	u8 step = 0;
+	u8 dis = 1;
+	
+	lcd = dev_lcd_open("tftlcd");
+	if(lcd == NULL)
+	{
+		wjq_test_showstr("open tft lcd err!");	
+	}
+	else
+	{
+		while(1)
+		{
+			if(dis == 1)
+			{
+				dis = 0;
+				switch(step)
+				{
+					case 0:
+						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, YELLOW);
+						break;
+					
+					case 1:
+						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, RED);
+						break;
+					
+					case 2:
+						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLUE);
+						dev_lcd_put_string(lcd, FONT_SONGTI_1616, 20, 20, "abc屋脊雀工作室ADC", RED);
+						break;
+
+					case 3:
+						dev_lcd_show_bmp(lcd, 1, 1, 320, 240, "1:/pic/女人单色.bmp");
+						break;
+					
+					case 4:
+						dev_lcd_show_bmp(lcd, 1, 1, 320, 240, "1:/pic/女人24位.bmp");//真彩色
+						break;
+					case 5:
+						dev_lcd_backlight(lcd, 0);
+						break;
+					case 6:
+						dev_lcd_backlight(lcd, 1);
+						break;		
+					default:
+						break;
+				}
+				step++;
+				if(step >= 7)
+					step = 0;
+			}
+			u8 keyvalue;
+			s32 res;
+			
+			res = dev_keypad_read(&keyvalue, 1);
+			if(res == 1)
+			{
+				if(keyvalue == 16)
+				{
+					dis = 1;
+				}
+				else if(keyvalue == 12)
+				{
+					break;
+				}
+			}
+		}
+
+	}
+	dev_lcd_close(lcd);
+	return 0;
+}
+
+s32 test_cog_lcd(void)
+{
+	DevLcdNode *lcd;
+	u8 step = 0;
+	u8 dis = 1;
+	
+	lcd = dev_lcd_open("spicoglcd");
+	if(lcd == NULL)
+	{
+		wjq_test_showstr("open cog lcd err!");	
+		while(1);
+	}
+
+	while(1)
+	{
+		dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLACK);
+		wjq_wait_key(16);
+		dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, WHITE);
+		wjq_wait_key(16);
+		dev_lcd_put_string(lcd, FONT_SONGTI_1212, 1, 32, "cog LCD测试程序", BLACK);
+		wjq_wait_key(16);
+		dev_lcd_backlight(lcd, 0);
+		wjq_wait_key(16);
+		dev_lcd_backlight(lcd, 1);
+		wjq_wait_key(16);
+	}
+	
+	return 0;
+}
+
+s32 test_tft_tp(void)
+{
+	DevLcdNode *lcd;
+
+
+	lcd = dev_lcd_open("tftlcd");
+	if(lcd == NULL)
+	{
+		wjq_test_showstr("open lcd err!");	
+	}
+	else
+	{
+		dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLUE);
+		dev_lcd_setdir(lcd, H_LCD, L2R_U2D);
+		dev_touchscreen_open();
+		ts_calibrate(lcd);
+		dev_touchscreen_close();
+	}
+	
+	dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLUE);
+
+	{
+		dev_touchscreen_open();	
+	
+		struct tsdev *ts;
+		ts = ts_open_module();
+
+		struct ts_sample samp[10];
+		int ret;
+		u8 i =0;	
+		while(1)
+		{
+			ret = ts_read(ts, samp, 10);
+			if(ret != 0)
+			{
+				//uart_printf("pre:%d, x:%d, y:%d\r\n", samp[0].pressure, samp[0].x, samp[0].y);
+						
+				i = 0;
+				
+				while(1)
+				{
+					if(i>= ret)
+						break;
+					
+					if(samp[i].pressure != 0 )
+					{
+						//uart_printf("pre:%d, x:%d, y:%d\r\n", samp.pressure, samp.x, samp.y);
+						dev_lcd_drawpoint(lcd, samp[i].x, samp[i].y, 0xF800); 
+					}
+					i++;
+				}
+			}
+
+		}
+
+		dev_touchscreen_close();
+	}
+	return 0;
+}
 
 

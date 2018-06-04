@@ -74,6 +74,7 @@ s32 dev_rs485_open(void)
 	
 	mcu_uart_open(DEV_RS485_UART);
 	mcu_uart_set_baud(DEV_RS485_UART, 9600);	
+	RS485Gd = 0;
 	return 0;
 }
 /**
