@@ -108,9 +108,7 @@ s32 dev_xpt2046_open(void)
 		return -1;
 
 	wjq_log(LOG_INFO, ">--------------xpt2046 open!\r\n");
-	
-	Xpt2046SpiCHNode = mcu_spi_open(XPT2046_SPI, SPI_MODE_0, 0);
-	
+
 	mcu_tim7_start(100, dev_xpt2046_task, 0);
 	DevXpt2046Gd = 0;
 	return 0;
@@ -127,8 +125,7 @@ s32 dev_xpt2046_close(void)
 
 	if(DevXpt2046Gd != 0)
 		return -1;
-	
-	mcu_spi_close(Xpt2046SpiCHNode);
+
 	DevXpt2046Gd = -1;
 	return 0;
 }
@@ -159,7 +156,7 @@ void dev_xpt2046_task(void)
 		读Z1,Z2，用于计算压力
 		读X,Y轴，用于计算坐标
 
-		1 使用了快速16CLK操作法，过程100us左右。
+		1 使用了快速16CLK操作法，过程100us左右, 其中SPI通信过程50us。
 		经测试，中间不需要延时。
 		2 没有使用下笔中断，通过压力判断是否下笔。但是有点疑惑，理论上接触电阻应该很小的，
 		 用ADC方案，正常，用XPT2046方案，感觉接触电阻比较大，不知道是哪里没有理解对。
@@ -173,7 +170,13 @@ void dev_xpt2046_task(void)
 	*/
 	
 	/*------------------------*/
-
+	GPIO_ResetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
+	
+	Xpt2046SpiCHNode = mcu_spi_open(XPT2046_SPI, SPI_MODE_0, 0);
+	
+	if(Xpt2046SpiCHNode == NULL)
+		return;
+	
 	stmp[0] = XPT2046_CMD_Z2;
 	mcu_spi_transfer(Xpt2046SpiCHNode, stmp, NULL, 1);
 	//vspi_delay(100);
@@ -201,7 +204,9 @@ void dev_xpt2046_task(void)
 	stmp[1] = 0X00;
 	mcu_spi_transfer(Xpt2046SpiCHNode, stmp, rtmp, 2);
 	sample_y = ((u16)(rtmp[0]&0x7f)<<5) + (rtmp[1]>>3);
-
+	
+	mcu_spi_close(Xpt2046SpiCHNode);
+	GPIO_SetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
 	/*
 		算压力
 		简化算法

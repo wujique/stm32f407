@@ -581,6 +581,7 @@ s32 mcu_spich_register(const DevSpiCh *dev)
                u16 pre      预分频
  *@param[out]  无
  *@retval:     
+ 			   打开一次SPI，在F407上大概要2us
  */
 DevSpiChNode *mcu_spi_open(char *name, SPI_MODE mode, u16 pre)
 {
