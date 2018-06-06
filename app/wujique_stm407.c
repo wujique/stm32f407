@@ -407,7 +407,7 @@ s32 test_tp_test(void)
 					if(samp[i].pressure != 0 )
 					{
 						//uart_printf("pre:%d, x:%d, y:%d\r\n", samp.pressure, samp.x, samp.y);
-						dev_lcd_drawpoint(lcd, samp[i].x, samp[i].y, 0xF800); 
+						dev_lcd_drawpoint(lcd, samp[i].x, samp[i].y, RED); 
 					}
 					i++;
 				}

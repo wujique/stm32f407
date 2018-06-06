@@ -31,9 +31,19 @@
 
 extern s32 dev_touchscreen_write(struct ts_sample *samp, int nr);
 
-/*xpt 2046使用 模拟串口1*/
-#define XPT2046_SPI "VSPI1_CH1"
+/*
+	xpt 2046使用 模拟SPI1_ch1
+	分频设置为0
+*/
+//#define XPT2046_SPI "VSPI1_CH1"
+//#define XPT2046_SPI_PRE	0
 
+/*
+	如果使用硬件SPI3_CH4,
+	分频不能设置太快
+*/
+#define XPT2046_SPI "SPI3_CH4"
+#define XPT2046_SPI_PRE	SPI_BaudRatePrescaler_8
 
 /*
 	命令字意义：
@@ -172,8 +182,8 @@ void dev_xpt2046_task(void)
 	/*------------------------*/
 	GPIO_ResetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
 	
-	Xpt2046SpiCHNode = mcu_spi_open(XPT2046_SPI, SPI_MODE_0, 0);
-	
+	Xpt2046SpiCHNode = mcu_spi_open(XPT2046_SPI, SPI_MODE_0, XPT2046_SPI_PRE);
+	//Xpt2046SpiCHNode = NULL;
 	if(Xpt2046SpiCHNode == NULL)
 		return;
 	

@@ -169,30 +169,30 @@ int ts_calibrate(DevLcdNode *lcd)
 	int yres = 320;
 
 	put_string_center (lcd, xres / 2, yres / 4,
-			   "TSLIB calibration utility", 0xF800);
+			   "TSLIB calibration utility", RED);
 	put_string_center (lcd,  xres / 2, yres / 4 + 20,
-			   "Touch crosshair to calibrate", 0xF800);
+			   "Touch crosshair to calibrate", RED);
 
 	wjq_log(LOG_DEBUG, "xres = %d, yres = %d\n", xres, yres);
 	
 	//----校准过程，获取5个点的数据-------
-	put_cross(lcd,  50, 50, 2);
+	put_cross(lcd,  50, 50, RED);
 	get_sample (ts, &cal, 0, 50,        50,        "Top left");
 	wjq_log(LOG_DEBUG, "-----------------------Top left finish\r\n");
 
-	put_cross(lcd,  xres - 50, 50, 2);
+	put_cross(lcd,  xres - 50, 50, RED);
 	get_sample (ts, &cal, 1, xres - 50, 50,        "Top right");
 	wjq_log(LOG_DEBUG, "-----------------------Top right finish\r\n");
 
-	put_cross(lcd,  xres - 50, yres - 50, 2);
+	put_cross(lcd,  xres - 50, yres - 50, RED);
 	get_sample (ts, &cal, 2, xres - 50, yres - 50, "Bot right");
 	wjq_log(LOG_DEBUG, "-----------------------Bot right finish\r\n");
 
-	put_cross(lcd,  50,  yres - 50, 2);
+	put_cross(lcd,  50,  yres - 50, RED);
 	get_sample (ts, &cal, 3, 50,        yres - 50, "Bot left");
 	wjq_log(LOG_DEBUG, "-----------------------Bot left finish\r\n");
 
-	put_cross(lcd,  xres / 2, yres / 2, 2);
+	put_cross(lcd,  xres / 2, yres / 2, RED);
 	get_sample (ts, &cal, 4, xres / 2,  yres / 2,  "Center");
 	wjq_log(LOG_DEBUG, "-----------------------Center\r\n");
 

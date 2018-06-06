@@ -116,8 +116,11 @@ static s32 mcu_hspi_open(DevSpiNode *node, SPI_MODE mode, u16 pre)
 	SPI_InitTypeDef SPI_InitStruct;
 
 	if(node->gd != -1)
+	{
+		//SPI_DEBUG(LOG_DEBUG, "spi dev busy\r\n");
 		return -1;
-
+	}
+	
 	if(mode >= SPI_MODE_MAX)
 		return -1;
 
@@ -180,7 +183,7 @@ static s32 mcu_hspi_transfer(DevSpiNode *node, u8 *snd, u8 *rsv, s32 len)
 
 	if(node->gd != 0)
 	{
-		SPI_DEBUG(LOG_DEBUG, "spi dev err\r\n");
+		SPI_DEBUG(LOG_DEBUG, "spi dev no open\r\n");
 		return -1;
 	}
 	
@@ -314,8 +317,13 @@ static s32 mcu_vspi_open(DevSpiNode *node, SPI_MODE mode, u16 pre)
 		return -1;
 	
 	if(node->gd != -1)
+	{
+		//SPI_DEBUG(LOG_DEBUG, "vspi dev busy\r\n");
 		return -1;
-
+	}
+	
+	//SPI_DEBUG(LOG_DEBUG, "vo-");
+	
 	node->clk = pre;
 	node->gd = 0;
 		
@@ -330,6 +338,9 @@ static s32 mcu_vspi_open(DevSpiNode *node, SPI_MODE mode, u16 pre)
  */
 static s32 mcu_vspi_close(DevSpiNode *node)
 {
+	if(node->gd != 0)
+		return -1;
+	//SPI_DEBUG(LOG_DEBUG, "vc-");
 	node->gd = -1;
 	
     return 0;
@@ -358,8 +369,17 @@ static s32 mcu_vspi_transfer(DevSpiNode *node, u8 *snd, u8 *rsv, s32 len)
 	DevSpi *dev;
 	
 	if(node == NULL)
+	{
+		SPI_DEBUG(LOG_DEBUG, "vspi dev err\r\n");
 		return -1;
+	}
 
+	if(node->gd != 0)
+	{
+		SPI_DEBUG(LOG_DEBUG, "vspi dev no open\r\n");
+		return -1;
+	}
+	
     if( ((snd == NULL) && (rsv == NULL)) || (len < 0) )
     {
         return -1;
@@ -487,13 +507,15 @@ s32 mcu_spi_register(const DevSpi *dev)
 	list_add(&(p->list), &DevSpiRoot);
 
 	memcpy((u8 *)&p->dev, (u8 *)dev, sizeof(DevSpi));
-	p->gd = -1;
+	
 
 	/*³õÊ¼»¯*/
 	if(dev->type == DEV_SPI_V)
 		mcu_vspi_init(dev);
 	else if(dev->type == DEV_SPI_H)
 		mcu_hspi_init(dev);
+	
+	p->gd = -1;
 	
 	return 0;
 }
@@ -621,7 +643,7 @@ DevSpiChNode *mcu_spi_open(char *name, SPI_MODE mode, u16 pre)
 		
 		if(node->gd == 0)
 		{
-			SPI_DEBUG(LOG_INFO, "spi ch open err:using!\r\n");
+			//SPI_DEBUG(LOG_INFO, "spi ch open err:using!\r\n");
 			node = NULL;
 		}
 		else
@@ -644,7 +666,7 @@ DevSpiChNode *mcu_spi_open(char *name, SPI_MODE mode, u16 pre)
 			}
 			else
 			{
-				SPI_DEBUG(LOG_INFO, "spi dev open err!\r\n");
+				//SPI_DEBUG(LOG_INFO, "spi dev open err!\r\n");
 				node = NULL;
 			}
 		}
