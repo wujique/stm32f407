@@ -1117,14 +1117,14 @@
               <FilePath>..\Utilities\fat_fs\src\ff.c</FilePath>
             </File>
             <File>
-              <FileName>ffunicode.c</FileName>
+              <FileName>cc936.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Utilities\fat_fs\src\ffunicode.c</FilePath>
+              <FilePath>..\Utilities\fat_fs\src\option\cc936.c</FilePath>
             </File>
             <File>
-              <FileName>ffsystem.c</FileName>
+              <FileName>syscall.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Utilities\fat_fs\src\ffsystem.c</FilePath>
+              <FilePath>..\Utilities\fat_fs\src\option\syscall.c</FilePath>
             </File>
           </Files>
         </Group>

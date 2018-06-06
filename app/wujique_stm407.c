@@ -287,7 +287,7 @@ s32 test_sound_wm8978(void)
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
 	
-	fun_sound_play("1:/Ê®ËÍºì¾ü.wav", "wm8978");
+	fun_sound_play("2:/stereo_16bit_32k.wav", "wm8978");
 	wjq_wait_key(16);
 	fun_sound_stop();
 	wjq_log(LOG_DEBUG,"wm8978 test out\r\n");

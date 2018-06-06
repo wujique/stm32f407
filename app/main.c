@@ -184,9 +184,9 @@ void start_task(void *pvParameters)
 	dev_htu21d_init();
 	
 	fun_mount_sd();
-	//sys_spiffs_mount_coreflash();
-	
-	//usb_task_create();
+	sys_spiffs_mount_coreflash();
+
+	usb_task_create();
 
 	wujique_407test_init();
 	

@@ -2985,14 +2985,6 @@ SD_Error SD_HighSpeed (void)
 
 */
 #include "diskio.h"
-#include "alloc.h"
-
-/*
-
-	sd卡的操作都是以sector，一定要注意buff要4字节对齐
-
-*/
-
 
 /*-----------------------------------------------------------------------*/
 /* Initialize Disk Drive                                                 */
