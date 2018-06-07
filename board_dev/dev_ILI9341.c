@@ -871,7 +871,7 @@ static s32 drv_ILI9341_8_drawpoint(DevLcdNode *lcd, u16 x, u16 y, u16 color)
 	
 	u8 tmp[2];
 	tmp[0] = color>>8;
-	tmp[0] = color&0xff;
+	tmp[1] = color&0xff;
 	bus_lcd_write_data(node, (u8*)tmp, 2);
 	bus_lcd_close(node);
  
