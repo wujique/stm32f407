@@ -90,11 +90,17 @@ _lcd_pra LCD_Oled12864 ={
 		.width = 64,	//LCD 宽度
 		.height = 128, //LCD 高度
 };
+		
+_lcd_pra LCD_ST7735R ={
+		.id   = 0x7735,//
+		.width = 128,	//LCD 宽度
+		.height = 128, //LCD 高度
+};
 
 /*
 	各种LCD列表
 */
-_lcd_pra *LcdPraList[6]=
+_lcd_pra *LcdPraList[7]=
 			{
 				&LCD_IIL9341,		
 				&LCD_IIL9325,
@@ -102,6 +108,7 @@ _lcd_pra *LcdPraList[6]=
 				&LCD_Cog12864,
 				&LCD_Oled12864,
 				&LCD_IIL9342,
+				&LCD_ST7735R,
 };
 
 /*
@@ -113,6 +120,7 @@ _lcd_drv *LcdDrvList[] = {
 					&CogLcdST7565Drv,
 					&OledLcdSSD1615rv,
 					&TftLcdILI9341_8_Drv,
+					&TftLcdST7735R_Drv,
 };
 /*
 

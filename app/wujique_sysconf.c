@@ -294,8 +294,10 @@ const DevLcd DevLcdCOG1	=	{"spicoglcd", 	"BusLcdSpi3", 	0X7565};
 /*fsmc接口的 tft lcd*/
 //const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	NULL};
 /*SPI接口的 tft lcd*/
-const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcdSpi3", 	0x9342};
+//const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcdSpi3", 	0x9342};
 //const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcdVSpi1CH2", 	0x9342};
+const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcdSpi3", 	0x7735};
+
 
 
 s32 sys_dev_register(void)

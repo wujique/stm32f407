@@ -185,8 +185,11 @@ void start_task(void *pvParameters)
 	
 	fun_mount_sd();
 	sys_spiffs_mount_coreflash();
-
-	usb_task_create();
+	/*
+		ST官方USB例程有很多硬延时
+		后续要优化掉
+	*/
+	//usb_task_create();
 
 	wujique_407test_init();
 	

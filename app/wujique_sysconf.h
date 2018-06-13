@@ -13,6 +13,17 @@
 #ifndef __WUJIQUE_SYSCONF__
 #define __WUJIQUE_SYSCONF__
 
+/* 
+
+	用宏控制哪些驱动参加编译
+
+*/
+#define TFT_LCD_DRIVER_9341
+#define TFT_LCD_DRIVER_9341_8BIT
+#define TFT_LCD_DRIVER_9325
+#define TFT_LCD_DRIVER_7735
+
+
 /*
 	选择触摸屏检测方案
 */
