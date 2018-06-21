@@ -32,20 +32,6 @@
 extern s32 dev_touchscreen_write(struct ts_sample *samp, int nr);
 
 /*
-	xpt 2046使用 模拟SPI1_ch1
-	分频设置为0
-*/
-//#define XPT2046_SPI "VSPI1_CH1"
-//#define XPT2046_SPI_PRE	0
-
-/*
-	如果使用硬件SPI3_CH4,
-	分频不能设置太快
-*/
-#define XPT2046_SPI "SPI3_CH4"
-#define XPT2046_SPI_PRE	SPI_BaudRatePrescaler_8
-
-/*
 	命令字意义：
 	bit7：S，启动标志，固定为1
 	bit6-bit4：A2/A1/A0,通道选择，差分模式跟单端不一样，下面只说差分

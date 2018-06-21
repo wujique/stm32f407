@@ -111,13 +111,13 @@ const DevSpi DevSpi3IO={
 		DEV_SPI_H,
 		
 		MCU_PORT_B,
-		GPIO_Pin_11,
+		GPIO_Pin_3,
 		
 		MCU_PORT_B,
-		GPIO_Pin_10,
+		GPIO_Pin_5,
 
 		MCU_PORT_B,
-		GPIO_Pin_9,
+		GPIO_Pin_4,
 	};
 
 /* SPIÍ¨µÀ*/

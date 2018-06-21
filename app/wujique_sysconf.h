@@ -30,6 +30,24 @@
 
 #define SYS_USE_TS_IC_CASE		1
 //#define SYS_USE_TS_ADC_CASE 	1
+
+#ifdef SYS_USE_TS_IC_CASE
+/*
+	xpt 2046使用 模拟SPI1_ch1
+	分频设置为0
+*/
+#define XPT2046_SPI "VSPI1_CH1"
+#define XPT2046_SPI_PRE	0
+
+/*
+	如果使用硬件SPI3_CH4,
+	分频不能设置太快
+*/
+//#define XPT2046_SPI "SPI3_CH4"
+//#define XPT2046_SPI_PRE	SPI_BaudRatePrescaler_8
+
+#endif
+
 /*
 	RS485跟外扩串口设备共用。
 */

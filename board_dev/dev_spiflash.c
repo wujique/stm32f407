@@ -422,7 +422,7 @@ s32 dev_spiflash_register(const DevSpiFlash *dev)
 	u32 MID = 0;
 	u8 index = 0;
 	
-	SPIFLASH_DEBUG(LOG_INFO, "[register] spi flash :%s!\r\n", dev->name);
+	wjq_log(LOG_INFO, "[register] spi flash :%s!\r\n", dev->name);
 
 	/*
 		先要查询当前，防止重名
@@ -437,7 +437,7 @@ s32 dev_spiflash_register(const DevSpiFlash *dev)
 		
 		if(strcmp(dev->name, node->dev.name) == 0)
 		{
-			SPIFLASH_DEBUG(LOG_INFO, "spi flash dev name err!\r\n");
+			wjq_log(LOG_INFO, "spi flash dev name err!\r\n");
 			return -1;
 		}
 		
@@ -459,10 +459,10 @@ s32 dev_spiflash_register(const DevSpiFlash *dev)
 	if(node->spichnode != NULL)
 	{
 		JID = dev_spiflash_readJTD(node);
-		SPIFLASH_DEBUG(LOG_DEBUG, "%s jid:0x%x\r\n", dev->name, JID);
+		wjq_log(LOG_DEBUG, "%s jid:0x%x\r\n", dev->name, JID);
 		
 		MID  = dev_spiflash_readMTD(node);
-		SPIFLASH_DEBUG(LOG_DEBUG, "%s mid:0x%x\r\n", dev->name, MID);
+		wjq_log(LOG_DEBUG, "%s mid:0x%x\r\n", dev->name, MID);
 		
 		/*根据JID查找设备信息*/
 		for(index = 0; index<(sizeof(SpiFlashPraList)/sizeof(_strSpiFlash));index++)

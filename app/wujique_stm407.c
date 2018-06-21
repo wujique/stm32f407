@@ -1258,6 +1258,8 @@ s32 test_tft_tp(void)
 	}
 	else
 	{
+		dev_lcd_backlight(lcd, 1);
+		
 		dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLUE);
 		dev_lcd_setdir(lcd, H_LCD, L2R_U2D);
 		dev_touchscreen_open();
