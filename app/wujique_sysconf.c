@@ -292,11 +292,11 @@ const DevLcd DevLcdOled1	=	{"i2coledlcd",  "BusLcdI2C1",  0X1315};
 const DevLcd DevLcdCOG1	=	{"spicoglcd", 	"BusLcdSpi3", 	0X7565};
 //LcdObj DevLcdCOG2	=	{"vspicoglcd", 	LCD_BUS_VSPI, 	0X7565};
 /*fsmc接口的 tft lcd*/
-//const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	NULL};
+const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	NULL};
 /*SPI接口的 tft lcd*/
 //const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcdSpi3", 	0x9342};
 //const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcdVSpi1CH2", 	0x9342};
-const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcdSpi3", 	0x7735};
+//const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcdSpi3", 	0x7735};
 
 
 
@@ -333,7 +333,7 @@ s32 sys_dev_register(void)
 	/*注册LCD总线*/
 	dev_lcdbus_register(&BusLcdSpi3);
 	dev_lcdbus_register(&BusLcdI2C1);
-	//dev_lcdbus_register(&BusLcd8080);
+	dev_lcdbus_register(&BusLcd8080);
 	//dev_lcdbus_register(&BusLcdVSpi2CH1);
 	//dev_lcdbus_register(&BusLcdVSpi1CH2);
 	/*
