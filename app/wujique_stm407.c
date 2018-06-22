@@ -90,7 +90,8 @@ s32 test_tft_display(void)
 					case 2:
 						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLUE);
 
-						dev_lcd_put_string(lcd, FONT_SONGTI_1616, 1, 1, "abcÎÝ¼¹È¸ADC", RED);
+						dev_lcd_put_string(lcd, FONT_SONGTI_1616, 1, 120, "abcÎÝ¼¹È¸ADC123¹¤×÷ÊÒ12345678901234ÎÝ¼¹È¸¹¤×÷ÊÒ", RED);
+
 						break;
 					default:
 						break;
@@ -146,11 +147,15 @@ s32 test_cogoled_lcd_display(char *name)
 					case 1:
 						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, WHITE);
 						break;
+					case 2:
+						dev_lcd_put_string(lcd, FONT_SONGTI_1616, 1, 56, "abcÎÝ¼¹È¸ADC123¹¤×÷ÊÒ", BLACK);
+						break;
+						
 					default:
 						break;
 				}
 				step++;
-				if(step >= 2)
+				if(step >= 3)
 					step = 0;
 			}
 			u8 keyvalue;

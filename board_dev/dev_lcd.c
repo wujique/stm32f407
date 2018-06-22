@@ -182,72 +182,6 @@ static _lcd_drv *dev_lcd_finddrv(u16 id)
 	}
 }
 
-/**
- *@brief:      dev_lcd_setdir
- *@details:    设置横屏或竖屏，扫描方向
- *@param[in]   u8 dir       0 竖屏1横屏
-               u8 scan_dir  参考宏定义L2R_U2D       
- *@param[out]  无
- *@retval:     
- */
-s32 dev_lcd_setdir(DevLcdNode *node, u8 dir, u8 scan_dir)
-{
-	u16 temp;
-	u8 scan_dir_tmp;
-
-	if(node == NULL)
-		return -1;
-
-	
-	if(dir != node->dir)//切换屏幕方向	
-	{
-		
-		node->dir = node->dir^0x01;
-		temp = node->width;
-		node->width = node->height;
-		node->height = temp;
-		LCD_DEBUG(LOG_DEBUG, "set dir w:%d, h:%d\r\n", node->width, node->height);
-	}
-	
-	
-	if(node->dir == W_LCD)//横屏，扫描方向映射转换
-	{
-		/*
-			横屏	 竖屏
-			LR----UD
-			RL----DU
-			UD----RL
-			DU----LR
-			UDLR----LRUD
-		*/
-		scan_dir_tmp = 0;
-		if((scan_dir&LRUD_BIT_MASK) == 0)
-		{
-			scan_dir_tmp += LRUD_BIT_MASK;
-		}
-
-		if((scan_dir&LR_BIT_MASK) == LR_BIT_MASK)
-		{
-			scan_dir_tmp += UD_BIT_MASK;	
-		}
-
-		if((scan_dir&UD_BIT_MASK) == 0)
-		{
-			scan_dir_tmp += LR_BIT_MASK;
-		}
-	}
-	else
-	{
-		scan_dir_tmp = scan_dir;
-	}
-	
-	node->scandir = scan_dir_tmp;
-	
-	node->drv->set_dir(node, node->scandir);
-	
-	return 0;
-}
-
 struct list_head DevLcdRoot = {&DevLcdRoot, &DevLcdRoot};	
 
 s32 dev_lcd_register(const DevLcd *dev)
@@ -500,6 +434,73 @@ s32 dev_lcd_display_onoff(DevLcdNode *lcd, u8 sta)
 
 	return lcd->drv->onoff(lcd, sta);
 }
+
+/**
+ *@brief:      dev_lcd_setdir
+ *@details:    设置横屏或竖屏，扫描方向
+ *@param[in]   u8 dir       0 竖屏1横屏
+               u8 scan_dir  参考宏定义L2R_U2D       
+ *@param[out]  无
+ *@retval:     
+ */
+s32 dev_lcd_setdir(DevLcdNode *node, u8 dir, u8 scan_dir)
+{
+	u16 temp;
+	u8 scan_dir_tmp;
+
+	if(node == NULL)
+		return -1;
+
+	
+	if(dir != node->dir)//切换屏幕方向	
+	{
+		
+		node->dir = node->dir^0x01;
+		temp = node->width;
+		node->width = node->height;
+		node->height = temp;
+		LCD_DEBUG(LOG_DEBUG, "set dir w:%d, h:%d\r\n", node->width, node->height);
+	}
+	
+	
+	if(node->dir == W_LCD)//横屏，扫描方向映射转换
+	{
+		/*
+			横屏	 竖屏
+			LR----UD
+			RL----DU
+			UD----RL
+			DU----LR
+			UDLR----LRUD
+		*/
+		scan_dir_tmp = 0;
+		if((scan_dir&LRUD_BIT_MASK) == 0)
+		{
+			scan_dir_tmp += LRUD_BIT_MASK;
+		}
+
+		if((scan_dir&LR_BIT_MASK) == LR_BIT_MASK)
+		{
+			scan_dir_tmp += UD_BIT_MASK;	
+		}
+
+		if((scan_dir&UD_BIT_MASK) == 0)
+		{
+			scan_dir_tmp += LR_BIT_MASK;
+		}
+	}
+	else
+	{
+		scan_dir_tmp = scan_dir;
+	}
+	
+	node->scandir = scan_dir_tmp;
+	
+	node->drv->set_dir(node, node->scandir);
+	
+	return 0;
+}
+
 /* 
 
 从tslib拷贝一些显示函数到这里
@@ -703,8 +704,8 @@ s32 dev_lcd_put_string(DevLcdNode *lcd, FontType font, int x, int y, char *s, un
 	u8 *dotbuf;//字符点阵缓冲
 	s32 res;
 	u16 sidx;
-	u8 i,j;
-	u32 xbase;
+	u16 i,j;
+	u32 xbase;//显示在x轴偏移量
 
 	if(lcd == NULL)
 		return -1;
@@ -796,7 +797,30 @@ s32 dev_lcd_put_string(DevLcdNode *lcd, FontType font, int x, int y, char *s, un
 			break;
 		}
 	}
+
+
+	if( y + ylen > lcd->height)
+	{
+		/*显示超出屏幕*/
+		ylen = lcd->height - y+1;//假设height = 240,y = 240, 也就意味着只显示一行
+	}
 	
+	if(x + xlen >= lcd->width)
+	{
+		/*显示超出屏幕宽度*/
+		i = lcd->width - x + 1;
+		
+		/*调整数据*/
+		j = 1;
+		while(1)
+		{
+			if(j >= ylen)
+				break;
+			memcpy(framebuff+j*i, framebuff+ j*xlen, 2*i);
+			j++;
+		}
+		xlen = i;
+	}
 
 	dev_lcd_fill(lcd, x, x + xlen-1, y, y + ylen-1, framebuff);
 
