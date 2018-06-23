@@ -648,8 +648,8 @@ s32 mcu_spich_register(const DevSpiCh *dev)
 
 /**
  *@brief:      mcu_spi_open
- *@details:    打开SPI
- *@param[in]   SPI_DEV dev  ：SPI号
+ *@details:    打开SPI通道
+ *@param[in]   DevSpiChNode * node
                u8 mode      模式
                u16 pre      预分频
  *@param[out]  无
@@ -733,8 +733,8 @@ DevSpiChNode *mcu_spi_open(char *name, SPI_MODE mode, u16 pre)
 
 /**
  *@brief:      mcu_spi_close
- *@details:    关闭SPI 控制器
- *@param[in]   void  
+ *@details:    关闭SPI 通道
+ *@param[in]   DevSpiChNode * node  
  *@param[out]  无
  *@retval:     
  */
@@ -756,7 +756,8 @@ s32 mcu_spi_close(DevSpiChNode * node)
 /**
  *@brief:      mcu_spi_transfer
  *@details:    SPI 传输
- *@param[in]   u8 *snd  
+ *@param[in]   DevSpiChNode * node
+ 			   u8 *snd  
                u8 *rsv  
                s32 len  
  *@param[out]  无
@@ -775,8 +776,8 @@ s32 mcu_spi_transfer(DevSpiChNode * node, u8 *snd, u8 *rsv, s32 len)
 /**
  *@brief:      mcu_spi_cs
  *@details:    操控对应SPI的CS
- *@param[in]   SPI_DEV dev  
-               u8 sta       
+ *@param[in]   DevSpiChNode * node  
+               u8 sta   1 高电平，0 低电平     
  *@param[out]  无
  *@retval:     
  */
@@ -800,5 +801,29 @@ s32 mcu_spi_cs(DevSpiChNode * node, u8 sta)
 	return 0;
 }
 
+#if 0
 
+void spi_example(void)
+{
+	DevSpiChNode *spichnode;
+	u8 src[16];
+	u8 rsv[16];
+	
+	/*打开SPI通道*/
+	spichnode = mcu_spi_open("VSPI1_CH1", SPI_MODE_1, 4);
+	if(spichnode == NULL)
+	{
+		while(1);
+	}
+	/*读10个数据*/
+	mcu_spi_transfer(spichnode, NULL, rsv, 10);
+	/*写10个数据*/
+	mcu_spi_transfer(spichnode, src, NULL, 10);
+	/*读写10个数据*/
+	mcu_spi_transfer(spichnode, src, rsv, 10);
+
+	mcu_spi_close(spichnode);
+}
+
+#endif
 

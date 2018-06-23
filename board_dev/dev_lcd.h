@@ -26,16 +26,6 @@ typedef struct
 	void (*backlight)(DevLcdNode *lcd, u8 sta);
 }_lcd_drv; 
 
-/* 
-	LCD参数, 属于设备的一部分
-	同一个LCD接口可以接不同的LCD，所有参数通过侦测获取。
-*/
-typedef struct
-{
-	u16 id;
-	u16 width;	//LCD 宽度   竖屏
-	u16 height;	//LCD 高度    竖屏
-}_lcd_pra;
 
 /*
 	设备定义
@@ -53,6 +43,9 @@ typedef struct
 	char buslcd[DEV_NAME_SIZE]; //挂在那条LCD总线上
 	
 	u16 id;
+
+	u16 width;	//LCD 宽度   竖屏
+	u16 height;	//LCD 高度    竖屏
 }DevLcd;
 /*
 	初始化的时候会根据设备数定义，
@@ -65,9 +58,6 @@ struct _strDevLcdNode
 	
 	DevLcd	dev;
 
-	/* LCD参数，固定，不可变*/
-	_lcd_pra *pra;
-	
 	/* LCD驱动 */
 	_lcd_drv *drv;
 
@@ -139,12 +129,15 @@ struct _strDevLcdNode
 
 extern s32 dev_lcd_register(const DevLcd *dev);
 extern DevLcdNode *dev_lcd_open(char *name);
+extern s32 dev_lcd_close(DevLcdNode *node);
 extern s32 dev_lcd_drawpoint(DevLcdNode *lcd, u16 x, u16 y, u16 color);
 extern s32 dev_lcd_prepare_display(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey);
 extern s32 dev_lcd_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color);
 extern s32 dev_lcd_color_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 color);
 extern s32 dev_lcd_backlight(DevLcdNode *lcd, u8 sta);
 extern s32 dev_lcd_display_onoff(DevLcdNode *lcd, u8 sta);
+extern s32 dev_lcd_setdir(DevLcdNode *node, u8 dir, u8 scan_dir);
+
 extern s32 dev_lcd_put_string(DevLcdNode *lcd, FontType font, int x, int y, char *s, unsigned colidx);
 
 extern void put_string_center(DevLcdNode *lcd, int x, int y, char *s, unsigned colidx);

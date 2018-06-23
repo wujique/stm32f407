@@ -313,9 +313,11 @@ static u8 mcu_i2c_readbyte(DevI2c *dev)
 /**
  *@brief:      mcu_i2c_transfer
  *@details:    中间无重新开始位的传输流程
- *@param[in]   u8 addr   
+ *@param[in]   DevI2cNode * node  I2C节点
+ 			   u8 addr   7位地址
                u8 rw    0 写，1 读    
                u8* data  
+               s32 datalen 发送数据长度
  *@param[out]  无
  *@retval:     
  */
@@ -410,7 +412,7 @@ struct list_head DevI2cGdRoot = {&DevI2cGdRoot, &DevI2cGdRoot};
 /**
  *@brief:      mcu_i2c_register
  *@details:    初始化I2C接口， 相当于注册一个I2C设备
- *@param[in]   void  
+ *@param[in]   const DevI2c * dev I2C设备信息
  *@param[out]  无
  *@retval:     
  */
@@ -465,7 +467,13 @@ s32 mcu_i2c_register(const DevI2c * dev)
 
 	return 0;
 }
-
+/**
+ *@brief:      mcu_i2c_open
+ *@details:    根据名字打开一个i2c接口
+ *@param[in]   void  
+ *@param[out]  无
+ *@retval:     返回设备节点
+ */
 DevI2cNode *mcu_i2c_open(char *name)
 {
 
@@ -507,7 +515,13 @@ DevI2cNode *mcu_i2c_open(char *name)
 	}
 	return node;
 }
-
+/**
+ *@brief:      mcu_i2c_close
+ *@details:    关闭I2C节点
+ *@param[in]   DevI2cNode *node 
+ *@param[out]  无
+ *@retval:     -1 关闭失败；0 关闭成功
+ */
 s32 mcu_i2c_close(DevI2cNode *node)
 {
 	if(node == NULL)
@@ -520,6 +534,31 @@ s32 mcu_i2c_close(DevI2cNode *node)
 
 	return 0;
 }
+
+
+#if 0
+
+void mcu_i2c_example(void)
+{
+	DevI2cNode *node;
+	
+	node = mcu_i2c_open("VI2C1");
+	if(node == NULL)
+	{
+		wjq_log(LOG_DEBUG, "open VI2C1 err!\r\n");
+		while(1);
+	}
+	
+	u8 data[16];
+	mcu_i2c_transfer(node, 0x70, MCU_I2C_MODE_W, data, 8);
+	mcu_i2c_transfer(node, 0x70, MCU_I2C_MODE_R, data, 8);
+
+	mcu_i2c_close(node);
+}
+
+#endif
+
+
 
 /*
 	摄像头使用SCCB接口，其实就是I2C

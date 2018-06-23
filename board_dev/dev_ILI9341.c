@@ -360,7 +360,10 @@ s32 drv_ILI9341_init(DevLcdNode *lcd)
 	bus_lcd_write_data(node, (u8*)tmp, 15);	
 	
 	bus_lcd_write_cmd(node, (0x11));
-
+	Delay(50);
+	bus_lcd_write_cmd(node, (0x29));
+	bus_lcd_write_cmd(node, (0x2C));
+	
 	bus_lcd_close(node);
 	
 	Delay(50);

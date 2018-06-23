@@ -44,73 +44,6 @@ u16 PenColor = BLACK;
 u16 BackColor = BLUE;
 
 
-
-/*
-	各种LCD的规格参数
-*/
-_lcd_pra LCD_IIL9341 ={
-		.id	  = 0x9341,
-		.width = 240,	//LCD 宽度
-		.height = 320,	//LCD 高度
-};
-		
-/*SPI接口的lcd ,驱动芯片也是9341，改名9342*/
-_lcd_pra LCD_IIL9342 ={
-		.id	  = 0x9342,
-		.width = 240,	//LCD 宽度
-		.height = 320,	//LCD 高度
-};		
-_lcd_pra LCD_IIL9325 ={
-		.id   = 0x9325,
-		.width = 240,	//LCD 宽度
-		.height = 320, //LCD 高度
-};
-
-_lcd_pra LCD_R61408 ={
-		.id   = 0x1408,//
-		.width = 480,	//LCD 宽度
-		.height = 800, //LCD 高度
-};
-
-
-_lcd_pra LCD_Cog12864 ={
-		.id   = 0x7565,//
-		.width = 64,	//LCD 宽度
-		.height = 128, //LCD 高度
-};
-		
-_lcd_pra LCD_Cog12832 ={
-		.id   = 0x7564,//
-		.width = 32,	//LCD 宽度
-		.height = 128, //LCD 高度
-};		
-		
-_lcd_pra LCD_Oled12864 ={
-		.id   = 0x1315,//
-		.width = 64,	//LCD 宽度
-		.height = 128, //LCD 高度
-};
-		
-_lcd_pra LCD_ST7735R ={
-		.id   = 0x7735,//
-		.width = 128,	//LCD 宽度
-		.height = 128, //LCD 高度
-};
-
-/*
-	各种LCD列表
-*/
-_lcd_pra *LcdPraList[7]=
-			{
-				&LCD_IIL9341,		
-				&LCD_IIL9325,
-				&LCD_R61408,
-				&LCD_Cog12864,
-				&LCD_Oled12864,
-				&LCD_IIL9342,
-				&LCD_ST7735R,
-};
-
 /*
 	所有驱动列表
 */
@@ -132,31 +65,7 @@ _lcd_drv *LcdProbDrv8080List[] = {
 					&TftLcdILI9325Drv,
 };
 
-/**
- *@brief:      dev_lcd_findpra
- *@details:    根据ID查找LCD参数
- *@param[in]   u16 id  
- *@param[out]  无
- *@retval:     _lcd_pra
- */
-static _lcd_pra *dev_lcd_findpra(u16 id)
-{
-	u8 i =0;
-	
-	while(1)
-	{
-		if(LcdPraList[i]->id == id)
-		{
-			return LcdPraList[i];
-		}
-		i++;
-		if(i>= sizeof(LcdPraList)/sizeof(_lcd_pra *))
-		{
-			return NULL;
-		}
-	}
-	
-}
+
 /**
  *@brief:      dev_lcd_finddrv
  *@details:    根据ID查找设备驱动
@@ -183,7 +92,13 @@ static _lcd_drv *dev_lcd_finddrv(u16 id)
 }
 
 struct list_head DevLcdRoot = {&DevLcdRoot, &DevLcdRoot};	
-
+/**
+ *@brief:      dev_lcd_register
+ *@details:    注册LCD设备
+ *@param[in]   
+ *@param[out]  
+ *@retval:     
+ */
 s32 dev_lcd_register(const DevLcd *dev)
 {
 	struct list_head *listp;
@@ -243,10 +158,6 @@ s32 dev_lcd_register(const DevLcd *dev)
 			{
 				LCD_DEBUG(LOG_DEBUG, "lcd drv prob ok!\r\n");	
 				plcdnode->drv = LcdProbDrv8080List[j];
-				/*
-					用驱动的ID找参数
-				*/
-				plcdnode->pra = dev_lcd_findpra(plcdnode->drv->id);
 				break;
 			}	
 			else
@@ -268,15 +179,9 @@ s32 dev_lcd_register(const DevLcd *dev)
 		plcdnode->drv = dev_lcd_finddrv(dev->id);
 		if(plcdnode->drv != NULL)
 		{
-			
-			plcdnode->pra = dev_lcd_findpra(dev->id);
-			if(plcdnode->pra != NULL)
-			{
-				/*找到驱动跟规格后，初始化*/
-				ret = plcdnode->drv->init(plcdnode);
-			}
-			else
-				LCD_DEBUG(LOG_DEBUG, "lcd find pra fail!\r\n");
+			/*找到驱动跟规格后，初始化*/
+			ret = plcdnode->drv->init(plcdnode);
+
 		}
 		else
 		{
@@ -291,8 +196,8 @@ s32 dev_lcd_register(const DevLcd *dev)
 		
 		plcdnode->dir = H_LCD;
 		
-		plcdnode->height = plcdnode->pra->height;
-		plcdnode->width = plcdnode->pra->width;
+		plcdnode->height = plcdnode->dev.height;
+		plcdnode->width = plcdnode->dev.width;
 		
 		dev_lcd_setdir(plcdnode, W_LCD, L2R_D2U);
 		

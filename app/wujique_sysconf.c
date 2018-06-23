@@ -86,17 +86,20 @@ const DevSpi DevVSpi1IO={
 /*  外扩接口模拟VSPI2， 与矩阵键盘，模拟I2C2冲突    */			
 #if 0
 const DevSpi DevVspi2IO={
-		"VSPI2",
-		DEV_SPI_V,
+		.name = "VSPI2",
+		.type = DEV_SPI_V,
 		
-		MCU_PORT_F,
-		GPIO_Pin_11,
+		/*clk*/
+		.clkport = MCU_PORT_F,
+		.clkpin = GPIO_Pin_11,
 		
-		MCU_PORT_F,
-		GPIO_Pin_10,
+		/*mosi*/
+		.mosiport = MCU_PORT_F,
+		.mosipin = GPIO_Pin_10,
 
-		MCU_PORT_F,
-		GPIO_Pin_9,
+		/*miso*/
+		.misoport = MCU_PORT_F,
+		.misopin = GPIO_Pin_9,
 
 	};
 #endif
@@ -107,82 +110,85 @@ const DevSpi DevVspi2IO={
 	如果添加其他控制器，请修改mcu_spi.c中的硬件SPI控制器初始化代码
 	*/
 const DevSpi DevSpi3IO={
-		"SPI3",
-		DEV_SPI_H,
+		.name = "SPI3",
+		.type = DEV_SPI_H,
 		
-		MCU_PORT_B,
-		GPIO_Pin_3,
+		/*clk*/
+		.clkport = MCU_PORT_B,
+		.clkpin = GPIO_Pin_3,
 		
-		MCU_PORT_B,
-		GPIO_Pin_5,
+		/*mosi*/
+		.mosiport = MCU_PORT_B,
+		.mosipin = GPIO_Pin_5,
 
-		MCU_PORT_B,
-		GPIO_Pin_4,
+		/*miso*/
+		.misoport = MCU_PORT_B,
+		.misopin = GPIO_Pin_4,
 	};
 
 /* SPI通道*/
 /* FLASH 1*/
 const DevSpiCh DevSpi3CH1={
-		"SPI3_CH1",
-		"SPI3",
+		.name = "SPI3_CH1",
+		.spi = "SPI3",
 		
-		MCU_PORT_B,
-		GPIO_Pin_14,
+		.csport = MCU_PORT_B,
+		.cspin = GPIO_Pin_14,
 		
 	};
 /* flash 2*/		
 const DevSpiCh DevSpi3CH2={
-		"SPI3_CH2",
-		"SPI3",
+		.name = "SPI3_CH2",
+		.spi = "SPI3",
 		
-		MCU_PORT_G,
-		GPIO_Pin_15,
+		.csport = MCU_PORT_G,
+		.cspin = GPIO_Pin_15,
 		
 	};
 /*外扩SPI，可接COG、OLED、SPI TFT、RF24L01*/			
 const DevSpiCh DevSpi3CH3={
-		"SPI3_CH3",
-		"SPI3",
+		.name = "SPI3_CH3",
+		.spi = "SPI3",
 		
-		MCU_PORT_G,
-		GPIO_Pin_6,
+		.csport = MCU_PORT_G,
+		.cspin = GPIO_Pin_6,
 		
 	};
 /*外扩的SPI, 彩屏的触摸屏*/
 const DevSpiCh DevSpi3CH4={
-		"SPI3_CH4",
-		"SPI3",
+		.name = "SPI3_CH4",
+		.spi = "SPI3",
 		
-		MCU_PORT_F,
-		GPIO_Pin_2,
+		.csport = MCU_PORT_F,
+		.cspin = GPIO_Pin_2,
 		
 	};
 
 /* 触摸屏, IO模拟SPI*/
 const DevSpiCh DevVSpi1CH1={
-		"VSPI1_CH1",
-		"VSPI1",
+		.name = "VSPI1_CH1",
+		.spi = "VSPI1",
 		
-		MCU_PORT_B,
-		GPIO_Pin_1,
+		.csport = MCU_PORT_B,
+		.cspin = GPIO_Pin_1,
 		
 	};
 /* SPI彩屏，跟触摸屏用相同的控制器*/		
 const DevSpiCh DevVSpi1CH2={
-		"VSPI1_CH2",
-		"VSPI1",
+		.name = "VSPI1_CH2",
+		.spi = "VSPI1",
 		
-		MCU_PORT_D,
-		GPIO_Pin_14,
+		.csport = MCU_PORT_D,
+		.cspin = GPIO_Pin_14,
 	};
 /*外扩IO*/
 #if 0
 const DevSpiCh DevVSpi2CH1={
-		"VSPI2_CH1",
-		"VSPI2",
+		.name = "VSPI2_CH1",
+		.spi = "VSPI2",
 		
-		MCU_PORT_F,
-		GPIO_Pin_12,
+		.csport = MCU_PORT_F,
+		.cspin = GPIO_Pin_12,
 		
 	};
 #endif	
@@ -218,7 +224,7 @@ const DevLcdBus BusLcdI2C1={
 const DevLcdBus BusLcd8080={
 	.name = "BusLcd8080",
 	.type = LCD_BUS_8080,
-	.basebus = "8080",//不适用，8080操作直接嵌入在LCD BUS代码内
+	.basebus = "8080",//不使用用，8080操作直接嵌入在LCD BUS代码内
 
 	/*8080 不用A0脚，填背光进去*/
 	.A0port = MCU_PORT_B,
@@ -279,27 +285,40 @@ const DevSpiFlash DevSpiFlashBoard={
 };
 
 /*
-	设备树定义
+	lcd设备树定义
 	指明系统有多少个LCD设备，挂在哪个LCD总线上。
 */
 /*I2C接口的 OLED*/
-const DevLcd DevLcdOled1	=	{"i2coledlcd",  "BusLcdI2C1",  0X1315};
-//LcdObj DevLcdOled2	=	{"i2coledlcd2", LCD_BUS_VI2C2,  0X1315};
+const DevLcd DevLcdOled1={
+	.name = "i2coledlcd",  
+	.buslcd = "BusLcdI2C1",  
+	.id = 0X1315, 
+	.width = 64, 
+	.height = 128
+	};
+//LcdObj DevLcdOled2	=	{"i2coledlcd2", LCD_BUS_VI2C2,  0X1315, 64, 128};
 /*SPI接口的 OLED*/
-//LcdObj DevLcdOled3	=	{"vspioledlcd", LCD_BUS_VSPI, 	0X1315};
-//DevLcd DevLcdOled4	=	{"spioledlcd", 	"BusLcdSpi3", 	0X1315};
+//LcdObj DevLcdOled3	=	{"vspioledlcd", LCD_BUS_VSPI, 	0X1315, 64, 128};
+//DevLcd DevLcdOled4	=	{"spioledlcd", 	"BusLcdSpi3", 	0X1315, 64, 128};
 /*SPI接口的 COG LCD*/
-const DevLcd DevLcdCOG1	=	{"spicoglcd", 	"BusLcdSpi3", 	0X7565};
-//LcdObj DevLcdCOG2	=	{"vspicoglcd", 	LCD_BUS_VSPI, 	0X7565};
+const DevLcd DevLcdCOG1	=	{"spicoglcd", 	"BusLcdSpi3", 	0X7565, 64, 128};
+//LcdObj DevLcdCOG2	=	{"vspicoglcd", 	LCD_BUS_VSPI, 	0X7565, 64, 128};
 /*fsmc接口的 tft lcd*/
-const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	NULL};
+const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	NULL, 240, 320};
+//const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	0x9325, 240, 320};
+//const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	0x9341, 240, 320};
+//const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	0x1408, 480, 800};
+
 /*SPI接口的 tft lcd*/
-//const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcdSpi3", 	0x9342};
-//const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcdVSpi1CH2", 	0x9342};
-//const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcdSpi3", 	0x7735};
+//const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcdSpi3", 	0x9342, 240, 320};
+//const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcdVSpi1CH2", 	0x9342, 240, 320};
+//const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcdSpi3", 	0x7735, 128, 128};
 
+/*
 
+	系统设备注册
 
+*/
 s32 sys_dev_register(void)
 {
 	/*注册I2C总线*/
@@ -346,7 +365,7 @@ s32 sys_dev_register(void)
 	/*注册LCD设备*/
 	dev_lcd_register(&DevLcdOled1);
 	dev_lcd_register(&DevLcdtTFT);
-	//dev_lcd_register(&DevLcdCOG1);
+	dev_lcd_register(&DevLcdCOG1);
 	
 	return 0;
 }
