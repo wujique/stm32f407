@@ -286,7 +286,7 @@ s32 emenu_test(DevLcdNode *lcd)
 	{
 		wjq_log(LOG_DEBUG, "open lcd err\r\n");
 	}
-	emenu_run(emenulcd, (MENU *)&EMenuListTest[0], sizeof(EMenuListTest)/sizeof(MENU));	
+	emenu_run(emenulcd, (MENU *)&EMenuListTest[0], sizeof(EMenuListTest)/sizeof(MENU), FONT_SONGTI_1212, 1);	
 	
 	return 0;
 }

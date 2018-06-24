@@ -19,6 +19,10 @@
 
 #include "main.h"
 
+extern u16 PenColor;
+extern u16 BackColor;
+
+
 DevLcdNode * WJQTestLcd;
 
 s32 wjq_wait_key(u8 key)
@@ -43,9 +47,9 @@ s32 wjq_wait_key(u8 key)
 s32 wjq_test_showstr(char *s)
 {
 	wjq_log(LOG_DEBUG, "test:%s", s);
-	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
+	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, BackColor);
 	/*顶行居中显示父菜单*/
-	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, s, BLACK);
+	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, s, PenColor);
 	wjq_wait_key(0);
 	
 	return 0;
@@ -221,6 +225,8 @@ s32 test_lcd_pic(void)
 		wjq_test_showstr("open lcd err!");	
 		return -1;
 	}
+	
+	dev_lcd_setdir(lcd, W_LCD, L2R_D2U);
 	
 	wjq_test_showstr((char *)__FUNCTION__);
 	dev_lcd_show_bmp(lcd, 1, 1, 320, 240, "1:/pic/女人单色.bmp");
@@ -1092,7 +1098,127 @@ const MENU WJQTestList[]=
 		"test",	//英文
 		MENU_TYPE_LIST,//菜单类型
 		NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+		
+		MENU_L_1,//菜单等级
+		"test1",//中文
+		"test1",	//英文
+		MENU_TYPE_LIST,//菜单类型
+		NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
 
+		MENU_L_1,//菜单等级
+		"test2",//中文
+		"test2",	//英文
+		MENU_TYPE_LIST,//菜单类型
+		NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+
+		MENU_L_1,//菜单等级
+		"test3",//中文
+		"test3",	//英文
+		MENU_TYPE_LIST,//菜单类型
+		NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+
+		MENU_L_1,//菜单等级
+		"test4",//中文
+		"test4",	//英文
+		MENU_TYPE_LIST,//菜单类型
+		NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+
+		MENU_L_1,//菜单等级
+		"test5",//中文
+		"test5",	//英文
+		MENU_TYPE_LIST,//菜单类型
+		NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+
+		MENU_L_1,//菜单等级
+		"test6",//中文
+		"test6",	//英文
+		MENU_TYPE_LIST,//菜单类型
+		NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+
+		MENU_L_1,//菜单等级
+		"test7",//中文
+		"test7",	//英文
+		MENU_TYPE_LIST,//菜单类型
+		NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+
+		MENU_L_1,//菜单等级
+		"test8",//中文
+		"test8",	//英文
+		MENU_TYPE_LIST,//菜单类型
+		NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+
+		MENU_L_1,//菜单等级
+		"test9",//中文
+		"test9",	//英文
+		MENU_TYPE_LIST,//菜单类型
+		NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+
+		MENU_L_1,//菜单等级
+		"test10",//中文
+		"test10",	//英文
+		MENU_TYPE_LIST,//菜单类型
+		NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+		
+			MENU_L_2,//菜单等级
+			"t10-1",//中文
+			"t10-1",	//英文
+			MENU_TYPE_LIST,//菜单类型
+			NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			MENU_L_2,//菜单等级
+			"t10-2",//中文
+			"t10-2",	//英文
+			MENU_TYPE_LIST,//菜单类型
+			NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			MENU_L_2,//菜单等级
+			"t10-3",//中文
+			"t10-3",	//英文
+			MENU_TYPE_LIST,//菜单类型
+			NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			MENU_L_2,//菜单等级
+			"t10-4",//中文
+			"t10-4",	//英文
+			MENU_TYPE_LIST,//菜单类型
+			NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			MENU_L_2,//菜单等级
+			"t10-5",//中文
+			"t10-5",	//英文
+			MENU_TYPE_LIST,//菜单类型
+			NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			MENU_L_2,//菜单等级
+			"t10-6",//中文
+			"t10-6",	//英文
+			MENU_TYPE_LIST,//菜单类型
+			NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			MENU_L_2,//菜单等级
+			"t10-7",//中文
+			"t10-7",	//英文
+			MENU_TYPE_LIST,//菜单类型
+			NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			MENU_L_2,//菜单等级
+			"t10-8",//中文
+			"t10-8",	//英文
+			MENU_TYPE_LIST,//菜单类型
+			NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			MENU_L_2,//菜单等级
+			"t10-9",//中文
+			"t10-9",	//英文
+			MENU_TYPE_LIST,//菜单类型
+			NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			MENU_L_2,//菜单等级
+			"t10-10",//中文
+			"t10-10",	//英文
+			MENU_TYPE_LIST,//菜单类型
+			NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			MENU_L_2,//菜单等级
+			"t10-11",//中文
+			"t10-11",	//英文
+			MENU_TYPE_LIST,//菜单类型
+			NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			MENU_L_2,//菜单等级
+			"t10-12",//中文
+			"t10-12",	//英文
+			MENU_TYPE_LIST,//菜单类型
+			NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
 	
 	/*最后的菜单是结束菜单，无意义*/			
 	MENU_L_0,//菜单等级
@@ -1108,7 +1234,7 @@ void wujique_stm407_test(void)
 	wjq_log(LOG_DEBUG,"run app\r\n");
 
 	
-	WJQTestLcd = dev_lcd_open("i2coledlcd");
+	WJQTestLcd = dev_lcd_open("spitftlcd");
 	if(WJQTestLcd == NULL)
 	{
 		wjq_log(LOG_DEBUG, "open oled lcd err\r\n");
@@ -1117,7 +1243,7 @@ void wujique_stm407_test(void)
 	dev_key_open();
 	dev_keypad_open();
 
-	emenu_run(WJQTestLcd, (MENU *)&WJQTestList[0], sizeof(WJQTestList)/sizeof(MENU));	
+	emenu_run(WJQTestLcd, (MENU *)&WJQTestList[0], sizeof(WJQTestList)/sizeof(MENU), FONT_SONGTI_1616, 2);	
 	while(1)
 	{
 	}

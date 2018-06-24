@@ -242,6 +242,26 @@ s32 font_get_asc(FontType type, u8 *ch, u8 *buf)
 
 	return 0;
 }
+/**
+ *@brief:      font_get_hw
+ *@details:    获取字体长宽
+ *@param[in]   FontType type  
+               u8 *h       
+               u8 *w      
+ *@param[out]  无
+ *@retval:     
+ 			返回的是单个字符长宽，也就是对应的ASC宽度，汉字算两个字符宽度
+ */
 
+s32 font_get_hw(FontType type, u8 *h, u8 *w)
+{
 
+	if(type >= FONT_LIST_MAX)
+		return -1;
+
+		*w = FontAscList[type]->width;
+		*h = FontAscList[type]->height;
+
+	return 0;
+}
 
