@@ -236,6 +236,11 @@ s32 test_lcd_pic(void)
 	dev_lcd_show_bmp(lcd, 1, 1, 320, 240, "1:/pic/女人256色.bmp");//调色板
 	wjq_wait_key(16);
 	dev_lcd_show_bmp(lcd, 1, 1, 320, 240, "1:/pic/女人24位.bmp");//真彩色
+	wjq_wait_key(16);
+	dev_lcd_show_bmp(lcd, 1, 1, 128, 128, "1:/pic/pic128.bmp");
+	wjq_wait_key(16);
+	dev_lcd_setdir(lcd, W_LCD, L2R_U2D);
+	
 	return 0;
 }
 
@@ -1234,7 +1239,7 @@ void wujique_stm407_test(void)
 	wjq_log(LOG_DEBUG,"run app\r\n");
 
 	
-	WJQTestLcd = dev_lcd_open("spitftlcd");
+	WJQTestLcd = dev_lcd_open("i2coledlcd");
 	if(WJQTestLcd == NULL)
 	{
 		wjq_log(LOG_DEBUG, "open oled lcd err\r\n");
@@ -1243,7 +1248,7 @@ void wujique_stm407_test(void)
 	dev_key_open();
 	dev_keypad_open();
 
-	emenu_run(WJQTestLcd, (MENU *)&WJQTestList[0], sizeof(WJQTestList)/sizeof(MENU), FONT_SONGTI_1616, 2);	
+	emenu_run(WJQTestLcd, (MENU *)&WJQTestList[0], sizeof(WJQTestList)/sizeof(MENU), FONT_SONGTI_1212, 1);	
 	while(1)
 	{
 	}

@@ -1855,9 +1855,9 @@ s32 drv_ST7735R_set_cp_addr(DevLcdNode *lcd, u16 sc, u16 ec, u16 sp, u16 ep)
 
 	bus_lcd_write_cmd(node, (ST7735R_CMD_SETY));
 	tmp[0] = (0);
-	tmp[1] = (sp+2);
+	tmp[1] = (sp+3);
 	tmp[2] = (0);
-	tmp[3] = (ep+2);
+	tmp[3] = (ep+3);
 	bus_lcd_write_data(node, (u8*)tmp, 4);
 
 	bus_lcd_write_cmd(node, (ST7735R_CMD_WRAM));

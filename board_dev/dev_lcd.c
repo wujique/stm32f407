@@ -928,6 +928,9 @@ s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpF
 	
 		for(j=0; j<ylen;) //图片取模:横向,左高右低
         {
+        	if(j+linecnt >= ylen)
+				linecnt = ylen-j;
+						
 			f_read(&bmpfile, (void *)pdata, LineBytes*linecnt, &rlen);
 			if(rlen != LineBytes*linecnt)
 			{
@@ -998,6 +1001,9 @@ s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpF
 	
 		for(j=0; j<ylen;) //图片取模:横向,左高右低
         {
+        	if(j+linecnt >= ylen)
+				linecnt = ylen-j;
+						
 			f_read(&bmpfile, (void *)pdata, LineBytes*linecnt, &rlen);
 			if(rlen != LineBytes*linecnt)
 			{
@@ -1085,6 +1091,9 @@ s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpF
 		pcc = wjq_malloc(xlen*sizeof(u16));	
 		for(j=0; j<ylen;) //图片取模:横向,左高右低
         {
+        	if(j+linecnt >= ylen)
+				linecnt = ylen-j;
+						
 			f_read(&bmpfile, (void *)pdata, LineBytes*linecnt, &rlen);
 			if(rlen != LineBytes*linecnt)
 			{
@@ -1136,12 +1145,15 @@ s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpF
 	
         for(j=0; j<ylen;) //图片取模:横向,左高右低
         {
-
+			if(j+linecnt >= ylen)
+				linecnt = ylen-j;
+			
 			res = f_read(&bmpfile, (void *)pdata, LineBytes*linecnt, &rlen);
 			if(res != FR_OK)
 			{
 				wjq_log(LOG_DEBUG, "bmp read data err!\r\n");	
 			}
+			
 			if(rlen != LineBytes*linecnt)
 			{
 				wjq_log(LOG_DEBUG, "bmp read data err!\r\n");
