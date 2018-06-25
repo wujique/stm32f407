@@ -40,7 +40,16 @@
 */
 struct _cog_drv_data
 {
-	u8 gram[8][128];	
+	u8 gram[8][128];
+
+	/*刷新区域*/
+	u16 sx;
+	u16 ex;
+	u16 sy;
+	u16 ey;
+	u16 disx;
+	u16 disy;
+
 };	
 
 
@@ -77,30 +86,6 @@ _lcd_drv CogLcdST7565Drv = {
 							.set_dir = drv_ST7565_scan_dir,
 							.backlight = drv_ST7565_lcd_bl,
 							.flush = drv_ST7565_flush
-							};
-/*
-
-	这是一个衍生出来的ST7565驱动，
-	ID叫做7564，用处是：
-	如果一个系统有两个ST7565的LCD，
-	一个是128*64，一个是128*32。
-	如果设备ID跟驱动ID通过映射表对应，就没有问题，
-	我们暂时不做映射，直接设备ID就是驱动ID。
-	因此需要区分两种不同设备，只好衍生一种假的驱动，
-	这种驱动除了ID不一样，其他跟ST7565完全一样。
-
-*/
-_lcd_drv CogLcdST7564Drv = {
-							.id = 0X7564,
-
-							.init = drv_ST7565_init,
-							.draw_point = drv_ST7565_drawpoint,
-							.color_fill = drv_ST7565_color_fill,
-							.fill = drv_ST7565_fill,
-							.onoff = drv_ST7565_display_onoff,
-							.prepare_display = drv_ST7565_prepare_display,
-							.set_dir = drv_ST7565_scan_dir,
-							.backlight = drv_ST7565_lcd_bl
 							};
 
 void drv_ST7565_lcd_bl(DevLcdNode *lcd, u8 sta)
@@ -153,14 +138,14 @@ static s32 drv_ST7565_set_cp_addr(DevLcd *lcd, u16 sc, u16 ec, u16 sp, u16 ep)
  */
 static s32 drv_ST7565_refresh_gram(DevLcdNode *lcd, u16 sc, u16 ec, u16 sp, u16 ep)
 {	
-	struct _cog_drv_data *gram; 
+	struct _cog_drv_data *drvdata; 
 	u8 i;
 	DevLcdBusNode *node;
 	
 	node = bus_lcd_open(lcd->dev.buslcd);
 
 	//uart_printf("drv_ST7565_refresh:%d,%d,%d,%d\r\n", sc,ec,sp,ep);
-	gram = (struct _cog_drv_data *)lcd->pri;
+	drvdata = (struct _cog_drv_data *)lcd->pri;
 	
     for(i=sp/8; i <= ep/8; i++)
     {
@@ -168,7 +153,7 @@ static s32 drv_ST7565_refresh_gram(DevLcdNode *lcd, u16 sc, u16 ec, u16 sp, u16 
         bus_lcd_write_cmd(node, ((sc>>4)&0x0f)+0x10);      //设置显示位置—列高地址
         bus_lcd_write_cmd(node, sc&0x0f);      //设置显示位置—列低地址
 
-         bus_lcd_write_data(node, &(gram->gram[i][sc]), ec-sc+1);
+         bus_lcd_write_data(node, &(drvdata->gram[i][sc]), ec-sc+1);
 
 	}
 	bus_lcd_close(node);
@@ -283,11 +268,11 @@ static s32 drv_ST7565_drawpoint(DevLcdNode *lcd, u16 x, u16 y, u16 color)
 	u16 xtmp,ytmp;
 	u16 page, colum;
 
-	struct _cog_drv_data *gram;
+	struct _cog_drv_data *drvdata;
 	
 	DevLcdBusNode * node;
 	
-	gram = (struct _cog_drv_data *)lcd->pri;
+	drvdata = (struct _cog_drv_data *)lcd->pri;
 
 	if(x > lcd->width)
 		return -1;
@@ -310,11 +295,11 @@ static s32 drv_ST7565_drawpoint(DevLcdNode *lcd, u16 x, u16 y, u16 color)
 	
 	if(color == BLACK)
 	{
-		gram->gram[page][colum] |= (0x01<<(ytmp%8));
+		drvdata->gram[page][colum] |= (0x01<<(ytmp%8));
 	}
 	else
 	{
-		gram->gram[page][colum] &= ~(0x01<<(ytmp%8));
+		drvdata->gram[page][colum] &= ~(0x01<<(ytmp%8));
 	}
 
 	/*效率不高*/
@@ -322,7 +307,7 @@ static s32 drv_ST7565_drawpoint(DevLcdNode *lcd, u16 x, u16 y, u16 color)
     bus_lcd_write_cmd (node, 0xb0 + page );   
     bus_lcd_write_cmd (node, ((colum>>4)&0x0f)+0x10); 
     bus_lcd_write_cmd (node, colum&0x0f);    
-    bus_lcd_write_data (node, &(gram->gram[page][colum]), 1);
+    bus_lcd_write_data (node, &(drvdata->gram[page][colum]), 1);
 	bus_lcd_close (node);
 	return 0;
 }
@@ -344,11 +329,11 @@ s32 drv_ST7565_color_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 color
 	u16 page, colum;
 
 	
-	struct _cog_drv_data *gram;
+	struct _cog_drv_data *drvdata;
 
 	//uart_printf("drv_ST7565_fill:%d,%d,%d,%d\r\n", sx,ex,sy,ey);
 
-	gram = (struct _cog_drv_data *)lcd->pri;
+	drvdata = (struct _cog_drv_data *)lcd->pri;
 
 	/*防止坐标溢出*/
 	if(sy >= lcd->height)
@@ -392,12 +377,12 @@ s32 drv_ST7565_color_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 color
 			
 			if(color == BLACK)
 			{
-				gram->gram[page][colum] |= (0x01<<(ytmp%8));
+				drvdata->gram[page][colum] |= (0x01<<(ytmp%8));
 				//uart_printf("*");
 			}
 			else
 			{
-				gram->gram[page][colum] &= ~(0x01<<(ytmp%8));
+				drvdata->gram[page][colum] &= ~(0x01<<(ytmp%8));
 				//uart_printf("-");
 			}
 		}
@@ -439,11 +424,11 @@ s32 drv_ST7565_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
 	u16 page, colum;
 	u32 index;
 	
-	struct _cog_drv_data *gram;
+	struct _cog_drv_data *drvdata;
 
 	//uart_printf("drv_ST7565_fill:%d,%d,%d,%d\r\n", sx,ex,sy,ey);
 
-	gram = (struct _cog_drv_data *)lcd->pri;
+	drvdata = (struct _cog_drv_data *)lcd->pri;
 
 	/*xlen跟ylen是用来取数据的，不是填LCD*/
 	xlen = ex-sx+1;//全包含
@@ -471,6 +456,7 @@ s32 drv_ST7565_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
 	for(j=sy;j<=ey;j++)
 	{
 		//uart_printf("\r\n");
+
 		index = (j-sy)*xlen;
 		
 		for(i=sx;i<=ex;i++)
@@ -492,12 +478,12 @@ s32 drv_ST7565_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
 			
 			if(*(color+index+i-sx) == BLACK)
 			{
-				gram->gram[page][colum] |= (0x01<<(ytmp%8));
+				drvdata->gram[page][colum] |= (0x01<<(ytmp%8));
 				//uart_printf("*");
 			}
 			else
 			{
-				gram->gram[page][colum] &= ~(0x01<<(ytmp%8));
+				drvdata->gram[page][colum] &= ~(0x01<<(ytmp%8));
 				//uart_printf("-");
 			}
 		}
@@ -522,12 +508,116 @@ s32 drv_ST7565_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
 
 s32 drv_ST7565_prepare_display(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey)
 {
+	struct _cog_drv_data *drvdata;
+	drvdata = (struct _cog_drv_data *)lcd->pri;
+
+	drvdata->ex = ex;
+	drvdata->sx = sx;
+	drvdata->sy = sy;
+	drvdata->ey = ey;
+
+	drvdata->disx = sx;
+	drvdata->disy = sy;
+	
 	return 0;
 }
 
 s32 drv_ST7565_flush(DevLcdNode *lcd, u16 *color, u32 len)
 {
+	u16 i,j;
+	u16 xtmp,ytmp;
+	u16 page, colum;
+	u32 index;
+	
+	u16 sx,ex,sy,ey;
+	
+	struct _cog_drv_data *drvdata;
 
+	//uart_printf("drv_ST7565_fill:%d,%d,%d,%d\r\n", sx,ex,sy,ey);
+
+	drvdata = (struct _cog_drv_data *)lcd->pri;
+	
+	sx = lcd->width;
+	ex = 0;
+	sy = lcd->height;
+	ey = 0;
+
+	index = 0;
+	while(1)
+	{
+		if(index >= len)
+			break;
+
+		if((drvdata->disx < lcd->width)&&(drvdata->disy < lcd->height))
+		{			
+			if(sx >drvdata->disx)
+				sx = drvdata->disx;
+
+		
+			if(ex < drvdata->disx)
+				ex = drvdata->disx;
+
+			if(sy >drvdata->disy)
+				sy = drvdata->disy;
+
+			if(ey < drvdata->disy)
+				ey = drvdata->disy;
+
+			if(lcd->dir == W_LCD)
+			{
+				xtmp = drvdata->disx;
+				ytmp = drvdata->disy;
+			}
+			else//如果是竖屏，XY轴跟显存的映射要对调
+			{
+				xtmp = drvdata->disy;
+				ytmp = lcd->width-drvdata->disx;
+			}
+
+			//wjq_log(LOG_DEBUG, " %d, %d \r\n", xtmp,ytmp);
+			
+			page = ytmp/8; //页地址
+			colum = xtmp;//列地址
+				
+			if(*(color+index) == BLACK)
+			{
+				drvdata->gram[page][colum] |= (0x01<<(ytmp%8));
+				//uart_printf("*");
+			}
+			else
+			{
+				drvdata->gram[page][colum] &= ~(0x01<<(ytmp%8));
+				//uart_printf("-");
+			}
+		}
+
+		drvdata->disx++;
+		if(drvdata->disx > drvdata->ex)
+		{
+			drvdata->disx = drvdata->sx;
+			drvdata->disy++;
+			
+			if(drvdata->disy> drvdata->ey)
+				drvdata->disy = drvdata->sy;
+		}
+		index++;
+		
+	}
+
+	/*
+		只刷新需要刷新的区域
+		坐标范围是横屏模式
+	*/
+	if(lcd->dir == W_LCD)
+	{
+		drv_ST7565_refresh_gram(lcd, sx,ex,sy,ey);
+	}
+	else
+	{
+
+		drv_ST7565_refresh_gram(lcd, sy, ey, lcd->width-ex-1, lcd->width-sx-1); 	
+	}
+	//uart_printf("refresh ok\r\n");		
 	return 0;
 } 
 

@@ -239,6 +239,9 @@ s32 test_lcd_pic(void)
 	wjq_wait_key(16);
 	dev_lcd_show_bmp(lcd, 1, 1, 128, 128, "1:/pic/pic128.bmp");
 	wjq_wait_key(16);
+	dev_lcd_show_bmp(lcd, 1, 1, 128, 64, "1:/pic/PIC12864.bmp");
+	wjq_wait_key(16);
+	
 	dev_lcd_setdir(lcd, W_LCD, L2R_U2D);
 	
 	return 0;
