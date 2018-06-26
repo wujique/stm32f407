@@ -64,17 +64,6 @@ const _strSpiModeSet SpiModeSet[SPI_MODE_MAX]=
 		{SPI_CPOL_High, SPI_CPHA_2Edge}
 	};
 
-int log2(int value)  //非递归判断一个数是2的多少次方 
-{ 
-  int x=0; 
-  while(value>1) 
-  { 
-	value>>=1; 
-	x++; 
-  } 
-  return x; 
-} 
-
 extern const GPIO_TypeDef *Stm32PortList[16];
 
 
