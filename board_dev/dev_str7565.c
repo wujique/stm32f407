@@ -24,6 +24,7 @@
 #include "stm32f4xx.h"
 #include "main.h"
 #include "wujique_log.h"
+#include "wujique_sysconf.h"
 #include "alloc.h"
 #include "dev_lcdbus.h"
 #include "dev_lcd.h"
@@ -52,9 +53,6 @@ struct _cog_drv_data
 
 };	
 
-
-
-#define TFT_LCD_DRIVER_COG12864
 
 #ifdef TFT_LCD_DRIVER_COG12864
 
@@ -630,6 +628,7 @@ s32 drv_ST7565_flush(DevLcdNode *lcd, u16 *color, u32 len)
 	仅仅初始化不一样
 	OLED有两种驱动，SSD1315，SSD1615，一样的。
 */
+#ifdef TFT_LCD_DRIVER_SSD1615
 
 /**
  *@brief:	   drv_ssd1615_init
@@ -737,5 +736,5 @@ _lcd_drv OledLcdSSD1615rv = {
 							.backlight = drv_ST7565_lcd_bl,
 							.flush = drv_ST7565_flush
 							};
-
+#endif
 

@@ -4,7 +4,8 @@
 #define DEV_NAME_SIZE	16
 
 typedef enum{
-	MCU_PORT_A = 0x00,
+	MCU_PORT_NULL = 0x00,
+	MCU_PORT_A,
 	MCU_PORT_B,
 	MCU_PORT_C,
 	MCU_PORT_D,

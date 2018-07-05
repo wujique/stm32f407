@@ -18,10 +18,14 @@
 	用宏控制哪些驱动参加编译
 
 */
+#define TFT_LCD_DRIVER_COG12864
+#define TFT_LCD_DRIVER_SSD1615
+
 #define TFT_LCD_DRIVER_9341
 #define TFT_LCD_DRIVER_9341_8BIT
 #define TFT_LCD_DRIVER_9325
 #define TFT_LCD_DRIVER_7735
+#define TFT_LCD_DRIVER_7789
 
 
 /*

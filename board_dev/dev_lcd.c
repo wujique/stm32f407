@@ -54,6 +54,7 @@ _lcd_drv *LcdDrvList[] = {
 					&OledLcdSSD1615rv,
 					&TftLcdILI9341_8_Drv,
 					&TftLcdST7735R_Drv,
+					&TftLcdST7789_Drv,
 };
 /*
 

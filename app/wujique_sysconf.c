@@ -145,6 +145,8 @@ const DevSpiCh DevSpi3CH2={
 		.cspin = GPIO_Pin_15,
 		
 	};
+		
+#if 0		
 /*外扩SPI，可接COG、OLED、SPI TFT、RF24L01*/			
 const DevSpiCh DevSpi3CH3={
 		.name = "SPI3_CH3",
@@ -163,6 +165,34 @@ const DevSpiCh DevSpi3CH4={
 		.cspin = GPIO_Pin_2,
 		
 	};
+#else
+const DevSpi DevVspi3IO={
+		.name = "VSPI3",
+		.type = DEV_SPI_V,
+		
+		/*clk*/
+		.clkport = MCU_PORT_G,
+		.clkpin = GPIO_Pin_6,
+		
+		/*mosi*/
+		.mosiport = MCU_PORT_F,
+		.mosipin = GPIO_Pin_2,
+
+		/*miso*/
+		.misoport = NULL,
+		.misopin = NULL,
+
+	};
+const DevSpiCh DevVSpi3CH1={
+		.name = "VSPI3_CH1",
+		.spi = "VSPI3",
+		
+		.csport = NULL,
+		.cspin = NULL,
+		
+	};
+
+#endif
 
 /* 触摸屏, IO模拟SPI*/
 const DevSpiCh DevVSpi1CH1={
@@ -192,6 +222,7 @@ const DevSpiCh DevVSpi2CH1={
 		
 	};
 #endif	
+#if 0
 /*
 	串行LCD接口，使用真正的SPI控制
 	外扩SPI
@@ -210,7 +241,23 @@ const DevLcdBus BusLcdSpi3={
 	.blport = MCU_PORT_G,
 	.blpin = GPIO_Pin_9,
 };
+#else
+const DevLcdBus BusLcdVSpi3={
+	.name = "BusLcdVSpi3",
+	.type = LCD_BUS_SPI,
+	.basebus = "VSPI3_CH1",
 
+	.A0port = MCU_PORT_G,
+	.A0pin = GPIO_Pin_4,
+
+	.rstport = MCU_PORT_G,
+	.rstpin = GPIO_Pin_7,
+
+	.blport = MCU_PORT_G,
+	.blpin = GPIO_Pin_9,
+};
+
+#endif 
 
 const DevLcdBus BusLcdI2C1={
 	.name = "BusLcdI2C1",
@@ -288,6 +335,7 @@ const DevSpiFlash DevSpiFlashBoard={
 	lcd设备树定义
 	指明系统有多少个LCD设备，挂在哪个LCD总线上。
 */
+
 /*I2C接口的 OLED*/
 const DevLcd DevLcdOled1={
 	.name = "i2coledlcd",  
@@ -312,7 +360,10 @@ const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	NULL, 240, 320};
 /*SPI接口的 tft lcd*/
 //const DevLcd DevLcdtTFT	=	{"spitftlcd", 		"BusLcdSpi3", 	0x9342, 240, 320};
 //const DevLcd DevLcdtTFT	=	{"spitftlcd", 		"BusLcdVSpi1CH2", 	0x9342, 240, 320};
-const DevLcd DevSpiLcdtTFT	=	{"spitftlcd", 		"BusLcdSpi3", 	0x7735, 128, 128};
+//const DevLcd DevSpiLcdtTFT	=	{"spitftlcd", 		"BusLcdSpi3", 	0x7735, 128, 128};
+
+/* 只有SCL&SDA的SPI接口LCD*/
+const DevLcd DevLcdVSPITFT =	{"vspitftlcd",		"BusLcdVSpi3",	0x7789, 240, 240};
 
 /*
 
@@ -338,23 +389,29 @@ s32 sys_dev_register(void)
 	#ifdef SYS_USE_VSPI2
 	mcu_spi_register(&DevVspi2IO);
 	#endif
+
+	mcu_spi_register(&DevVspi3IO);
 	
 	/*注册SPI 通道*/
 	mcu_spich_register(&DevSpi3CH1);
 	mcu_spich_register(&DevSpi3CH2);
-	mcu_spich_register(&DevSpi3CH3);
-	mcu_spich_register(&DevSpi3CH4);
+	//mcu_spich_register(&DevSpi3CH3);
+	//mcu_spich_register(&DevSpi3CH4);
 	
 	mcu_spich_register(&DevVSpi1CH1);
 	mcu_spich_register(&DevVSpi1CH2);
 	//mcu_spich_register(&DevVSpi2CH1);
+	mcu_spich_register(&DevVSpi3CH1);
 	
 	/*注册LCD总线*/
-	dev_lcdbus_register(&BusLcdSpi3);
+	//dev_lcdbus_register(&BusLcdSpi3);
+	
 	dev_lcdbus_register(&BusLcdI2C1);
 	dev_lcdbus_register(&BusLcd8080);
 	//dev_lcdbus_register(&BusLcdVSpi2CH1);
 	//dev_lcdbus_register(&BusLcdVSpi1CH2);
+	dev_lcdbus_register(&BusLcdVSpi3);
+	
 	/*
 		注册设备
 
@@ -365,7 +422,7 @@ s32 sys_dev_register(void)
 	/*注册LCD设备*/
 	dev_lcd_register(&DevLcdOled1);
 	dev_lcd_register(&DevLcdtTFT);
-	dev_lcd_register(&DevSpiLcdtTFT);
+	dev_lcd_register(&DevLcdVSPITFT);
 	
 	return 0;
 }
