@@ -2004,7 +2004,7 @@ s32 drv_ST7735R_init(DevLcdNode *lcd)
 
 	tmp[12] = 0x00;
 	tmp[13] = 0x07;
-	tmp[12] = 0x02;
+	tmp[14] = 0x02;
 	tmp[15] = 0x10;
 	bus_lcd_write_data(node, (u8*)tmp, 16);
 	
@@ -2026,7 +2026,7 @@ s32 drv_ST7735R_init(DevLcdNode *lcd)
 
 	tmp[12] = 0x00;
 	tmp[13] = 0x07;
-	tmp[12] = 0x03;
+	tmp[14] = 0x03;
 	tmp[15] = 0x10;
 	bus_lcd_write_data(node, (u8*)tmp, 16);
 
