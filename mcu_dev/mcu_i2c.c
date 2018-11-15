@@ -422,7 +422,7 @@ s32 mcu_i2c_register(const DevI2c * dev)
 	struct list_head *listp;
 	DevI2cNode *p;
 	
-	wjq_log(LOG_INFO, "[register]  i2c:%s!\r\n", dev->name);
+	wjq_log(LOG_INFO, "[register] i2c:%s!\r\n", dev->name);
 
 	/*
 		先要查询当前I2C控制器，防止重名

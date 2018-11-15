@@ -146,7 +146,7 @@ const DevSpiCh DevSpi3CH2={
 		
 	};
 		
-#if 0		
+		
 /*外扩SPI，可接COG、OLED、SPI TFT、RF24L01*/			
 const DevSpiCh DevSpi3CH3={
 		.name = "SPI3_CH3",
@@ -156,6 +156,8 @@ const DevSpiCh DevSpi3CH3={
 		.cspin = GPIO_Pin_6,
 		
 	};
+		
+#if 0		
 /*外扩的SPI, 彩屏的触摸屏*/
 const DevSpiCh DevSpi3CH4={
 		.name = "SPI3_CH4",
@@ -222,7 +224,7 @@ const DevSpiCh DevVSpi2CH1={
 		
 	};
 #endif	
-#if 0
+#if 1
 /*
 	串行LCD接口，使用真正的SPI控制
 	外扩SPI
@@ -360,15 +362,13 @@ const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	NULL, 240, 320};
 /*SPI接口的 tft lcd*/
 //const DevLcd DevLcdtTFT	=	{"spitftlcd", 		"BusLcdSpi3", 	0x9342, 240, 320};
 //const DevLcd DevLcdtTFT	=	{"spitftlcd", 		"BusLcdVSpi1CH2", 	0x9342, 240, 320};
-//const DevLcd DevSpiLcdtTFT	=	{"spitftlcd", 		"BusLcdSpi3", 	0x7735, 128, 128};
+const DevLcd DevSpiLcdtTFT	=	{"spitftlcd",   "BusLcdSpi3", 	0x7735, 128, 128};
 
 /* 只有SCL&SDA的SPI接口LCD*/
-const DevLcd DevLcdVSPITFT =	{"vspitftlcd",		"BusLcdVSpi3",	0x7789, 240, 240};
+//const DevLcd DevLcdVSPITFT =	{"vspitftlcd",		"BusLcdVSpi3",	0x7789, 240, 240};
 
 /*
-
 	系统设备注册
-
 */
 s32 sys_dev_register(void)
 {
@@ -378,51 +378,47 @@ s32 sys_dev_register(void)
 	#ifdef SYS_USE_VI2C2
 	//mcu_i2c_register(&DevVi2c2);
 	#endif
-	
+/*------------------------------------------------*/
 	/*注册SPI控制器*/
 	mcu_spi_register(&DevSpi3IO);
-	
 	#ifdef SYS_USE_VSPI1
 	mcu_spi_register(&DevVSpi1IO);
 	#endif
-
 	#ifdef SYS_USE_VSPI2
 	mcu_spi_register(&DevVspi2IO);
 	#endif
-
 	mcu_spi_register(&DevVspi3IO);
-	
+/*------------------------------------------------*/
 	/*注册SPI 通道*/
 	mcu_spich_register(&DevSpi3CH1);
 	mcu_spich_register(&DevSpi3CH2);
-	//mcu_spich_register(&DevSpi3CH3);
+	mcu_spich_register(&DevSpi3CH3);
 	//mcu_spich_register(&DevSpi3CH4);
 	
 	mcu_spich_register(&DevVSpi1CH1);
 	mcu_spich_register(&DevVSpi1CH2);
 	//mcu_spich_register(&DevVSpi2CH1);
 	mcu_spich_register(&DevVSpi3CH1);
-	
+/*------------------------------------------------*/	
 	/*注册LCD总线*/
-	//dev_lcdbus_register(&BusLcdSpi3);
+	dev_lcdbus_register(&BusLcdSpi3);
 	
 	dev_lcdbus_register(&BusLcdI2C1);
 	dev_lcdbus_register(&BusLcd8080);
 	//dev_lcdbus_register(&BusLcdVSpi2CH1);
 	//dev_lcdbus_register(&BusLcdVSpi1CH2);
-	dev_lcdbus_register(&BusLcdVSpi3);
-	
-	/*
-		注册设备
+	//dev_lcdbus_register(&BusLcdVSpi3);
+/*------------------------------------------------*/	
+	/*注册设备*/
 
-	*/
 	/*注册FLASH设备*/
 	dev_spiflash_register(&DevSpiFlashCore);
 	dev_spiflash_register(&DevSpiFlashBoard);
+	
 	/*注册LCD设备*/
 	dev_lcd_register(&DevLcdOled1);
 	dev_lcd_register(&DevLcdtTFT);
-	dev_lcd_register(&DevLcdVSPITFT);
+	dev_lcd_register(&DevSpiLcdtTFT);
 	
 	return 0;
 }

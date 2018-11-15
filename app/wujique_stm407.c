@@ -207,7 +207,75 @@ s32 test_spi_cog_display(void)
 	
 	return 	test_cogoled_lcd_display("spicoglcd");
 }
-
+/*
+	240*240 彩色TFT lcd 0x7735控制器
+*/
+s32 test_lcd_spi_128128(void)
+{
+	DevLcdNode *lcd;
+	u8 step = 0;
+	u8 dis = 1;
+	
+	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
+	/*顶行居中显示父菜单*/
+	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
+	
+	lcd = dev_lcd_open("spitftlcd");
+	if(lcd == NULL)
+	{
+		wjq_test_showstr("open lcd err!");	
+	}
+	else
+	{
+		dev_lcd_setdir(lcd, W_LCD, L2R_D2U);
+		
+		while(1)
+		{
+			if(dis == 1)
+			{
+				dis = 0;
+				switch(step)
+				{
+					case 0:
+						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, YELLOW);
+						break;
+					case 1:
+						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, RED);
+						break;
+					case 2:
+						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLUE);
+						dev_lcd_put_string(lcd, FONT_SONGTI_1616, 1, 120, "abc屋脊雀ADC123工作室12345678901234屋脊雀工作室", RED);
+						break;
+					case 3:
+						dev_lcd_show_bmp(lcd, 1, 1, 240, 240, "1:/pic/pic128.bmp");
+						break;
+					default:
+						break;
+				}
+				step++;
+				if(step >= 4)
+					step = 0;
+			}
+			u8 keyvalue;
+			s32 res;
+			
+			res = dev_keypad_read(&keyvalue, 1);
+			if(res == 1)
+			{
+				if(keyvalue == 16)
+				{
+					dis = 1;
+				}
+				else if(keyvalue == 12)
+				{
+					break;
+				}
+			}
+		}
+	
+	}
+		return 0;
+}
 
 s32 test_lcd_pic(void)
 {
@@ -871,24 +939,32 @@ const MENU WJQTestList[]=
 		"LCD",	//英文
 		MENU_TYPE_LIST,//菜单类型
 		NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			/*
 			MENU_L_2,//菜单等级
 			"VSPI OLED",//中文
 			"VSPI OLED",	//英文
 			MENU_TYPE_FUN,//菜单类型
 			test_vspi_oled_display,//菜单函数，功能菜单才会执行，有子菜单的不会执行
-
+			*/
 			MENU_L_2,//菜单等级
 			"I2C OLED",//中文
 			"I2C OLED",	//英文
 			MENU_TYPE_FUN,//菜单类型
 			test_i2c_oled_display,//菜单函数，功能菜单才会执行，有子菜单的不会执行
-
+			/*
 			MENU_L_2,//菜单等级
 			"SPI COG",//中文
 			"SPI COG",	//英文
 			MENU_TYPE_FUN,//菜单类型
 			test_spi_cog_display,//菜单函数，功能菜单才会执行，有子菜单的不会执行
-
+			*/
+			MENU_L_2,//菜单等级
+			"SPI tft",//中文
+			"SPI tft",	//英文
+			MENU_TYPE_FUN,//菜单类型
+			test_lcd_spi_128128,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			
+			
 			MENU_L_2,//菜单等级
 			"tft",//中文
 			"tft",	//英文

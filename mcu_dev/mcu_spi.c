@@ -713,7 +713,7 @@ DevSpiChNode *mcu_spi_open(char *name, SPI_MODE mode, u16 pre)
 	}
 	else
 	{
-		SPI_DEBUG(LOG_INFO, "spi ch no exist!\r\n");	
+		SPI_DEBUG(LOG_INFO, ">-------spi ch no exist!\r\n");	
 	}
 	
 	return node;
