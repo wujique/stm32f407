@@ -19,4 +19,11 @@ SPI FLASH等关键设备进行架构优化。并尽可能的对所有设备进�
 
 # 教程
 每个驱动开发都有配套源码和教程：
-https://pan.baidu.com/s/1bHUVe6X6tymktUHk_z91cA
+https://pan.baidu.com/s/12o0Vh4Tv4z_O8qh49JwLjg
+
+官网：www.wujique.com
+github: https://github.com/wujique/stm32f407
+淘宝：https://shop316863092.taobao.com/?spm=2013.1.1000126.2.3a8f4e6eb3rBdf
+技术支持邮箱：code@wujique.com、github@wujique.com
+资料下载：https://pan.baidu.com/s/12o0Vh4Tv4z_O8qh49JwLjg
+QQ群：767214262
