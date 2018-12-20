@@ -337,7 +337,7 @@
               <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>..\app;..\StLib\core;..\StLib\STM32F4xx_StdPeriph_Driver\inc;..\mcu_dev;..\board_dev;..\Utilities\font;..\Utilities\tslib\src;..\Utilities\tslib\tests;..\app\usb\inc;..\StLib\STM32_USB_OTG_Driver\inc;..\StLib\STM32_USB_HOST_Library\Core\inc;..\StLib\STM32_USB_HOST_Library\Class\MSC\inc;..\StLib\STM32_USB_Device_Library\Core\inc;..\StLib\STM32_USB_Device_Library\Class\msc\inc;..\Utilities\fat_fs\src;..\app\eth\inc;..\StLib\STM32F4x7_ETH_Driver\inc;..\Utilities\lwip-1.4.1\port\STM32F4x7\Standalone;..\Utilities\lwip-1.4.1\src\include\ipv4;..\Utilities\lwip-1.4.1\src\include;..\Utilities\lwip-1.4.1\src\include\netif;..\Utilities\lwip-1.4.1\port\STM32F4x7;..\Utilities\lwip-1.4.1\src\include\lwip;..\Utilities\alloc;..\function;..\Utilities\FreeRTOS\Source\include;..\Utilities\FreeRTOS\Source\portable\RVDS\ARM_CM4F;..\Utilities\cmd;..\Utilities\spiffs-0.3.7\src</IncludePath>
+              <IncludePath>..\app;..\StLib\core;..\StLib\STM32F4xx_StdPeriph_Driver\inc;..\mcu_dev;..\board_dev;..\Utilities\font;..\Utilities\tslib\src;..\Utilities\tslib\tests;..\app\usb\inc;..\StLib\STM32_USB_OTG_Driver\inc;..\StLib\STM32_USB_HOST_Library\Core\inc;..\StLib\STM32_USB_HOST_Library\Class\MSC\inc;..\StLib\STM32_USB_Device_Library\Core\inc;..\StLib\STM32_USB_Device_Library\Class\msc\inc;..\Utilities\fat_fs\src;..\app\eth\inc;..\StLib\STM32F4x7_ETH_Driver\inc;..\Utilities\lwip-1.4.1\port\STM32F4x7\Standalone;..\Utilities\lwip-1.4.1\src\include\ipv4;..\Utilities\lwip-1.4.1\src\include;..\Utilities\lwip-1.4.1\src\include\netif;..\Utilities\lwip-1.4.1\port\STM32F4x7;..\Utilities\lwip-1.4.1\src\include\lwip;..\Utilities\alloc;..\function;..\Utilities\FreeRTOS\Source\include;..\Utilities\FreeRTOS\Source\portable\RVDS\ARM_CM4F;..\Utilities\cmd;..\Utilities\spiffs-0.3.7\src;..\Utilities\littlefs-master</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -415,6 +415,11 @@
               <FileName>sys_spiffs.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\app\sys_spiffs.c</FilePath>
+            </File>
+            <File>
+              <FileName>sys_littlefs.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\app\sys_littlefs.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1480,6 +1485,21 @@
               <FileName>spiffs_nucleus.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Utilities\spiffs-0.3.7\src\spiffs_nucleus.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>littlefs</GroupName>
+          <Files>
+            <File>
+              <FileName>lfs.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\littlefs-master\lfs.c</FilePath>
+            </File>
+            <File>
+              <FileName>lfs_util.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\littlefs-master\lfs_util.c</FilePath>
             </File>
           </Files>
         </Group>

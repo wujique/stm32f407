@@ -168,6 +168,10 @@ const DevSpiCh DevSpi3CH4={
 		
 	};
 #else
+
+/*
+	模拟SPI，无miso
+*/
 const DevSpi DevVspi3IO={
 		.name = "VSPI3",
 		.type = DEV_SPI_V,
@@ -185,6 +189,10 @@ const DevSpi DevVspi3IO={
 		.misopin = NULL,
 
 	};
+
+/*
+	模拟SPI通道，无CS
+*/	
 const DevSpiCh DevVSpi3CH1={
 		.name = "VSPI3_CH1",
 		.spi = "VSPI3",
@@ -351,7 +359,7 @@ const DevLcd DevLcdOled1={
 //LcdObj DevLcdOled3	=	{"vspioledlcd", LCD_BUS_VSPI, 	0X1315, 64, 128};
 //DevLcd DevLcdOled4	=	{"spioledlcd", 	"BusLcdSpi3", 	0X1315, 64, 128};
 /*SPI接口的 COG LCD*/
-//const DevLcd DevLcdCOG1	=	{"spicoglcd", 	"BusLcdSpi3", 	0X7565, 64, 128};
+const DevLcd DevLcdCOG1	=	{"spicoglcd", 	"BusLcdSpi3", 	0X7565, 64, 128};
 //LcdObj DevLcdCOG2	=	{"vspicoglcd", 	LCD_BUS_VSPI, 	0X7565, 64, 128};
 /*fsmc接口的 tft lcd*/
 const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	NULL, 240, 320};
@@ -362,7 +370,7 @@ const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	NULL, 240, 320};
 /*SPI接口的 tft lcd*/
 //const DevLcd DevLcdtTFT	=	{"spitftlcd", 		"BusLcdSpi3", 	0x9342, 240, 320};
 //const DevLcd DevLcdtTFT	=	{"spitftlcd", 		"BusLcdVSpi1CH2", 	0x9342, 240, 320};
-const DevLcd DevSpiLcdtTFT	=	{"spitftlcd",   "BusLcdSpi3", 	0x7735, 128, 128};
+//const DevLcd DevSpiLcdtTFT	=	{"spitftlcd",   "BusLcdSpi3", 	0x7735, 128, 128};
 
 /* 只有SCL&SDA的SPI接口LCD*/
 //const DevLcd DevLcdVSPITFT =	{"vspitftlcd",		"BusLcdVSpi3",	0x7789, 240, 240};
@@ -418,7 +426,7 @@ s32 sys_dev_register(void)
 	/*注册LCD设备*/
 	dev_lcd_register(&DevLcdOled1);
 	dev_lcd_register(&DevLcdtTFT);
-	dev_lcd_register(&DevSpiLcdtTFT);
+	dev_lcd_register(&DevLcdCOG1);
 	
 	return 0;
 }

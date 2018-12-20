@@ -136,6 +136,22 @@ int main(void)
 	while(1);
   
 }
+
+static u32 LedFlashCnt;
+
+void tastk_led_flash(void)
+{
+	LedFlashCnt++;
+
+	if(LedFlashCnt == 500)
+		GPIO_SetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
+	else if(LedFlashCnt == 1000)
+	{
+		LedFlashCnt = 0;
+		GPIO_ResetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
+	}
+}
+
 /**
  *@brief:      start_task
  *@details:    开始第一个任务，主要做初始化
@@ -159,6 +175,7 @@ void start_task(void *pvParameters)
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
 	GPIO_Init(GPIOG, &GPIO_InitStructure);   
+	
 	GPIO_SetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
 	#endif
 	wjq_log(LOG_INFO,"start task---\r\n");
@@ -184,7 +201,10 @@ void start_task(void *pvParameters)
 	dev_htu21d_init();
 	
 	fun_mount_sd();
+	
 	sys_spiffs_mount_coreflash();
+	sys_lfs_mount();
+	lfs_test();
 	/*
 		ST官方USB例程有很多硬延时
 		后续要优化掉
@@ -209,6 +229,7 @@ void start_task(void *pvParameters)
 		fun_rec_task();
 		vTaskDelay(2);
 		dev_touchkey_task();
+		tastk_led_flash();
 	}
 }
 

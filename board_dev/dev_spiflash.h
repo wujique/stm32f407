@@ -37,10 +37,12 @@ typedef struct
 	struct list_head list;
 }DevSpiFlashNode;
 
-extern s32 dev_spiflash_sector_erase(DevSpiFlashNode *node, u32 sector_addr);
+extern s32 dev_spiflash_sector_erase(DevSpiFlashNode *node, u32 sector);
 extern s32 dev_spiflash_sector_read(DevSpiFlashNode *node, u32 sector, u8 *dst);	
 extern s32 dev_spiflash_sector_write(DevSpiFlashNode *node, u32 sector, u8 *src);
 extern DevSpiFlashNode *dev_spiflash_open(char* name);
+extern s32 dev_spiflash_close(DevSpiFlashNode *node);
+
 extern s32 dev_spiflash_test(void);
 
 #endif

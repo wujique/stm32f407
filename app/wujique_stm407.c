@@ -962,8 +962,8 @@ const MENU WJQTestList[]=
 			"SPI tft",//中文
 			"SPI tft",	//英文
 			MENU_TYPE_FUN,//菜单类型
-			test_lcd_spi_128128,//菜单函数，功能菜单才会执行，有子菜单的不会执行
-			
+			//test_lcd_spi_128128,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			test_spi_cog_display,
 			
 			MENU_L_2,//菜单等级
 			"tft",//中文
