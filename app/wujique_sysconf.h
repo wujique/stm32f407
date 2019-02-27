@@ -25,6 +25,8 @@
 #define TFT_LCD_DRIVER_9325
 #define TFT_LCD_DRIVER_7735
 #define TFT_LCD_DRIVER_7789
+#define TFT_LCD_DRIVER_91874
+
 
 
 /*
@@ -66,9 +68,9 @@
 /*
 	VSPI2 VI2C2 KEYPAD ,3者只能用一个
 */
-//#define SYS_USE_VSPI2 1
+#define SYS_USE_VSPI2 1
 //#define SYS_USE_VI2C2	1
-#define SYS_USE_KEYPAD	1
+//#define SYS_USE_KEYPAD	1
 
 
 #if (defined(SYS_USE_EXUART) && defined(SYS_USE_RS485))

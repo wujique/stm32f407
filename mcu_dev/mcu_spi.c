@@ -759,8 +759,12 @@ s32 mcu_spi_transfer(DevSpiChNode * node, u8 *snd, u8 *rsv, s32 len)
 
 	if(node->spi->dev.type == DEV_SPI_H)
 		return mcu_hspi_transfer(node->spi, snd, rsv, len);
-	else	
+	else if(node->spi->dev.type == DEV_SPI_V)	
 		return mcu_vspi_transfer(node->spi, snd, rsv, len);
+	else
+	{
+		SPI_DEBUG(LOG_DEBUG, "spi dev type err\r\n");	
+	}
 }
 /**
  *@brief:      mcu_spi_cs

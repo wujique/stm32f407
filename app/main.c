@@ -202,9 +202,9 @@ void start_task(void *pvParameters)
 	
 	fun_mount_sd();
 	
-	sys_spiffs_mount_coreflash();
-	sys_lfs_mount();
-	lfs_test();
+	//sys_spiffs_mount_coreflash();
+	//sys_lfs_mount();
+	//lfs_test();
 	/*
 		ST官方USB例程有很多硬延时
 		后续要优化掉
@@ -216,7 +216,7 @@ void start_task(void *pvParameters)
 	/* 默认开启网络测试*/
 	//eth_app_init();
 
-	fun_cmd_init();
+	//fun_cmd_init();
 	
 	while (1)
 	{

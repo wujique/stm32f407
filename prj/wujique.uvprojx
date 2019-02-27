@@ -826,6 +826,11 @@
               <FileType>1</FileType>
               <FilePath>..\board_dev\dev_htu21d.c</FilePath>
             </File>
+            <File>
+              <FileName>dev_IL91874.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\board_dev\dev_IL91874.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

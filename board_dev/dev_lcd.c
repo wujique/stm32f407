@@ -28,6 +28,7 @@
 #include "dev_lcd.h"
 #include "dev_ILI9341.h"
 #include "dev_str7565.h"
+#include "dev_IL91874.h"
 #include "alloc.h"
 
 #define DEV_LCD_DEBUG
@@ -55,6 +56,7 @@ _lcd_drv *LcdDrvList[] = {
 					&TftLcdILI9341_8_Drv,
 					&TftLcdST7735R_Drv,
 					&TftLcdST7789_Drv,
+					&TftLcdIL91874Drv,
 };
 /*
 
@@ -136,10 +138,10 @@ s32 dev_lcd_register(const DevLcd *dev)
 
 	/* 
 		申请一个节点空间 
-		
 	*/
 	plcdnode = (DevLcdNode *)wjq_malloc(sizeof(DevLcdNode));
 	list_add(&(plcdnode->list), &DevLcdRoot);
+	
 	/*复制设备信息*/
 	memcpy((u8 *)&plcdnode->dev, (u8 *)dev, sizeof(DevLcd));
 	plcdnode->gd = -1;

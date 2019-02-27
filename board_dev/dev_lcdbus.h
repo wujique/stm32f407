@@ -37,6 +37,10 @@ typedef struct
 
 	MCU_PORT blport;
 	u16 blpin;
+
+	/* 电子纸 91874 需要一个busy状态脚*/
+	MCU_PORT staport;
+	u16 stapin;
 }DevLcdBus;
 
 typedef struct
