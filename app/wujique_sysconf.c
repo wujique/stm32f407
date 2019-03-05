@@ -26,13 +26,13 @@
 	1.最底层，按照STM32设计，用在其他CPU需要移植。
 
 */
-
 /*-------------------------------
-	IO口模拟的I2C1
-	WM8978、TEA5767、外扩I2C使用
-
+	I2C控制器
 -------------------------------*/
-
+/*
+	IO口模拟的I2C1
+	WM8978、TEA5767、外扩接口的I2C使用
+*/
 const DevI2c DevVi2c1={
 		.name = "VI2C1",
 		
@@ -46,9 +46,7 @@ const DevI2c DevVi2c1={
 		
 #if 0
 /*
-
 	外扩IO口模拟I2C，和矩阵按键，模拟SPI冲突
-
 */
 const DevI2c DevVi2c2={
 		.name = "VI2C2",
@@ -64,7 +62,8 @@ const DevI2c DevVi2c2={
 	IO口模拟SPI控制器
 ------------------------*/
 /*
-	VSPI1，使用触摸屏四线接口模拟SPI，用于XPT2046方案触摸处理，可读可写。
+	VSPI1，核心板上的LCD接口中的4根IO模拟SPI，
+	用于XPT2046方案触摸处理，可读可写。
 */					
 const DevSpi DevVSpi1IO={
 		.name = "VSPI1",
@@ -81,9 +80,10 @@ const DevSpi DevVSpi1IO={
 		.misopin = GPIO_Pin_12,
 	};
 
-#if 0
+#if 1
 /*
 	模拟SPI，无miso
+	用于测试SPI程序框架
 */
 const DevSpi DevVspi3IO={
 		.name = "VSPI3",
@@ -105,7 +105,9 @@ const DevSpi DevVspi3IO={
 #endif
 
 #if 1
-/*  外扩接口模拟VSPI2， 与矩阵键盘，模拟I2C2冲突    */			
+/*  
+	外扩接口模拟VSPI2， 与矩阵键盘，模拟I2C2冲突  
+*/			
 const DevSpi DevVspi2IO={
 		.name = "VSPI2",
 		.type = DEV_SPI_V,
@@ -128,7 +130,7 @@ const DevSpi DevVspi2IO={
 	硬件SPI控制器：SPI3
 	SPI驱动暂时支持SPI3，
 	如果添加其他控制器，请修改mcu_spi.c中的硬件SPI控制器初始化代码
-	*/
+*/
 const DevSpi DevSpi3IO={
 		.name = "SPI3",
 		.type = DEV_SPI_H,
@@ -149,6 +151,9 @@ const DevSpi DevSpi3IO={
 /*------------------------ 
 	SPI通道
 -------------------------*/
+/*
+	FLASH用
+*/
 const DevSpiCh DevSpi3CH1={
 		.name = "SPI3_CH1",
 		.spi = "SPI3",
@@ -157,6 +162,9 @@ const DevSpiCh DevSpi3CH1={
 		.cspin = GPIO_Pin_14,
 		
 	};		
+/*
+	FLASH用
+*/
 const DevSpiCh DevSpi3CH2={
 		.name = "SPI3_CH2",
 		.spi = "SPI3",
@@ -165,7 +173,9 @@ const DevSpiCh DevSpi3CH2={
 		.cspin = GPIO_Pin_15,
 		
 	};
-/*外扩SPI，可接COG、OLED、SPI TFT、RF24L01*/			
+/*
+	外扩接口的SPI，可接COG、OLED、SPI TFT、RF24L01
+*/			
 const DevSpiCh DevSpi3CH3={
 		.name = "SPI3_CH3",
 		.spi = "SPI3",
@@ -176,7 +186,16 @@ const DevSpiCh DevSpi3CH3={
 	};
 		
 #if 0		
-/*外扩的SPI, 彩屏的触摸屏*/
+/*
+	外扩接口的SPI, 
+	跟DevSpi3CH3用相同的IO，
+	主要是接SPI接口的LCD,
+	同时带触摸屏XPT2046，
+	本通道就是控制XPT2046的。
+
+	但是实际上，SPI接口的TFT 2.7寸LCD太慢了，
+	只能用来测试程序框架。
+*/
 const DevSpiCh DevSpi3CH4={
 		.name = "SPI3_CH4",
 		.spi = "SPI3",
@@ -187,9 +206,11 @@ const DevSpiCh DevSpi3CH4={
 	};
 #endif
 
-#if 0
+#if 1
 /*
 	模拟SPI通道，无CS
+	用来调试没有CS的LCD屏幕，
+	VSPI3，其实是外扩接口SPI附近的两个IO模拟的。
 */	
 const DevSpiCh DevVSpi3CH1={
 		.name = "VSPI3_CH1",
@@ -201,7 +222,9 @@ const DevSpiCh DevVSpi3CH1={
 	};
 #endif
 
-/* 触摸屏, IO模拟SPI*/
+/* 
+	LCD座子中的触摸屏接口, IO模拟SPI
+*/
 const DevSpiCh DevVSpi1CH1={
 		.name = "VSPI1_CH1",
 		.spi = "VSPI1",
@@ -211,7 +234,9 @@ const DevSpiCh DevVSpi1CH1={
 		
 	};
 #if 0		
-/* SPI彩屏，跟触摸屏用相同的控制器*/		
+/* 
+	SPI彩屏，跟触摸屏用相同的控制器
+*/		
 const DevSpiCh DevVSpi1CH2={
 		.name = "VSPI1_CH2",
 		.spi = "VSPI1",
@@ -221,8 +246,10 @@ const DevSpiCh DevVSpi1CH2={
 	};
 #endif
 
-#if 1
-/*外扩IO VSPI通道*/
+#if 0
+/*
+	外扩IO VSPI通道
+*/
 const DevSpiCh DevVSpi2CH1={
 		.name = "VSPI2_CH1",
 		.spi = "VSPI2",
@@ -240,7 +267,7 @@ const DevSpiCh DevVSpi2CH1={
 #if 1
 /*
 	串行LCD接口，使用真正的SPI控制
-	外扩SPI
+	外扩接口中的SPI接口
 */
 const DevLcdBus BusLcdSpi3={
 	.name = "BusLcdSpi3",
@@ -261,7 +288,7 @@ const DevLcdBus BusLcdSpi3={
 };
 #else
 /*
-	使用虚拟SPI控制
+	用来接没有CS和MISO的1.33寸LCD屏
 */
 const DevLcdBus BusLcdVSpi3={
 	.name = "BusLcdVSpi3",
@@ -311,8 +338,8 @@ const DevLcdBus BusLcd8080={
 };
 
 
-#if 1
-/* 模拟SPI2（外扩IO）*/
+#if 0
+/* 模拟SPI2（外扩IO）可接SPI接口的屏 */
 const DevLcdBus BusLcdVSpi2CH1={
 	.name = "BusLcdVSpi2CH1",
 	.type = LCD_BUS_SPI,
@@ -381,87 +408,92 @@ const DevLcd DevLcdOled1={
 	.height = 128
 	};
 /*SPI接口的 OLED*/
-//DevLcd DevLcdOled4	=	{"spioledlcd", 	"BusLcdSpi3", 	0X1315, 64, 128};
+DevLcd DevLcdSpiOled	=	{
+	.name = "spioledlcd", 	
+	.buslcd = "BusLcdSpi3", 	
+	.id = 0X1315, 
+	.width = 64, 
+	.height = 128};
+
 /*SPI接口的 COG LCD*/
 const DevLcd DevLcdCOG1	=	{
-	"spicoglcd", 	
-	//"BusLcdVSpi2CH1", 
-	"BusLcdSpi3",
-	0X7565, 
-	64, 
-	128};
+	.name = "spicoglcd", 
+	//.buslcd = "BusLcdVSpi2CH1", 
+	.buslcd = "BusLcdSpi3",
+	.id = 0X7565, 
+	.width = 64, 
+	.height = 128};
 	
 /*fsmc接口的 tft lcd*/
 const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	NULL, 240, 320};
 //const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	0x9325, 240, 320};
 //const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	0x9341, 240, 320};
+/*1408, 4.0寸的IPS屏幕*/
 //const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	0x1408, 480, 800};
-
 /*SPI接口的 tft lcd*/
 //const DevLcd DevLcdtTFT	=	{"spitftlcd", 		"BusLcdSpi3", 	0x9342, 240, 320};
 //const DevLcd DevLcdtTFT	=	{"spitftlcd", 		"BusLcdVSpi1CH2", 	0x9342, 240, 320};
+/*1.44寸 中景园*/
 //const DevLcd DevSpiLcdtTFT	=	{"spitftlcd",   "BusLcdSpi3", 	0x7735, 128, 128};
 
-/* 只有SCL&SDA的SPI接口LCD*/
-//const DevLcd DevLcdVSPITFT =	{"vspitftlcd",		"BusLcdVSpi3",	0x7789, 240, 240};
+/* 1.3寸，IPS，中景园，只有SCL&SDA的SPI接口LCD*/
+const DevLcd DevLcdVSPITFT =	{"vspitftlcd",		"BusLcdVSpi3",	0x7789, 240, 240};
 
 /* spi 接口的三色墨水屏 */
 const DevLcd DevLcdSPIEPaper =	{"spiE-Paper",		"BusLcdSpi3",	0x9187, 176, 264};
 
 /*
 	系统设备注册
+	通过缩进区分层级和依赖关系。
+	后续可以考虑实现可见字符表示的设备树
 */
 s32 sys_dev_register(void)
 {
 	/*注册I2C总线*/
 	mcu_i2c_register(&DevVi2c1);
-
+			dev_lcdbus_register(&BusLcdI2C1);
+					dev_lcd_register(&DevLcdOled1);
+					
 	#ifdef SYS_USE_VI2C2
 	//mcu_i2c_register(&DevVi2c2);
 	#endif
-/*------------------------------------------------*/
-	/*注册SPI控制器*/
+	
+	/*硬SPI3控制器，核心板和底板的FLASH、外扩接口的SPI口*/
 	mcu_spi_register(&DevSpi3IO);
+			mcu_spich_register(&DevSpi3CH1);
+					dev_spiflash_register(&DevSpiFlashBoard);
+			mcu_spich_register(&DevSpi3CH2);
+					dev_spiflash_register(&DevSpiFlashCore);
+			mcu_spich_register(&DevSpi3CH3);
+					dev_lcdbus_register(&BusLcdSpi3);
+							dev_lcd_register(&DevLcdSPIEPaper);
+							//dev_lcd_register(&DevLcdCOG1);
+			//mcu_spich_register(&DevSpi3CH4);
+	
 	#ifdef SYS_USE_VSPI1
 	mcu_spi_register(&DevVSpi1IO);
+			mcu_spich_register(&DevVSpi1CH1);//8080接口的触摸屏
+			//mcu_spich_register(&DevVSpi1CH2);
+					//dev_lcdbus_register(&BusLcdVSpi1CH2);
 	#endif
 	
 	#ifdef SYS_USE_VSPI2
 	mcu_spi_register(&DevVspi2IO);
+			mcu_spich_register(&DevVSpi2CH1);
+					dev_lcdbus_register(&BusLcdVSpi2CH1);
+							dev_lcd_register(&DevLcdSpiOled);
 	#endif
 	
-
-/*------------------------------------------------*/
-	/*注册SPI 通道*/
-	mcu_spich_register(&DevSpi3CH1);
-	mcu_spich_register(&DevSpi3CH2);
-	mcu_spich_register(&DevSpi3CH3);
-	//mcu_spich_register(&DevSpi3CH4);
+	/*测试1.33寸IPS屏幕采用*/
+	#if 0
+	mcu_spi_register(&DevVspi3IO);
+			mcu_spich_register(&DevVSpi3CH1);
+					dev_lcdbus_register(&BusLcdVSpi3);
+							dev_lcd_register(&DevLcdVSPITFT);
+	#endif
 	
-	mcu_spich_register(&DevVSpi1CH1);
-	//mcu_spich_register(&DevVSpi1CH2);
-	mcu_spich_register(&DevVSpi2CH1);
-	//mcu_spich_register(&DevVSpi3CH1);
-/*------------------------------------------------*/	
-	/*注册LCD总线*/
-	dev_lcdbus_register(&BusLcdSpi3);
-	dev_lcdbus_register(&BusLcdI2C1);
 	dev_lcdbus_register(&BusLcd8080);
-	dev_lcdbus_register(&BusLcdVSpi2CH1);
-	//dev_lcdbus_register(&BusLcdVSpi1CH2);
-	//dev_lcdbus_register(&BusLcdVSpi3);
-/*------------------------------------------------*/	
-	/*注册设备*/
-
-	/*注册FLASH设备*/
-	dev_spiflash_register(&DevSpiFlashCore);
-	dev_spiflash_register(&DevSpiFlashBoard);
-	
-	/*注册LCD设备*/
-	dev_lcd_register(&DevLcdOled1);
-	dev_lcd_register(&DevLcdtTFT);
-	dev_lcd_register(&DevLcdSPIEPaper);
-	//dev_lcd_register(&DevLcdCOG1);
+			dev_lcd_register(&DevLcdtTFT);
 	
 	return 0;
 }

@@ -1329,7 +1329,7 @@ void wujique_stm407_test(void)
 	dev_key_open();
 	dev_keypad_open();
 
-	emenu_run(WJQTestLcd, (MENU *)&WJQTestList[0], sizeof(WJQTestList)/sizeof(MENU), FONT_SONGTI_1212, 1);	
+	emenu_run(WJQTestLcd, (MENU *)&WJQTestList[0], sizeof(WJQTestList)/sizeof(MENU), FONT_SONGTI_1616, 1);	
 	while(1)
 	{
 	}

@@ -337,7 +337,7 @@
               <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>..\app;..\StLib\core;..\StLib\STM32F4xx_StdPeriph_Driver\inc;..\mcu_dev;..\board_dev;..\Utilities\font;..\Utilities\tslib\src;..\Utilities\tslib\tests;..\app\usb\inc;..\StLib\STM32_USB_OTG_Driver\inc;..\StLib\STM32_USB_HOST_Library\Core\inc;..\StLib\STM32_USB_HOST_Library\Class\MSC\inc;..\StLib\STM32_USB_Device_Library\Core\inc;..\StLib\STM32_USB_Device_Library\Class\msc\inc;..\Utilities\fat_fs\src;..\app\eth\inc;..\StLib\STM32F4x7_ETH_Driver\inc;..\Utilities\lwip-1.4.1\port\STM32F4x7\Standalone;..\Utilities\lwip-1.4.1\src\include\ipv4;..\Utilities\lwip-1.4.1\src\include;..\Utilities\lwip-1.4.1\src\include\netif;..\Utilities\lwip-1.4.1\port\STM32F4x7;..\Utilities\lwip-1.4.1\src\include\lwip;..\Utilities\alloc;..\function;..\Utilities\FreeRTOS\Source\include;..\Utilities\FreeRTOS\Source\portable\RVDS\ARM_CM4F;..\Utilities\cmd;..\Utilities\spiffs-0.3.7\src;..\Utilities\littlefs-master</IncludePath>
+              <IncludePath>..\app;..\StLib\core;..\StLib\STM32F4xx_StdPeriph_Driver\inc;..\mcu_dev;..\board_dev;..\Utilities\font;..\Utilities\tslib\src;..\Utilities\tslib\tests;..\app\usb\inc;..\StLib\STM32_USB_OTG_Driver\inc;..\StLib\STM32_USB_HOST_Library\Core\inc;..\StLib\STM32_USB_HOST_Library\Class\MSC\inc;..\StLib\STM32_USB_Device_Library\Core\inc;..\StLib\STM32_USB_Device_Library\Class\msc\inc;..\Utilities\fat_fs\src;..\app\eth\inc;..\StLib\STM32F4x7_ETH_Driver\inc;..\Utilities\lwip-1.4.1\port\STM32F4x7\Standalone;..\Utilities\lwip-1.4.1\src\include\ipv4;..\Utilities\lwip-1.4.1\src\include;..\Utilities\lwip-1.4.1\src\include\netif;..\Utilities\lwip-1.4.1\port\STM32F4x7;..\Utilities\lwip-1.4.1\src\include\lwip;..\Utilities\alloc;..\function;..\Utilities\FreeRTOS\Source\include;..\Utilities\FreeRTOS\Source\portable\RVDS\ARM_CM4F;..\Utilities\cmd;..\Utilities\spiffs-0.3.7\src;..\Utilities\littlefs-master;..\board_dev\lcd</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -757,11 +757,6 @@
               <FilePath>..\board_dev\dev_wm8978.c</FilePath>
             </File>
             <File>
-              <FileName>dev_ILI9341.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\board_dev\dev_ILI9341.c</FilePath>
-            </File>
-            <File>
               <FileName>dev_touchscreen.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\board_dev\dev_touchscreen.c</FilePath>
@@ -792,21 +787,6 @@
               <FilePath>..\board_dev\dev_rs485.c</FilePath>
             </File>
             <File>
-              <FileName>dev_lcd.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\board_dev\dev_lcd.c</FilePath>
-            </File>
-            <File>
-              <FileName>dev_str7565.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\board_dev\dev_str7565.c</FilePath>
-            </File>
-            <File>
-              <FileName>dev_lcdbus.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\board_dev\dev_lcdbus.c</FilePath>
-            </File>
-            <File>
               <FileName>dev_keypad.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\board_dev\dev_keypad.c</FilePath>
@@ -829,7 +809,42 @@
             <File>
               <FileName>dev_IL91874.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\board_dev\dev_IL91874.c</FilePath>
+              <FilePath>..\board_dev\lcd\dev_IL91874.c</FilePath>
+            </File>
+            <File>
+              <FileName>dev_ILI9325.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\board_dev\lcd\dev_ILI9325.c</FilePath>
+            </File>
+            <File>
+              <FileName>dev_ILI9341.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\board_dev\lcd\dev_ILI9341.c</FilePath>
+            </File>
+            <File>
+              <FileName>dev_lcd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\board_dev\lcd\dev_lcd.c</FilePath>
+            </File>
+            <File>
+              <FileName>dev_lcdbus.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\board_dev\lcd\dev_lcdbus.c</FilePath>
+            </File>
+            <File>
+              <FileName>dev_st7735r.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\board_dev\lcd\dev_st7735r.c</FilePath>
+            </File>
+            <File>
+              <FileName>dev_st7789.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\board_dev\lcd\dev_st7789.c</FilePath>
+            </File>
+            <File>
+              <FileName>dev_str7565.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\board_dev\lcd\dev_str7565.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -24,12 +24,17 @@
 #include "stm32f4xx.h"
 #include "wujique_log.h"
 #include "list.h"
+#include "alloc.h"
+
 #include "dev_lcdbus.h"
 #include "dev_lcd.h"
+
 #include "dev_ILI9341.h"
 #include "dev_str7565.h"
 #include "dev_IL91874.h"
-#include "alloc.h"
+#include "dev_ILI9325.h"
+#include "dev_st7789.h"
+#include "dev_st7735r.h"
 
 #define DEV_LCD_DEBUG
 
