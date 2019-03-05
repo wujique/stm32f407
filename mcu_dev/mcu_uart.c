@@ -37,6 +37,8 @@ u8 McuUart1Buf[MCU_UART1_BUF_SIZE];
 u8 McuUart2Buf[MCU_UART2_BUF_SIZE];
 u8 McuUart3Buf[MCU_UART3_BUF_SIZE];
 #endif
+u8 McuUartLogBuf[MCU_UART3_BUF_SIZE];
+
 /*
 @bref：串口设备
 */
@@ -217,7 +219,7 @@ s32 mcu_uart_open(McuUartNum comport)
 		McuUart[MCU_UART_3].OverFg = 0;
 		McuUart[MCU_UART_3].size = MCU_UART3_BUF_SIZE;
 		McuUart[MCU_UART_3].gd = 0;
-		McuUart[MCU_UART_3].Buf = (u8 *)wjq_malloc(MCU_UART3_BUF_SIZE);
+		McuUart[MCU_UART_3].Buf = McuUartLogBuf;//(u8 *)wjq_malloc(MCU_UART3_BUF_SIZE);
 		// 打开GPIO时钟
 		RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
 		// 打开串口时钟

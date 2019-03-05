@@ -19,7 +19,11 @@
 
 #include "main.h"
 
-DevLcd * WJQTestLcd;
+extern u16 PenColor;
+extern u16 BackColor;
+
+
+DevLcdNode * WJQTestLcd;
 
 s32 wjq_wait_key(u8 key)
 {
@@ -43,9 +47,9 @@ s32 wjq_wait_key(u8 key)
 s32 wjq_test_showstr(char *s)
 {
 	wjq_log(LOG_DEBUG, "test:%s", s);
-	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
+	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, BackColor);
 	/*顶行居中显示父菜单*/
-	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, s, BLACK);
+	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, s, PenColor);
 	wjq_wait_key(0);
 	
 	return 0;
@@ -59,7 +63,7 @@ s32 wjq_test_showstr(char *s)
  */
 s32 test_tft_display(void)
 {
-	DevLcd *lcd;
+	DevLcdNode *lcd;
 	u8 step = 0;
 	u8 dis = 1;
 	
@@ -89,6 +93,9 @@ s32 test_tft_display(void)
 						break;
 					case 2:
 						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLUE);
+
+						dev_lcd_put_string(lcd, FONT_SONGTI_1616, 1, 120, "abc屋脊雀ADC123工作室12345678901234屋脊雀工作室", RED);
+
 						break;
 					default:
 						break;
@@ -120,7 +127,7 @@ s32 test_tft_display(void)
 
 s32 test_cogoled_lcd_display(char *name)
 {
-	DevLcd *lcd;
+	DevLcdNode *lcd;
 	u8 step = 0;
 	u8 dis = 1;
 	
@@ -144,11 +151,15 @@ s32 test_cogoled_lcd_display(char *name)
 					case 1:
 						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, WHITE);
 						break;
+					case 2:
+						dev_lcd_put_string(lcd, FONT_SONGTI_1616, 1, 56, "abc屋脊雀ADC123工作室", BLACK);
+						break;
+						
 					default:
 						break;
 				}
 				step++;
-				if(step >= 2)
+				if(step >= 3)
 					step = 0;
 			}
 			u8 keyvalue;
@@ -196,11 +207,113 @@ s32 test_spi_cog_display(void)
 	
 	return 	test_cogoled_lcd_display("spicoglcd");
 }
-
-
-s32 test_lcd_bmp(void)
+/*
+	240*240 彩色TFT lcd 0x7735控制器
+*/
+s32 test_lcd_spi_128128(void)
 {
+	DevLcdNode *lcd;
+	u8 step = 0;
+	u8 dis = 1;
+	
+	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
+	/*顶行居中显示父菜单*/
+	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
+	
+	lcd = dev_lcd_open("spitftlcd");
+	if(lcd == NULL)
+	{
+		wjq_test_showstr("open lcd err!");	
+	}
+	else
+	{
+		dev_lcd_setdir(lcd, W_LCD, L2R_D2U);
+		
+		while(1)
+		{
+			if(dis == 1)
+			{
+				dis = 0;
+				switch(step)
+				{
+					case 0:
+						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, YELLOW);
+						break;
+					case 1:
+						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, RED);
+						break;
+					case 2:
+						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLUE);
+						dev_lcd_put_string(lcd, FONT_SONGTI_1616, 1, 120, "abc屋脊雀ADC123工作室12345678901234屋脊雀工作室", RED);
+						break;
+					case 3:
+						dev_lcd_show_bmp(lcd, 1, 1, 240, 240, "1:/pic/pic128.bmp");
+						break;
+					default:
+						break;
+				}
+				step++;
+				if(step >= 4)
+					step = 0;
+			}
+			u8 keyvalue;
+			s32 res;
+			
+			res = dev_keypad_read(&keyvalue, 1);
+			if(res == 1)
+			{
+				if(keyvalue == 16)
+				{
+					dis = 1;
+				}
+				else if(keyvalue == 12)
+				{
+					break;
+				}
+			}
+		}
+	
+	}
+		return 0;
+}
+
+s32 test_lcd_pic(void)
+{
+	DevLcdNode *lcd;
+	u8 step = 0;
+	u8 dis = 1;
+	
+	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
+	/*顶行居中显示父菜单*/
+	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
+	
+	lcd = dev_lcd_open("tftlcd");
+	if(lcd == NULL)
+	{
+		wjq_test_showstr("open lcd err!");	
+		return -1;
+	}
+	
+	dev_lcd_setdir(lcd, W_LCD, L2R_D2U);
+	
 	wjq_test_showstr((char *)__FUNCTION__);
+	dev_lcd_show_bmp(lcd, 1, 1, 320, 240, "1:/pic/女人单色.bmp");
+	wjq_wait_key(16);
+	dev_lcd_show_bmp(lcd, 1, 1, 320, 240, "1:/pic/女人16色.bmp");//调色板
+	wjq_wait_key(16);
+	dev_lcd_show_bmp(lcd, 1, 1, 320, 240, "1:/pic/女人256色.bmp");//调色板
+	wjq_wait_key(16);
+	dev_lcd_show_bmp(lcd, 1, 1, 320, 240, "1:/pic/女人24位.bmp");//真彩色
+	wjq_wait_key(16);
+	dev_lcd_show_bmp(lcd, 1, 1, 128, 128, "1:/pic/pic128.bmp");
+	wjq_wait_key(16);
+	dev_lcd_show_bmp(lcd, 1, 1, 128, 64, "1:/pic/PIC12864.bmp");
+	wjq_wait_key(16);
+	dev_lcd_show_bmp(lcd, 1, 1, 240, 240, "1:/pic/pic240240.bmp");
+	wjq_wait_key(16);
+	
+	dev_lcd_setdir(lcd, W_LCD, L2R_U2D);
+	
 	return 0;
 }
 
@@ -247,6 +360,10 @@ s32 test_sound_fm(void)
 {
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
+
+	dev_wm8978_inout(WM8978_INPUT_DAC|WM8978_INPUT_AUX|WM8978_INPUT_ADC,
+					WM8978_OUTPUT_PHONE|WM8978_OUTPUT_SPK);
+	
 	dev_tea5767_open();
 	dev_tea5767_setfre(105700);
 	wjq_wait_key(12);
@@ -312,7 +429,7 @@ s32 test_sound_rec(void)
 extern struct tsdev *ts_open_module(void);
 s32 test_tp_calibrate(void)
 {
-	DevLcd *lcd;
+	DevLcdNode *lcd;
 
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	/*顶行居中显示父菜单*/
@@ -330,13 +447,17 @@ s32 test_tp_calibrate(void)
 		ts_calibrate(lcd);
 		dev_touchscreen_close();
 	}
+	
+	dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLUE);
+	dev_lcd_close(lcd);
+	
 	return 0;
 }
 
 
 s32 test_tp_test(void)
 {
-	DevLcd *lcd;
+	DevLcdNode *lcd;
 
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	/*顶行居中显示父菜单*/
@@ -375,7 +496,7 @@ s32 test_tp_test(void)
 					if(samp[i].pressure != 0 )
 					{
 						//uart_printf("pre:%d, x:%d, y:%d\r\n", samp.pressure, samp.x, samp.y);
-						dev_lcd_drawpoint(lcd, samp[i].x, samp[i].y, 0xF800); 
+						dev_lcd_drawpoint(lcd, samp[i].x, samp[i].y, RED); 
 					}
 					i++;
 				}
@@ -448,7 +569,7 @@ s32 test_key(void)
 
 s32 test_camera(void)
 {
-	DevLcd *lcd;
+	DevLcdNode *lcd;
 
 	//dev_lcd_color_fill(emenulcd, 1, 1000, 1, 1000, WHITE);
 	/*顶行居中显示父菜单*/
@@ -482,7 +603,6 @@ s32 test_rs485_rec(void)
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
 
-	dev_rs485_init();
 	dev_rs485_open();
 
 	while(1)
@@ -517,7 +637,6 @@ s32 test_rs485_snd(void)
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
 	
-	dev_rs485_init();
 	dev_rs485_open();
 
 	while(1)
@@ -531,7 +650,7 @@ s32 test_rs485_snd(void)
 			}
 			else if(keyvalue == 16)
 			{
-				res = dev_rs485_write("rs485 test\r\n", 13);
+				res = dev_rs485_write("rs485 test\r\n", 14);
 				wjq_log(LOG_DEBUG, "dev rs485 write:%d\r\n", res);
 			}
 		}
@@ -654,7 +773,7 @@ s32 test_spiflash_core(void)
 {
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
-	dev_spiflash_test_chipcheck("core_spiflash");
+	dev_spiflash_test_chiperase("core_spiflash");
 	wjq_wait_key(12);
 	return 0;
 }
@@ -820,24 +939,32 @@ const MENU WJQTestList[]=
 		"LCD",	//英文
 		MENU_TYPE_LIST,//菜单类型
 		NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			/*
 			MENU_L_2,//菜单等级
 			"VSPI OLED",//中文
 			"VSPI OLED",	//英文
 			MENU_TYPE_FUN,//菜单类型
 			test_vspi_oled_display,//菜单函数，功能菜单才会执行，有子菜单的不会执行
-
+			*/
 			MENU_L_2,//菜单等级
 			"I2C OLED",//中文
 			"I2C OLED",	//英文
 			MENU_TYPE_FUN,//菜单类型
 			test_i2c_oled_display,//菜单函数，功能菜单才会执行，有子菜单的不会执行
-
+			/*
 			MENU_L_2,//菜单等级
 			"SPI COG",//中文
 			"SPI COG",	//英文
 			MENU_TYPE_FUN,//菜单类型
 			test_spi_cog_display,//菜单函数，功能菜单才会执行，有子菜单的不会执行
-
+			*/
+			MENU_L_2,//菜单等级
+			"SPI tft",//中文
+			"SPI tft",	//英文
+			MENU_TYPE_FUN,//菜单类型
+			//test_lcd_spi_128128,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			test_spi_cog_display,
+			
 			MENU_L_2,//菜单等级
 			"tft",//中文
 			"tft",	//英文
@@ -848,7 +975,7 @@ const MENU WJQTestList[]=
 			"图片测试",//中文
 			"test BMP",	//英文
 			MENU_TYPE_FUN,//菜单类型
-			test_lcd_bmp,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			test_lcd_pic,//菜单函数，功能菜单才会执行，有子菜单的不会执行
 			
 			MENU_L_2,//菜单等级
 			"字库测试",//中文
@@ -1057,7 +1184,127 @@ const MENU WJQTestList[]=
 		"test",	//英文
 		MENU_TYPE_LIST,//菜单类型
 		NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+		
+		MENU_L_1,//菜单等级
+		"test1",//中文
+		"test1",	//英文
+		MENU_TYPE_LIST,//菜单类型
+		NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
 
+		MENU_L_1,//菜单等级
+		"test2",//中文
+		"test2",	//英文
+		MENU_TYPE_LIST,//菜单类型
+		NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+
+		MENU_L_1,//菜单等级
+		"test3",//中文
+		"test3",	//英文
+		MENU_TYPE_LIST,//菜单类型
+		NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+
+		MENU_L_1,//菜单等级
+		"test4",//中文
+		"test4",	//英文
+		MENU_TYPE_LIST,//菜单类型
+		NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+
+		MENU_L_1,//菜单等级
+		"test5",//中文
+		"test5",	//英文
+		MENU_TYPE_LIST,//菜单类型
+		NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+
+		MENU_L_1,//菜单等级
+		"test6",//中文
+		"test6",	//英文
+		MENU_TYPE_LIST,//菜单类型
+		NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+
+		MENU_L_1,//菜单等级
+		"test7",//中文
+		"test7",	//英文
+		MENU_TYPE_LIST,//菜单类型
+		NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+
+		MENU_L_1,//菜单等级
+		"test8",//中文
+		"test8",	//英文
+		MENU_TYPE_LIST,//菜单类型
+		NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+
+		MENU_L_1,//菜单等级
+		"test9",//中文
+		"test9",	//英文
+		MENU_TYPE_LIST,//菜单类型
+		NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+
+		MENU_L_1,//菜单等级
+		"test10",//中文
+		"test10",	//英文
+		MENU_TYPE_LIST,//菜单类型
+		NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+		
+			MENU_L_2,//菜单等级
+			"t10-1",//中文
+			"t10-1",	//英文
+			MENU_TYPE_LIST,//菜单类型
+			NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			MENU_L_2,//菜单等级
+			"t10-2",//中文
+			"t10-2",	//英文
+			MENU_TYPE_LIST,//菜单类型
+			NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			MENU_L_2,//菜单等级
+			"t10-3",//中文
+			"t10-3",	//英文
+			MENU_TYPE_LIST,//菜单类型
+			NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			MENU_L_2,//菜单等级
+			"t10-4",//中文
+			"t10-4",	//英文
+			MENU_TYPE_LIST,//菜单类型
+			NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			MENU_L_2,//菜单等级
+			"t10-5",//中文
+			"t10-5",	//英文
+			MENU_TYPE_LIST,//菜单类型
+			NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			MENU_L_2,//菜单等级
+			"t10-6",//中文
+			"t10-6",	//英文
+			MENU_TYPE_LIST,//菜单类型
+			NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			MENU_L_2,//菜单等级
+			"t10-7",//中文
+			"t10-7",	//英文
+			MENU_TYPE_LIST,//菜单类型
+			NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			MENU_L_2,//菜单等级
+			"t10-8",//中文
+			"t10-8",	//英文
+			MENU_TYPE_LIST,//菜单类型
+			NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			MENU_L_2,//菜单等级
+			"t10-9",//中文
+			"t10-9",	//英文
+			MENU_TYPE_LIST,//菜单类型
+			NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			MENU_L_2,//菜单等级
+			"t10-10",//中文
+			"t10-10",	//英文
+			MENU_TYPE_LIST,//菜单类型
+			NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			MENU_L_2,//菜单等级
+			"t10-11",//中文
+			"t10-11",	//英文
+			MENU_TYPE_LIST,//菜单类型
+			NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
+			MENU_L_2,//菜单等级
+			"t10-12",//中文
+			"t10-12",	//英文
+			MENU_TYPE_LIST,//菜单类型
+			NULL,//菜单函数，功能菜单才会执行，有子菜单的不会执行
 	
 	/*最后的菜单是结束菜单，无意义*/			
 	MENU_L_0,//菜单等级
@@ -1073,7 +1320,7 @@ void wujique_stm407_test(void)
 	wjq_log(LOG_DEBUG,"run app\r\n");
 
 	
-	WJQTestLcd = dev_lcd_open("spicoglcd");
+	WJQTestLcd = dev_lcd_open("spiE-Paper");
 	if(WJQTestLcd == NULL)
 	{
 		wjq_log(LOG_DEBUG, "open oled lcd err\r\n");
@@ -1081,9 +1328,8 @@ void wujique_stm407_test(void)
 
 	dev_key_open();
 	dev_keypad_open();
-	dev_wm8978_open();
 
-	emenu_run(WJQTestLcd, (MENU *)&WJQTestList[0], sizeof(WJQTestList)/sizeof(MENU));	
+	emenu_run(WJQTestLcd, (MENU *)&WJQTestList[0], sizeof(WJQTestList)/sizeof(MENU), FONT_SONGTI_1616, 1);	
 	while(1)
 	{
 	}
@@ -1106,5 +1352,177 @@ s32 wujique_407test_init(void)
 	return 0;
 }
 
+/*
+
+生产测试
+
+*/
+
+s32 test_tft_lcd(void)
+{
+	DevLcdNode *lcd;
+	u8 step = 0;
+	u8 dis = 1;
+	
+	lcd = dev_lcd_open("tftlcd");
+	if(lcd == NULL)
+	{
+		wjq_test_showstr("open tft lcd err!");	
+	}
+	else
+	{
+		while(1)
+		{
+			if(dis == 1)
+			{
+				dis = 0;
+				switch(step)
+				{
+					case 0:
+						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, YELLOW);
+						break;
+					
+					case 1:
+						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, RED);
+						break;
+					
+					case 2:
+						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLUE);
+						dev_lcd_put_string(lcd, FONT_SONGTI_1616, 20, 20, "abc屋脊雀工作室ADC", RED);
+						break;
+
+					case 3:
+						dev_lcd_show_bmp(lcd, 1, 1, 320, 240, "1:/pic/女人单色.bmp");
+						break;
+					
+					case 4:
+						dev_lcd_show_bmp(lcd, 1, 1, 320, 240, "1:/pic/女人24位.bmp");//真彩色
+						break;
+					case 5:
+						dev_lcd_backlight(lcd, 0);
+						break;
+					case 6:
+						dev_lcd_backlight(lcd, 1);
+						break;		
+					default:
+						break;
+				}
+				step++;
+				if(step >= 7)
+					step = 0;
+			}
+			u8 keyvalue;
+			s32 res;
+			
+			res = dev_keypad_read(&keyvalue, 1);
+			if(res == 1)
+			{
+				if(keyvalue == 16)
+				{
+					dis = 1;
+				}
+				else if(keyvalue == 12)
+				{
+					break;
+				}
+			}
+		}
+
+	}
+	dev_lcd_close(lcd);
+	return 0;
+}
+
+s32 test_cog_lcd(void)
+{
+	DevLcdNode *lcd;
+	u8 step = 0;
+	u8 dis = 1;
+	
+	lcd = dev_lcd_open("spicoglcd");
+	if(lcd == NULL)
+	{
+		wjq_test_showstr("open cog lcd err!");	
+		while(1);
+	}
+
+	while(1)
+	{
+		dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLACK);
+		wjq_wait_key(16);
+		dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, WHITE);
+		wjq_wait_key(16);
+		dev_lcd_put_string(lcd, FONT_SONGTI_1212, 1, 32, "cog LCD测试程序", BLACK);
+		wjq_wait_key(16);
+		dev_lcd_backlight(lcd, 0);
+		wjq_wait_key(16);
+		dev_lcd_backlight(lcd, 1);
+		wjq_wait_key(16);
+	}
+	
+	return 0;
+}
+
+s32 test_tft_tp(void)
+{
+	DevLcdNode *lcd;
+
+
+	lcd = dev_lcd_open("tftlcd");
+	if(lcd == NULL)
+	{
+		wjq_test_showstr("open lcd err!");	
+	}
+	else
+	{
+		dev_lcd_backlight(lcd, 1);
+		
+		dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLUE);
+		dev_lcd_setdir(lcd, H_LCD, L2R_U2D);
+		dev_touchscreen_open();
+		ts_calibrate(lcd);
+		dev_touchscreen_close();
+	}
+	
+	dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLUE);
+
+	{
+		dev_touchscreen_open();	
+	
+		struct tsdev *ts;
+		ts = ts_open_module();
+
+		struct ts_sample samp[10];
+		int ret;
+		u8 i =0;	
+		while(1)
+		{
+			ret = ts_read(ts, samp, 10);
+			if(ret != 0)
+			{
+				//uart_printf("pre:%d, x:%d, y:%d\r\n", samp[0].pressure, samp[0].x, samp[0].y);
+						
+				i = 0;
+				
+				while(1)
+				{
+					if(i>= ret)
+						break;
+					
+					if(samp[i].pressure != 0 )
+					{
+						//uart_printf("pre:%d, x:%d, y:%d\r\n", samp.pressure, samp.x, samp.y);
+						dev_lcd_drawpoint(lcd, samp[i].x, samp[i].y, 0xF800); 
+					}
+					i++;
+				}
+			}
+
+		}
+
+		dev_touchscreen_close();
+	}
+	return 0;
+}
 
 

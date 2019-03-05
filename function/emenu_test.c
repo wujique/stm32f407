@@ -7,7 +7,7 @@
 #include "font.h"
 #include "mcu_uart.h"
 
-DevLcd *emenulcd;
+DevLcdNode *emenulcd;
 
 s32 test_wait_key(u8 key)
 {
@@ -279,14 +279,14 @@ const MENU EMenuListTest[]=
 
 
 
-s32 emenu_test(DevLcd *lcd)
+s32 emenu_test(DevLcdNode *lcd)
 {
 	emenulcd = lcd;
 	if(emenulcd == NULL)
 	{
 		wjq_log(LOG_DEBUG, "open lcd err\r\n");
 	}
-	emenu_run(emenulcd, (MENU *)&EMenuListTest[0], sizeof(EMenuListTest)/sizeof(MENU));	
+	emenu_run(emenulcd, (MENU *)&EMenuListTest[0], sizeof(EMenuListTest)/sizeof(MENU), FONT_SONGTI_1212, 1);	
 	
 	return 0;
 }

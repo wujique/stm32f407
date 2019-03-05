@@ -31,10 +31,6 @@
 
 extern s32 dev_touchscreen_write(struct ts_sample *samp, int nr);
 
-/*xpt 2046使用 模拟串口1*/
-#define XPT2046_SPI DEV_VSPI_1
-
-
 /*
 	命令字意义：
 	bit7：S，启动标志，固定为1
@@ -68,6 +64,7 @@ extern s32 dev_touchscreen_write(struct ts_sample *samp, int nr);
 
 
 s32 DevXpt2046Gd = -2;
+DevSpiChNode *Xpt2046SpiCHNode;
 
 void dev_xpt2046_task(void);
 
@@ -83,9 +80,10 @@ s32 dev_xpt2046_init(void)
 	#ifdef SYS_USE_TS_IC_CASE
 	DevXpt2046Gd = -1;
 	
+	wjq_log(LOG_INFO, ">-----------xpt2046 init!\r\n");
 	mcu_timer7_init();
 	#else
-	wjq_log(LOG_INFO, ">>>>>>>>>xpt2046 not init!\r\n");
+	wjq_log(LOG_INFO, ">-----------xpt2046 not init!\r\n");
 
 	#endif
 
@@ -104,7 +102,9 @@ s32 dev_xpt2046_open(void)
 
 	if(DevXpt2046Gd != -1)
 		return -1;
-	mcu_spi_open(XPT2046_SPI, SPI_MODE_0, 2);
+
+	wjq_log(LOG_INFO, ">--------------xpt2046 open!\r\n");
+
 	mcu_tim7_start(100, dev_xpt2046_task, 0);
 	DevXpt2046Gd = 0;
 	return 0;
@@ -121,8 +121,7 @@ s32 dev_xpt2046_close(void)
 
 	if(DevXpt2046Gd != 0)
 		return -1;
-	
-	mcu_spi_close(XPT2046_SPI);
+
 	DevXpt2046Gd = -1;
 	return 0;
 }
@@ -153,7 +152,7 @@ void dev_xpt2046_task(void)
 		读Z1,Z2，用于计算压力
 		读X,Y轴，用于计算坐标
 
-		1 使用了快速16CLK操作法，过程100us左右。
+		1 使用了快速16CLK操作法，过程100us左右, 其中SPI通信过程50us。
 		经测试，中间不需要延时。
 		2 没有使用下笔中断，通过压力判断是否下笔。但是有点疑惑，理论上接触电阻应该很小的，
 		 用ADC方案，正常，用XPT2046方案，感觉接触电阻比较大，不知道是哪里没有理解对。
@@ -167,33 +166,43 @@ void dev_xpt2046_task(void)
 	*/
 	
 	/*------------------------*/
-
+	GPIO_ResetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
+	
+	Xpt2046SpiCHNode = mcu_spi_open(XPT2046_SPI, SPI_MODE_0, XPT2046_SPI_PRE);
+	//Xpt2046SpiCHNode = NULL;
+	if(Xpt2046SpiCHNode == NULL)
+		return;
+	
 	stmp[0] = XPT2046_CMD_Z2;
-	mcu_spi_transfer(XPT2046_SPI, stmp, NULL, 1);
+	mcu_spi_transfer(Xpt2046SpiCHNode, stmp, NULL, 1);
 	//vspi_delay(100);
 	stmp[0] = 0x00;
 	stmp[1] = XPT2046_CMD_Z1;
-	mcu_spi_transfer(XPT2046_SPI, stmp, rtmp, 2);
+	mcu_spi_transfer(Xpt2046SpiCHNode, stmp, rtmp, 2);
+	//wjq_log(LOG_DEBUG, "%d, %d- ", rtmp[0], rtmp[1]);
+	
 	pre_y = ((u16)(rtmp[0]&0x7f)<<5) + (rtmp[1]>>3);
 	/*------------------------*/
 	//vspi_delay(100);
 	stmp[0] = 0x00;
 	stmp[1] = XPT2046_CMD_X;
-	mcu_spi_transfer(XPT2046_SPI, stmp, rtmp, 2);
+	mcu_spi_transfer(Xpt2046SpiCHNode, stmp, rtmp, 2);
 	pre_x = ((u16)(rtmp[0]&0x7f)<<5) + (rtmp[1]>>3);
 	/*------------------------*/
 	//vspi_delay(100);
 	stmp[0] = 0x00;
 	stmp[1] = XPT2046_CMD_Y;
-	mcu_spi_transfer(XPT2046_SPI, stmp, rtmp, 2);
+	mcu_spi_transfer(Xpt2046SpiCHNode, stmp, rtmp, 2);
 	sample_x = ((u16)(rtmp[0]&0x7f)<<5) + (rtmp[1]>>3);
 	/*------------------------*/
 	//vspi_delay(100);
 	stmp[0] = 0x00;
 	stmp[1] = 0X00;
-	mcu_spi_transfer(XPT2046_SPI, stmp, rtmp, 2);
+	mcu_spi_transfer(Xpt2046SpiCHNode, stmp, rtmp, 2);
 	sample_y = ((u16)(rtmp[0]&0x7f)<<5) + (rtmp[1]>>3);
-
+	
+	mcu_spi_close(Xpt2046SpiCHNode);
+	GPIO_SetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
 	/*
 		算压力
 		简化算法

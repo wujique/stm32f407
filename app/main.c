@@ -49,7 +49,7 @@
 #include "eth_app.h"
 #include "dev_lcd.h"
 #include "dev_keypad.h"
-
+#include "dev_htu21d.h"
 #include "FreeRTos.h"
 /** @addtogroup Template_Project
   * @{
@@ -105,6 +105,14 @@ int main(void)
   	RCC_GetClocksFreq(&RCC_Clocks);
   	SysTick_Config(RCC_Clocks.HCLK_Frequency / (1000/SYSTEMTICK_PERIOD_MS));
 	#endif
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOF, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOG, ENABLE);
+
+	/* Enable DMA2 clock */
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
 	
 	mcu_uart_init();
 	mcu_uart_open(PC_PORT);
@@ -128,6 +136,22 @@ int main(void)
 	while(1);
   
 }
+
+static u32 LedFlashCnt;
+
+void tastk_led_flash(void)
+{
+	LedFlashCnt++;
+
+	if(LedFlashCnt == 500)
+		GPIO_SetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
+	else if(LedFlashCnt == 1000)
+	{
+		LedFlashCnt = 0;
+		GPIO_ResetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
+	}
+}
+
 /**
  *@brief:      start_task
  *@details:    开始第一个任务，主要做初始化
@@ -139,7 +163,7 @@ int main(void)
  */
 void start_task(void *pvParameters)
 {
-	#if 0
+	#if 1
 	GPIO_InitTypeDef GPIO_InitStructure;
 	/*初始化LED IO口*/
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOG, ENABLE);
@@ -151,36 +175,48 @@ void start_task(void *pvParameters)
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
 	GPIO_Init(GPIOG, &GPIO_InitStructure);   
+	
 	GPIO_SetBits(GPIOG, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3);
 	#endif
 	wjq_log(LOG_INFO,"start task---\r\n");
 	
 	mcu_rtc_init();
-	mcu_i2c_init();
-	mcu_spi_init();
-	dev_lcdbus_init();
+	
+	sys_dev_register();
 	
 	dev_key_init();
 	dev_keypad_init();
 	dev_buzzer_init();
 	dev_tea5767_init();
 	dev_dacsound_init();
-	dev_spiflash_init();
+
 	dev_wm8978_init();
 	dev_rs485_init();
-	dev_lcd_init();
 	dev_touchscreen_init();
 	dev_touchkey_init();
 	dev_camera_init();
 	dev_8266_init();
+	/* stm32 内部ADC 测量温度 */
+	mcu_adc_temprate_init();
+	dev_htu21d_init();
 	
 	fun_mount_sd();
-	usb_task_create();
+	
+	//sys_spiffs_mount_coreflash();
+	//sys_lfs_mount();
+	//lfs_test();
+	/*
+		ST官方USB例程有很多硬延时
+		后续要优化掉
+	*/
+	//usb_task_create();
 
 	wujique_407test_init();
 	
 	/* 默认开启网络测试*/
 	//eth_app_init();
+
+	//fun_cmd_init();
 	
 	while (1)
 	{
@@ -193,7 +229,7 @@ void start_task(void *pvParameters)
 		fun_rec_task();
 		vTaskDelay(2);
 		dev_touchkey_task();
-
+		tastk_led_flash();
 	}
 }
 

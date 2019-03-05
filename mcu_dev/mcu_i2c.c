@@ -21,93 +21,21 @@
 
 #include "stm32f4xx.h"
 #include "wujique_log.h"
+#include "list.h"
 #include "mcu_i2c.h"
+#include "alloc.h"
 
+#define MCU_I2C_DEBUG
 
-#define MCU_I2C_PORT GPIOD
-#define MCU_I2C_SCL GPIO_Pin_6
-#define MCU_I2C_SDA GPIO_Pin_7
-
-
-/*
-	i2c接口硬件定义
-*/
-typedef struct
-{
-	char *name;
-	VI2C_DEV dev;
-	s32 gd;
-	
-	u32 sclrcc;
-	GPIO_TypeDef *sclport;
-	u16 sclpin;
-
-	u32 sdarcc;
-	GPIO_TypeDef *sdaport;
-	u16 sdapin;
-}DevVi2cIO;
-
-
-/*无用的虚拟i2c设备，占位用*/		
-DevVi2cIO DevVi2cNULL={
-		"VI2C0",
-		DEV_VI2C_NULL,
-		-2,//未初始化;
-		};
-
-#define MCU_I2C1_PORT GPIOD
-#define MCU_I2C1_SCL GPIO_Pin_6
-#define MCU_I2C1_SDA GPIO_Pin_7
-#define MCU_I2C1_RCC RCC_AHB1Periph_GPIOD
-
-DevVi2cIO DevVi2c1={
-		"VI2C1",
-		DEV_VI2C_1,
-		-2,//未初始化;
-		
-		MCU_I2C1_RCC,
-		MCU_I2C1_PORT,
-		MCU_I2C1_SCL,
-
-		MCU_I2C1_RCC,
-		MCU_I2C1_PORT,
-		MCU_I2C1_SDA,
-		
-		};
-
-#ifdef SYS_USE_VI2C2		
-#define MCU_I2C2_PORT GPIOF
-#define MCU_I2C2_SCL GPIO_Pin_11
-#define MCU_I2C2_SDA GPIO_Pin_10
-#define MCU_I2C2_RCC RCC_AHB1Periph_GPIOF
-		
-		DevVi2cIO DevVi2c2={
-				"VI2C2",
-				DEV_VI2C_2,
-				-2,//未初始化;
-				
-				MCU_I2C2_RCC,
-				MCU_I2C2_PORT,
-				MCU_I2C2_SCL,
-		
-				MCU_I2C2_RCC,
-				MCU_I2C2_PORT,
-				MCU_I2C2_SDA,
-				
-				};
+#ifdef MCU_I2C_DEBUG
+#define I2C_DEBUG	wjq_log 
+#else
+#define I2C_DEBUG(a, ...)
 #endif
-
-DevVi2cIO *DevVi2cIOList[]={
-	&DevVi2cNULL,
-	&DevVi2c1,
-	#ifdef SYS_USE_VI2C2
-	&DevVi2c2,
-	#endif
-	};
-
 
 
 #define MCU_I2C_TIMEOUT 250
+
 
 /**
  *@brief:      mcu_i2c_delay
@@ -131,18 +59,9 @@ static void mcu_i2c_delay(void)
  *@param[out]  无
  *@retval:     
  */
-void mcu_i2c_sda_input(VI2C_DEV dev)
+void mcu_i2c_sda_input(DevI2c *dev)
 {
-    GPIO_InitTypeDef GPIO_InitStructure;
-    DevVi2cIO *devp;
-
-	devp = DevVi2cIOList[dev];
-	
-    GPIO_InitStructure.GPIO_Pin = devp->sdapin;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;//输入模式  
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-    GPIO_Init(devp->sdaport, &GPIO_InitStructure);//初始化   
+	mcu_io_config_in(dev->sdaport, dev->sdapin);
 }
 /**
  *@brief:      mcu_i2c_sda_output
@@ -151,20 +70,9 @@ void mcu_i2c_sda_input(VI2C_DEV dev)
  *@param[out]  无
  *@retval:     
  */
-void mcu_i2c_sda_output(VI2C_DEV dev)
+void mcu_i2c_sda_output(DevI2c *dev)
 {
-
-    GPIO_InitTypeDef GPIO_InitStructure;
-    DevVi2cIO *devp;
-
-	devp = DevVi2cIOList[dev];
-    GPIO_InitStructure.GPIO_Pin = devp->sdapin;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//普通输出模式   
-    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;//上拉
-    GPIO_Init(devp->sdaport, &GPIO_InitStructure);//初始化
-
+	mcu_io_config_out(dev->sdaport, dev->sdapin);
 }
 /**
  *@brief:      mcu_i2c_readsda
@@ -173,13 +81,10 @@ void mcu_i2c_sda_output(VI2C_DEV dev)
  *@param[out]  无
  *@retval:     static
  */
-static s32 mcu_i2c_readsda(VI2C_DEV dev)
+static s32 mcu_i2c_readsda(DevI2c *dev)
 {
-	DevVi2cIO *devp;
 
-	devp = DevVi2cIOList[dev];
-	
-    if(Bit_SET == GPIO_ReadInputDataBit(devp->sdaport, devp->sdapin))
+    if(Bit_SET == mcu_io_input_readbit(dev->sdaport, dev->sdapin))
         return 1;
     else
         return 0;
@@ -191,24 +96,18 @@ static s32 mcu_i2c_readsda(VI2C_DEV dev)
  *@param[out]  无
  *@retval:     static
  */
-static void mcu_i2c_sda(VI2C_DEV dev, u8 sta)
+static void mcu_i2c_sda(DevI2c *dev, u8 sta)
 {
-	DevVi2cIO *devp;
-
-	devp = DevVi2cIOList[dev];
 
     if(sta == 1)
     {
-        GPIO_SetBits(devp->sdaport, devp->sdapin);    
+		mcu_io_output_setbit(dev->sdaport, dev->sdapin);
     }
     else if(sta == 0)
     {
-        GPIO_ResetBits(devp->sdaport, devp->sdapin);
+    	mcu_io_output_resetbit(dev->sdaport, dev->sdapin);
     }
-    else
-    {
-    
-    }
+
 }
 
 /**
@@ -218,24 +117,17 @@ static void mcu_i2c_sda(VI2C_DEV dev, u8 sta)
  *@param[out]  无
  *@retval:     static
  */
-static void mcu_i2c_scl(VI2C_DEV dev, u8 sta)
+static void mcu_i2c_scl(DevI2c *dev, u8 sta)
 {
-	DevVi2cIO *devp;
 
-	devp = DevVi2cIOList[dev];
-
-    if(sta == 1)
+	if(sta == 1)
     {
-        GPIO_SetBits(devp->sclport, devp->sclpin);    
+		mcu_io_output_setbit(dev->sclport, dev->sclpin);
     }
     else if(sta == 0)
     {
-        GPIO_ResetBits(devp->sclport, devp->sclpin);
+    	mcu_io_output_resetbit(dev->sclport, dev->sclpin);
     }
-    else
-    {
-    
-    }    
 }
 /**
  *@brief:      mcu_i2c_start
@@ -244,7 +136,7 @@ static void mcu_i2c_scl(VI2C_DEV dev, u8 sta)
  *@param[out]  无
  *@retval:     static
  */
-static void mcu_i2c_start(VI2C_DEV dev)
+static void mcu_i2c_start(DevI2c *dev)
 {
     mcu_i2c_sda_output(dev);
     
@@ -264,7 +156,7 @@ static void mcu_i2c_start(VI2C_DEV dev)
  *@param[out]  无
  *@retval:     static
  */
-static void mcu_i2c_stop(VI2C_DEV dev)
+static void mcu_i2c_stop(DevI2c *dev)
 {
     mcu_i2c_sda_output(dev);
 
@@ -286,7 +178,7 @@ static void mcu_i2c_stop(VI2C_DEV dev)
  *@param[out]  无
  *@retval:     static
  */
-static s32 mcu_i2c_wait_ack(VI2C_DEV dev)
+static s32 mcu_i2c_wait_ack(DevI2c *dev)
 {
     u8 time_out = 0;
     
@@ -304,7 +196,7 @@ static s32 mcu_i2c_wait_ack(VI2C_DEV dev)
         if(time_out > MCU_I2C_TIMEOUT)
         {
             mcu_i2c_stop(dev);
-            wjq_log(LOG_INFO, "i2c:wait ack time out!\r\n");
+            //wjq_log(LOG_ERR, "i2c:wait ack time out!\r\n");
             return 1;
         }
 
@@ -325,7 +217,7 @@ static s32 mcu_i2c_wait_ack(VI2C_DEV dev)
  *@param[out]  无
  *@retval:     static
  */
-static void mcu_i2c_ack(VI2C_DEV dev)
+static void mcu_i2c_ack(DevI2c *dev)
 {
     mcu_i2c_scl(dev, 0);
     mcu_i2c_sda_output(dev);
@@ -345,7 +237,7 @@ static void mcu_i2c_ack(VI2C_DEV dev)
  *@param[out]  无
  *@retval:     static
  */
-static s32 mcu_i2c_writebyte(VI2C_DEV dev, u8 data)
+static s32 mcu_i2c_writebyte(DevI2c *dev, u8 data)
 {
     u8 i = 0;
 
@@ -385,7 +277,7 @@ static s32 mcu_i2c_writebyte(VI2C_DEV dev, u8 data)
  *@param[out]  无
  *@retval:     static
  */
-static u8 mcu_i2c_readbyte(VI2C_DEV dev)
+static u8 mcu_i2c_readbyte(DevI2c *dev)
 {
     u8 i = 0;
     u8 data = 0;
@@ -421,17 +313,21 @@ static u8 mcu_i2c_readbyte(VI2C_DEV dev)
 /**
  *@brief:      mcu_i2c_transfer
  *@details:    中间无重新开始位的传输流程
- *@param[in]   u8 addr   
+ *@param[in]   DevI2cNode * node  I2C节点
+ 			   u8 addr   7位地址
                u8 rw    0 写，1 读    
                u8* data  
+               s32 datalen 发送数据长度
  *@param[out]  无
  *@retval:     
  */
-s32 mcu_i2c_transfer(VI2C_DEV dev, u8 addr, u8 rw, u8* data, s32 datalen)
+s32 mcu_i2c_transfer(DevI2cNode *node, u8 addr, u8 rw, u8* data, s32 datalen)
 {
     s32 i;
     u8 ch;
-
+	DevI2c *dev;
+	s32 res;
+	
     #if 0//测试IO口是否连通
     while(1)
     {
@@ -444,7 +340,13 @@ s32 mcu_i2c_transfer(VI2C_DEV dev, u8 addr, u8 rw, u8* data, s32 datalen)
         Delay(5);
     }   
     #endif
-    
+
+	if(node == NULL)
+		return -1;
+
+	dev = &node->dev;
+	
+	//I2C_DEBUG(LOG_DEBUG, "i2c trf %s\r\n", dev->name);
     //发送起始
     mcu_i2c_start(dev);
     //发送地址+读写标志
@@ -461,26 +363,36 @@ s32 mcu_i2c_transfer(VI2C_DEV dev, u8 addr, u8 rw, u8* data, s32 datalen)
     }
     
     mcu_i2c_writebyte(dev, addr);
-    mcu_i2c_wait_ack(dev);
-
+	
+    res = mcu_i2c_wait_ack(dev);
+	if(res == 1)
+		return 1;
+	
     i = 0;
-    while(i < datalen)
+
+    //数据传输
+    if(rw == MCU_I2C_MODE_W)//写
     {
-        //数据传输
-        if(rw == MCU_I2C_MODE_W)//写
-        {
+	    while(i < datalen)
+	 	{
             ch = *(data+i);
             mcu_i2c_writebyte(dev, ch);
-            mcu_i2c_wait_ack(dev);
-            
-        }
-        else if(rw == MCU_I2C_MODE_R)//读
-        {
+            res = mcu_i2c_wait_ack(dev);
+			if(res == 1)
+				return 1;
+			
+			i++;
+	    }
+    }
+    else if(rw == MCU_I2C_MODE_R)//读
+    {
+       	while(i < datalen)
+	 	{
             ch = mcu_i2c_readbyte(dev);  
             mcu_i2c_ack(dev);
             *(data+i) = ch;
-        }
-        i++;
+			i++;
+	    }
     }
 
     //发送结束
@@ -488,58 +400,164 @@ s32 mcu_i2c_transfer(VI2C_DEV dev, u8 addr, u8 rw, u8* data, s32 datalen)
     return 0;
 }
 
+
+/*
+
+	I2C模块维护一个链表，记录有当前初始化的I2C控制器
+
+*/
+struct list_head DevI2cGdRoot = {&DevI2cGdRoot, &DevI2cGdRoot};
+
+
 /**
- *@brief:      mcu_i2c_init
- *@details:    初始化I2C接口
- *@param[in]   void  
+ *@brief:      mcu_i2c_register
+ *@details:    初始化I2C接口， 相当于注册一个I2C设备
+ *@param[in]   const DevI2c * dev I2C设备信息
  *@param[out]  无
  *@retval:     
  */
-s32 mcu_i2c_init(void)
+s32 mcu_i2c_register(const DevI2c * dev)
 {
-    GPIO_InitTypeDef GPIO_InitStructure;
-	DevVi2cIO *devp;
-	u8 i = 1;
+    
+	struct list_head *listp;
+	DevI2cNode *p;
+	
+	wjq_log(LOG_INFO, "[register] i2c:%s!\r\n", dev->name);
 
+	/*
+		先要查询当前I2C控制器，防止重名
+	*/
+	listp = DevI2cGdRoot.next;
 	while(1)
 	{
-		if(i>= sizeof(DevVi2cIOList)/sizeof(DevVi2cIO *))
+		if(listp == &DevI2cGdRoot)
 			break;
+
+		p = list_entry(listp, DevI2cNode, list);
+		//wjq_log(LOG_INFO, "i2c dev name:%s!\r\n", p->dev.name);
 		
+		if(strcmp(dev->name, p->dev.name) == 0)
 		{
-			devp = DevVi2cIOList[i];
-
-			wjq_log(LOG_INFO, "i2c init:%s!\r\n", devp->name);
-			
-	    	RCC_AHB1PeriphClockCmd(devp->sclrcc, ENABLE);
-	    
-	    	GPIO_InitStructure.GPIO_Pin = devp->sclpin;
-	    	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//普通输出模式   
-	    	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
-	    	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
-	    	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;//上拉
-	    	GPIO_Init(devp->sclport, &GPIO_InitStructure);//初始化
-
-			RCC_AHB1PeriphClockCmd(devp->sdarcc, ENABLE);
-	    
-	    	GPIO_InitStructure.GPIO_Pin = devp->sdapin;
-	    	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//普通输出模式   
-	    	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
-	    	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
-	    	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;//上拉
-	    	GPIO_Init(devp->sdaport, &GPIO_InitStructure);//初始化
-
-	   	 	//初始化IO口状态
-	   	 	GPIO_SetBits(devp->sdaport, devp->sdapin); 
-			GPIO_SetBits(devp->sclport, devp->sclpin); 
-
+			wjq_log(LOG_INFO, "i2c dev name err!\r\n");
+			return -1;
 		}
-
-		i++;
+		
+		listp = listp->next;
 	}
-	wjq_log(LOG_INFO, "i2c init finish!\r\n");
+
+	/* 
+		申请一个节点空间 
+		
+	*/
+	p = (DevI2cNode *)wjq_malloc(sizeof(DevI2cNode));
+	list_add(&(p->list), &DevI2cGdRoot);
+	
+	/*
+		初始化设备节点
+	*/
+	memcpy((u8 *)&p->dev, (u8 *)dev, sizeof(DevI2c));
+	p->gd = -1;
+
+	/*初始化IO口状态*/
+	mcu_io_config_out(dev->sclport, dev->sclpin);
+	mcu_io_config_out(dev->sdaport, dev->sdapin);
+
+	mcu_io_output_setbit(dev->sdaport, dev->sdapin);
+	mcu_io_output_setbit(dev->sclport, dev->sclpin); 
+
 	return 0;
 }
+/**
+ *@brief:      mcu_i2c_open
+ *@details:    根据名字打开一个i2c接口
+ *@param[in]   void  
+ *@param[out]  无
+ *@retval:     返回设备节点
+ */
+DevI2cNode *mcu_i2c_open(char *name)
+{
+
+	DevI2cNode *node;
+	struct list_head *listp;
+	
+	//I2C_DEBUG(LOG_INFO, "i2c open:%s!\r\n", name);
+
+	listp = DevI2cGdRoot.next;
+	node = NULL;
+	
+	while(1)
+	{
+		if(listp == &DevI2cGdRoot)
+			break;
+
+		node = list_entry(listp, DevI2cNode, list);
+		//I2C_DEBUG(LOG_INFO, "i2c dev name:%s!\r\n", node->dev.name);
+		
+		if(strcmp(name, node->dev.name) == 0)
+		{
+			//I2C_DEBUG(LOG_INFO, "i2c dev open ok!\r\n");
+			break;
+		}
+		
+		listp = listp->next;
+	}
+
+	if(node != NULL)
+	{
+		if(node->gd == 0)
+		{
+			node = NULL;
+		}
+		else
+		{
+			node->gd = 0;
+		}
+	}
+	return node;
+}
+/**
+ *@brief:      mcu_i2c_close
+ *@details:    关闭I2C节点
+ *@param[in]   DevI2cNode *node 
+ *@param[out]  无
+ *@retval:     -1 关闭失败；0 关闭成功
+ */
+s32 mcu_i2c_close(DevI2cNode *node)
+{
+	if(node == NULL)
+		return -1;
+
+	if(node->gd != 0)
+		return -1;
+
+	node->gd = -1; 
+
+	return 0;
+}
+
+
+#if 0
+
+void mcu_i2c_example(void)
+{
+	DevI2cNode *node;
+	
+	node = mcu_i2c_open("VI2C1");
+	if(node == NULL)
+	{
+		wjq_log(LOG_DEBUG, "open VI2C1 err!\r\n");
+		while(1);
+	}
+	
+	u8 data[16];
+	mcu_i2c_transfer(node, 0x70, MCU_I2C_MODE_W, data, 8);
+	mcu_i2c_transfer(node, 0x70, MCU_I2C_MODE_R, data, 8);
+
+	mcu_i2c_close(node);
+}
+
+#endif
+
 
 
 /*

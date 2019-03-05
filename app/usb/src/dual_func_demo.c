@@ -586,6 +586,7 @@ static uint8_t Explore_Disk (char* path , uint8_t recu_level)
       {
         wjq_log(LOG_INFO, "   |   |__");
       }
+	  
       if((fno.fattrib & AM_MASK) == AM_DIR)
       {
         strcat(tmp, "\n");

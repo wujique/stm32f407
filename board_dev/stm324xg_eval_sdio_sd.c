@@ -3030,8 +3030,10 @@ DRESULT SD_disk_read (
                      )
 {
 	SD_Error result;
+	DRESULT res;
 
-	//uart_printf("SD_disk_read: %08x, sector:%d, count:%d\r\n", buff, sector, count);
+	//wjq_log(LOG_DEBUG, "SD_disk_read: %08x, sector:%d, count:%d\r\n", buff, sector, count);
+
 	result = SD_ReadMultiBlocks(buff, sector*512, 512, count);
 	if(result == SD_OK)
 	{
@@ -3039,21 +3041,21 @@ DRESULT SD_disk_read (
 		/* Wait until end of DMA transfer */
 		while(SD_GetStatus() != SD_TRANSFER_OK);
 	}
-	
-	// translate the reslut code here
+		// translate the reslut code here
 	if(SD_OK == result)
-		return RES_OK;
+		res = RES_OK;
 	else
-		return RES_ERROR;
+		res =  RES_ERROR;
+
+
+	return res;
 }
-
-
 
 /*-----------------------------------------------------------------------*/
 /* Write Sector(s)                                                       */
 /*-----------------------------------------------------------------------*/
 
-#if _READONLY == 0
+
 DRESULT SD_disk_write (
                     BYTE pdrv,			/* Physical drive number (0) */
                     const BYTE *buff,	/* Pointer to the data to be written */
@@ -3062,6 +3064,8 @@ DRESULT SD_disk_write (
                       )
 {
 	SD_Error result;
+	DRESULT res;
+
 	result = SD_WriteMultiBlocks((uint8_t *)buff, sector*512, 512, count);
 	if(result == SD_OK)
 	{
@@ -3071,11 +3075,13 @@ DRESULT SD_disk_write (
 	}
 	
 	if(SD_OK == result)
-  		return RES_OK;
+  		res = RES_OK;
 	else
-		return RES_ERROR;
+		res = RES_ERROR;
+
+	return res;
 }
-#endif /* _READONLY == 0 */
+
 
 DRESULT SD_disk_ioctl (
                     BYTE drv,		/* Physical drive number (0) */

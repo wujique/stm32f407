@@ -36,7 +36,8 @@
 	3 提供读写接口给APP，读接口读的是缓冲，写则直接操作发送。
 */
 
-#define RF24L01_SPI DEV_SPI_3_3
+#define RF24L01_SPI "SPI3_CH3"
+
 #define RF24L01_CE_PORT	GPIOG
 #define RF24L01_CE_PIN	GPIO_Pin_7
 #define RF24L01_IRQ_PORT GPIO_Pin_4
@@ -93,8 +94,6 @@
 #define NRF_STA_BIT_MAX_RT  0x10//达到最大重发次数，需写1清，否则无法继续通信
 #define NRF_STA_BIT_TX_DS   0x20//发送成功，如果使能自动应答，收到应答算成功
 #define NRF_STA_BIT_RX_DR   0x40//收到数据
-
-
 
 #define TX_PLOAD_WIDTH 32//每次最多发送32个字节
 #define RX_PLOAD_WIDTH 32
@@ -193,9 +192,9 @@ static u8 dev_nrf24l01_write_reg(u8 reg,u8 data)
 	cmd[0] = reg;
 	cmd[1] = data;
 	
-	mcu_spi_cs(RF24L01_SPI, 0);
-	res = mcu_spi_transfer(RF24L01_SPI, &cmd[0], NULL, 2);
-	mcu_spi_cs(RF24L01_SPI, 1);
+	//mcu_spi_cs(RF24L01_SPI, 0);
+	//res = mcu_spi_transfer(RF24L01_SPI, &cmd[0], NULL, 2);
+	//mcu_spi_cs(RF24L01_SPI, 1);
 	
     return 0;
 }
@@ -205,14 +204,14 @@ static s32 dev_nrf24l01_read_reg(u8 reg, u8 *data)
   	s32 res;
 
 	
-	mcu_spi_cs(RF24L01_SPI, 0);
-    res = mcu_spi_transfer(RF24L01_SPI, &reg, NULL, 1);
+	//mcu_spi_cs(RF24L01_SPI, 0);
+    //res = mcu_spi_transfer(RF24L01_SPI, &reg, NULL, 1);
     if(res != -1)
     {
-		res = mcu_spi_transfer(RF24L01_SPI, NULL, data, 1);
+	//	res = mcu_spi_transfer(RF24L01_SPI, NULL, data, 1);
 
     }
-	mcu_spi_cs(RF24L01_SPI, 1);
+	//mcu_spi_cs(RF24L01_SPI, 1);
 	
     return res;
 }
@@ -222,14 +221,14 @@ static s32 dev_nrf24l01_write_buf(u8 reg, u8 *pBuf, u8 len)
 	s32 res;
 	u8 tmp = reg;
 
-	mcu_spi_cs(RF24L01_SPI, 0);
-	res = mcu_spi_transfer(RF24L01_SPI, &tmp, NULL, 1);
+	//mcu_spi_cs(RF24L01_SPI, 0);
+	//res = mcu_spi_transfer(RF24L01_SPI, &tmp, NULL, 1);
     if(res != -1)
     {
-		res = mcu_spi_transfer(RF24L01_SPI, pBuf, NULL, len);
+	//	res = mcu_spi_transfer(RF24L01_SPI, pBuf, NULL, len);
     }
 	
-	mcu_spi_cs(RF24L01_SPI, 1);
+	//mcu_spi_cs(RF24L01_SPI, 1);
 	return res;
 }
 
@@ -240,13 +239,13 @@ static u8 dev_nrf24l01_read_buf(u8 reg,u8 *pBuf, u8 len)
 	u8 tmp;
 	tmp = reg;
 
-	mcu_spi_cs(RF24L01_SPI, 0);
-    res = mcu_spi_transfer(RF24L01_SPI, &tmp, NULL, 1);
+	//mcu_spi_cs(RF24L01_SPI, 0);
+    //res = mcu_spi_transfer(RF24L01_SPI, &tmp, NULL, 1);
     if(res != -1)
     {
-    	res = mcu_spi_transfer(RF24L01_SPI, NULL, pBuf, len);
+    //	res = mcu_spi_transfer(RF24L01_SPI, NULL, pBuf, len);
     }
-	mcu_spi_cs(RF24L01_SPI, 1);
+	//mcu_spi_cs(RF24L01_SPI, 1);
 	
     return 0;   
 }
@@ -255,7 +254,7 @@ static s32 dev_nrf24l01_openspi(void)
 {
 	 s32 res;
 
-	res = mcu_spi_open(RF24L01_SPI, SPI_MODE_0, SPI_BaudRatePrescaler_32);
+	//res = mcu_spi_open(RF24L01_SPI, SPI_MODE_0, SPI_BaudRatePrescaler_32);
 	if(res == -1)
 	{
 		wjq_log(LOG_FUN, "rf open spi err\r\n");
@@ -267,7 +266,7 @@ static s32 dev_nrf24l01_openspi(void)
 
 static s32 dev_nrf24l01_closespi(void)
 {
-	mcu_spi_close(RF24L01_SPI);	
+	//mcu_spi_close(RF24L01_SPI);	
 	return 0;
 }
 /**
@@ -335,7 +334,9 @@ s32 NRF_Rx_Dat(u8 *rxb)
 		
         dev_nrf24l01_write_reg(NRF_WRITE_REG+NRF_REG_STATUS,state);/* 清除中断标志*/   
         dev_nrf24l01_read_buf(NRF_RD_RX_PLOAD, rxb, RX_PLOAD_WIDTH);//读取数据  
+        
         PrintFormat(rxb, RX_PLOAD_WIDTH);
+		
 //      SPI_NRF_WriteReg(FLUSH_RX,NOP);          //清除RX FIFO寄存器  
         res = NRF_STA_BIT_RX_DR;   
     }else      

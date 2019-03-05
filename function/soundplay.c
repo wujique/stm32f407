@@ -297,7 +297,8 @@ int fun_sound_play(char *name, char *dev)
 	if(0 == strcmp(dev, "wm8978"))
 	{
 		dev_wm8978_open();
-
+		dev_wm8978_inout(WM8978_INPUT_DAC|WM8978_INPUT_AUX|WM8978_INPUT_ADC,
+					WM8978_OUTPUT_PHONE|WM8978_OUTPUT_SPK);
 		dev_wm8978_dataformat(wav_header->nSamplesPerSec, WM8978_I2S_Phillips, format);
 		mcu_i2s_dma_init(SoundBufP[0], SoundBufP[1], SoundBufSize);
 		SoundDevType = SOUND_DEV_2CH;
@@ -621,6 +622,8 @@ s32 fun_sound_rec(char *name)
 	}
 	
 	dev_wm8978_open();	
+	dev_wm8978_inout(WM8978_INPUT_DAC|WM8978_INPUT_AUX|WM8978_INPUT_ADC|WM8978_INPUT_LMIC|WM8978_INPUT_RMIC,
+					WM8978_OUTPUT_PHONE);
 	dev_wm8978_dataformat(SOUND_REC_FRE, WM8978_I2S_Phillips, WM8978_I2S_Data_16b);
 	mcu_i2s_dma_init(RecPlayTmp, RecPlayTmp, 1);
 

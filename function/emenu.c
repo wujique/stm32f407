@@ -17,8 +17,11 @@
 #include "font.h"
 #include "dev_keypad.h"
 
-#define EMENU_FONT FONT_SONGTI_1212
+extern u16 PenColor;
+extern u16 BackColor;
 
+
+/*按键定义*/
 #define EMENU_KEYU_0	'0'
 #define EMENU_KEYU_1	'1'
 #define EMENU_KEYU_2	'2'
@@ -38,7 +41,7 @@
 #define EMENU_KEYU_UP	EMENU_KEYU_STAR
 #define EMENU_KEYU_DOWM EMENU_KEYU_HASH
 
-
+/*按键转换表*/
 const u8 emunu_key_chg[17]=
 {
 	0, EMENU_KEYU_1,EMENU_KEYU_2,EMENU_KEYU_3,EMENU_KEYU_F,
@@ -55,7 +58,7 @@ u8 emenu_get_key(void)
 	res = dev_keypad_read(&key, 1);
 	if(res == 1)
 	{
-		wjq_log(LOG_DEBUG,"key:%02x\r\n", key);
+		//wjq_log(LOG_DEBUG,"key:%02x\r\n", key);
 		
 		if((key & KEYPAD_PR_MASK)!= KEYPAD_PR_MASK  )
 		{
@@ -112,28 +115,35 @@ s32 emenu_check_list(MENU *list, u16 len)
 
 typedef struct _strMenuCtrl
 {
-	MENU *fa;//父菜单，也就是当前显示的菜单
-	MENU *dis;//显示起始
-	MENU *sel;//当前选中的菜单
-	u8 d;//记录dis跟SEL的同级偏移，不用每次去找
+	MENU *fa;	//父菜单，也就是当前显示的菜单
+	MENU *dis;	//显示起始
+	MENU *sel;	//当前选中的菜单
+	u8 d;		//记录dis跟SEL的同级偏移，不用每次去找
 	
-	u8 lang;//语言指针偏移量
+	u8 lang;	//语言指针偏移量
+	
 	/*
 		LCD跟字体规格
 	*/
 	u16 lcdh;
 	u16 lcdw;
+	
+	FontType font;
 	u8 fonth;
 	u8 fontw;
 
 	/*
 		显示控制
 	*/
-	u8 row_d;//行间隔
+	u8 spaced;//行间隔
+	u8 line;//一屏能显示的行数
 } MenuCtrl;
 
 MenuCtrl menu_ctrl;
-/*记录dis跟sel、d，以便返回*/
+
+/*
+	记录dis跟sel、d，以便返回
+*/
 MENU *emenu_stack[2*MENU_L_MAX];
 u8 d_rec[MENU_L_MAX];
 
@@ -191,11 +201,18 @@ MENU *emunu_find_next(MENU *fp, u8 mode)
 
 	}
 }
-
-s32 emenu_display(DevLcd *lcd)
+/**
+ *@brief:    
+ *@details:   
+ *@param[in]    
+ *@param[out] 
+ *@retval:     
+ */
+s32 emenu_display(DevLcdNode *lcd)
 {
 	MENU *p;
 	u16 disy = 1;
+	u16 disx;
 	u8 discol = 0;
 	char disbuf[32];
 	u8 menu_num = 0;
@@ -205,15 +222,18 @@ s32 emenu_display(DevLcd *lcd)
 	lang = menu_ctrl.lang*MENU_LANG_BUF_SIZE;
 	
 	wjq_log(LOG_DEBUG,"emenu display:%s\r\n", menu_ctrl.fa->cha + lang);
-	dev_lcd_color_fill(lcd, 1, 128, 1, 64, WHITE);
+	
+	dev_lcd_color_fill(lcd, 1, menu_ctrl.lcdw, 1, menu_ctrl.lcdh, BackColor);
+	
 	/*顶行居中显示父菜单*/
-	dev_lcd_put_string(lcd, EMENU_FONT, 40, 1, menu_ctrl.fa->cha + lang, BLACK);
+	disx = (menu_ctrl.lcdw - strlen(menu_ctrl.fa->cha)*menu_ctrl.fontw)/2;//居中显示
+	dev_lcd_put_string(lcd, menu_ctrl.font, disx, disy, menu_ctrl.fa->cha + lang, PenColor);
 	
 	/* 显示子菜单*/
 	switch(menu_ctrl.fa->type)
 	{
 		case MENU_TYPE_LIST:
-			disy = menu_ctrl.fonth + menu_ctrl.row_d;//这些参数要根据选择的字体选择
+			disy += menu_ctrl.fonth + menu_ctrl.spaced;//这些参数要根据选择的字体选择
 
 			/* 
 				从父节点后一个节点开始分析，以便统计子节点数量
@@ -249,9 +269,9 @@ s32 emenu_display(DevLcd *lcd)
 						}
 						strcat(disbuf, p->cha + lang);
 						
-						dev_lcd_put_string(lcd, EMENU_FONT, 1, disy, disbuf, BLACK);
+						dev_lcd_put_string(lcd, menu_ctrl.font, 1, disy, disbuf, PenColor);
 
-						disy += (menu_ctrl.fonth + menu_ctrl.row_d);//每行间隔
+						disy += (menu_ctrl.fonth + menu_ctrl.spaced);//每行间隔
 					}
 				}
 				else if(p->l == (menu_ctrl.fa->l))
@@ -274,8 +294,18 @@ s32 emenu_display(DevLcd *lcd)
 			break;
 			
 		case MENU_TYPE_KEY_2COL:
+			u8 col2_dis_num;
+			/*
+				数字键只有0-9，因此双列菜单最多显示8个菜单一页，用1-8按键选择
+			*/
+			col2_dis_num = (menu_ctrl.line-1)*2;
+			if(col2_dis_num > 8)
+				col2_dis_num = 8;
+			
 			p = menu_ctrl.dis;//直接从显示节点开始分析，不用统计子节点数量
-			disy = menu_ctrl.fonth + menu_ctrl.row_d;
+			
+			disy += menu_ctrl.fonth + menu_ctrl.spaced;
+		
 			menu_ctrl.d = 0;
 			while(1)
 			{
@@ -283,10 +313,13 @@ s32 emenu_display(DevLcd *lcd)
 				if(p->l == ((menu_ctrl.fa->l)+1))
 				{
 					menu_num++;
+					
+					if(menu_num > col2_dis_num)
+						break;
 					/*处理显示位置*/
-					if(disy + menu_ctrl.fonth - 1 > menu_ctrl.lcdh)
+					if(menu_num  == (col2_dis_num/2+1))
 					{
-						disy = menu_ctrl.fonth + menu_ctrl.row_d;
+						disy = menu_ctrl.fonth + menu_ctrl.spaced + 1;
 						discol++;
 						if(discol>=2)
 						{
@@ -302,9 +335,9 @@ s32 emenu_display(DevLcd *lcd)
 					sprintf(disbuf, "%d.", menu_num);	
 					strcat(disbuf, p->cha + lang);
 					
-					dev_lcd_put_string(lcd, EMENU_FONT, menu_ctrl.lcdw/2*discol+1, disy, disbuf, BLACK);
+					dev_lcd_put_string(lcd, menu_ctrl.font, menu_ctrl.lcdw/2*discol+1, disy, disbuf, PenColor);
 
-					disy += (menu_ctrl.fonth + menu_ctrl.row_d);
+					disy += (menu_ctrl.fonth + menu_ctrl.spaced);
 				}
 				else if(p->l == (menu_ctrl.fa->l))
 				{
@@ -355,7 +388,7 @@ s32 emenu_deal_key_list(u8 key)
 			{
 				menu_ctrl.sel = menup;	
 				wjq_log(LOG_DEBUG,"%");
-				if(menu_ctrl.d>= 3)//3，最好根据屏幕动态算，显示4行，差距就是3
+				if(menu_ctrl.d>= menu_ctrl.line-2)//如果一屏能显示5行，顶行是显示内容，4行菜单，间距为3，因此-2
 				{
 					menup = emunu_find_next(menu_ctrl.dis, 1);
 					if(menup!=0)
@@ -403,7 +436,7 @@ s32 emenu_deal_key_list(u8 key)
 					{
 						menu_ctrl.sel = menup;	
 
-						if(menu_ctrl.d>= 3)//3，最好根据屏幕动态算，显示4行，差距就是3
+						if(menu_ctrl.d>= menu_ctrl.line-2)
 						{
 							menup = emunu_find_next(menu_ctrl.dis, 1);
 							if(menup!=0)
@@ -503,8 +536,17 @@ s32 emenu_deal_key_2col(u8 key)
 				}
 				else
 					break;
+				
+				u8 col2_dis_num;
+				/*
+					数字键只有0-9，因此双列菜单最多显示8个菜单一页，用1-8按键选择
+				*/
+				col2_dis_num = (menu_ctrl.line-1)*2;
+				if(col2_dis_num > 8)
+					col2_dis_num = 8;
+				
 				i++;
-				if(i>=8)//一页能显示8个菜单	
+				if( i>= col2_dis_num)
 					break;
 			}
 			break;
@@ -598,7 +640,7 @@ s32 emenu_deal_key_2col(u8 key)
  *@param[out]  无
  *@retval:     
  */
-s32 emenu_run(DevLcd *lcd, MENU *p, u16 len)
+s32 emenu_run(DevLcdNode *lcd, MENU *p, u16 len, FontType font, u8 spaced)
 {
 	u8 disflag = 1;
 	
@@ -616,9 +658,10 @@ s32 emenu_run(DevLcd *lcd, MENU *p, u16 len)
 	
 	menu_ctrl.lcdw = lcd->width;
 	menu_ctrl.lcdh = lcd->height;
-	menu_ctrl.fonth = 12;
-	menu_ctrl.fontw = 6;
-	menu_ctrl.row_d = 1;
+	menu_ctrl.font = font;
+	font_get_hw(font, &(menu_ctrl.fonth), &(menu_ctrl.fontw));
+	
+	menu_ctrl.spaced = spaced;
 	
 	menu_ctrl.lang = MENU_LANG_CHA;//语言选择
 	
@@ -626,6 +669,9 @@ s32 emenu_run(DevLcd *lcd, MENU *p, u16 len)
 	menu_ctrl.sel = p+1;//第二个菜单肯定是第一个MENU_L_1
 	menu_ctrl.dis = menu_ctrl.sel;
 	menu_ctrl.d = 0;
+	menu_ctrl.line = (menu_ctrl.lcdh+1)/(menu_ctrl.fonth + menu_ctrl.spaced);//+1，因为最后一行可以不要间距，
+	
+	wjq_log(LOG_DEBUG, "line:%d\r\n", menu_ctrl.line);
 	
 	while(1)
 	{
@@ -641,7 +687,7 @@ s32 emenu_run(DevLcd *lcd, MENU *p, u16 len)
 		
 		if(key != 0)
 		{
-			wjq_log(LOG_DEBUG, "KEY:%02x\r\n", key);
+			//wjq_log(LOG_DEBUG, "KEY:%02x\r\n", key);
 			
 			if(menu_ctrl.fa->type == MENU_TYPE_LIST)
 			{

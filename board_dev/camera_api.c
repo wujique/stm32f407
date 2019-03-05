@@ -273,7 +273,7 @@ OV2640_IDTypeDef  OV2640_Camera_ID;
 
 u16 *ov2640_data;
 
-s32 dev_camera_show(DevLcd *lcd)
+s32 dev_camera_show(DevLcdNode *lcd)
 {
 	uint8_t abuffer[40];
   

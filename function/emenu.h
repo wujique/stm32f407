@@ -24,6 +24,7 @@ typedef enum{
 //<按键菜单> 本级菜单名显示在顶部，子菜单行列式显示在下方，通过按键选择进入菜单
   上下用于翻页子菜单 
   MENU_TYPE_KEY_1COL 单列 MENU_TYPE_KEY_2COL双列
+  双列菜单通过数字按键选择，通常数字键盘只有10个按键，一般只使用1-8
 */
 	MENU_TYPE_KEY_1COL,
 	MENU_TYPE_KEY_2COL
@@ -57,7 +58,7 @@ typedef struct _strMenu
 } MENU;
 
 #include "dev_lcd.h"
-extern s32 emenu_run(DevLcd *lcd, MENU *p, u16 len);
+extern s32 emenu_run(DevLcdNode *lcd, MENU *p, u16 len, FontType font, u8 spaced);
 
 
 #endif
