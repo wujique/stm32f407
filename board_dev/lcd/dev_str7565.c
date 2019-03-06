@@ -19,6 +19,13 @@
 		7 如侵犯你的权利，请联系：code@wujique.com
 		8 一切解释权归屋脊雀工作室所有。
 */
+/*
+
+	COG LCD 的驱动
+
+*/
+
+
 #include <stdarg.h>
 #include <stdio.h>
 #include "stm32f4xx.h"
@@ -30,11 +37,6 @@
 #include "dev_lcd.h"
 #include "dev_str7565.h"
 
-/*
-
-	COG LCD 的驱动
-
-*/
 
 /*
 	驱动使用的数据结构，不对外

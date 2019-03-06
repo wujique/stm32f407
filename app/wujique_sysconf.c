@@ -440,7 +440,9 @@ const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	NULL, 240, 320};
 const DevLcd DevLcdVSPITFT =	{"vspitftlcd",		"BusLcdVSpi3",	0x7789, 240, 240};
 
 /* spi 接口的三色墨水屏 */
-const DevLcd DevLcdSPIEPaper =	{"spiE-Paper",		"BusLcdSpi3",	0x9187, 176, 264};
+//const DevLcd DevLcdSPIEPaper =	{"spiE-Paper",		"BusLcdSpi3",	0x9187, 176, 264};
+/* spi 接口 黑白墨水屏 1.54寸 GDEH154D27*/
+const DevLcd DevLcdSPIEPaper =	{"spiE-Paper",		"BusLcdSpi3",	0x3820, 200, 200};
 
 /*
 	系统设备注册
@@ -491,12 +493,45 @@ s32 sys_dev_register(void)
 					dev_lcdbus_register(&BusLcdVSpi3);
 							dev_lcd_register(&DevLcdVSPITFT);
 	#endif
-	
 	dev_lcdbus_register(&BusLcd8080);
 			dev_lcd_register(&DevLcdtTFT);
 	
 	return 0;
 }
 
+/*
 
+硬件参数配置表想法，类似LINUX的设备树
+实际应用中，修改接口IO的可能性应该不大，
+修改外设的可能性较大。
+例如兼容多个LCD，降本的时候，会替代LCD，
+很多LCD无法自动识别，所以，能用硬件配置文件最好。
+
+格式：
+[层级]类型:名称
+	{
+		参数
+	}
+
+例如：	
+{
+	[0]cpu:stm32f407
+		{}
+		[1]VI2C:VI2C1
+			{	
+				
+			}
+			[2]LCDBUS:BusLcdI2C1
+				{
+					
+				}
+				[3]LCD:i2coledlcd
+					{
+						
+					}
+
+}
+
+
+*/
 

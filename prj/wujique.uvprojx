@@ -846,6 +846,11 @@
               <FileType>1</FileType>
               <FilePath>..\board_dev\lcd\dev_str7565.c</FilePath>
             </File>
+            <File>
+              <FileName>dev_IL3820.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\board_dev\lcd\dev_IL3820.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

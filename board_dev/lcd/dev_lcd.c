@@ -32,6 +32,7 @@
 #include "dev_ILI9341.h"
 #include "dev_str7565.h"
 #include "dev_IL91874.h"
+#include "dev_IL3820.h"
 #include "dev_ILI9325.h"
 #include "dev_st7789.h"
 #include "dev_st7735r.h"
@@ -62,6 +63,7 @@ _lcd_drv *LcdDrvList[] = {
 					&TftLcdST7735R_Drv,
 					&TftLcdST7789_Drv,
 					&TftLcdIL91874Drv,
+					&TftLcdIL3820Drv,
 };
 /*
 
@@ -207,7 +209,7 @@ s32 dev_lcd_register(const DevLcd *dev)
 		plcdnode->height = plcdnode->dev.height;
 		plcdnode->width = plcdnode->dev.width;
 		
-		dev_lcd_setdir(plcdnode, W_LCD, L2R_U2D);
+		dev_lcd_setdir(plcdnode, H_LCD, L2R_U2D);
 		
 		plcdnode->drv->onoff((plcdnode),1);//╢Р©╙отй╬
 		
