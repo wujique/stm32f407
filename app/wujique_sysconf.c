@@ -407,14 +407,16 @@ const DevLcd DevLcdOled1={
 	.width = 64, 
 	.height = 128
 	};
+	
 /*SPI接口的 OLED*/
+/*	
 DevLcd DevLcdSpiOled	=	{
 	.name = "spioledlcd", 	
 	.buslcd = "BusLcdSpi3", 	
 	.id = 0X1315, 
 	.width = 64, 
 	.height = 128};
-
+*/
 /*SPI接口的 COG LCD*/
 const DevLcd DevLcdCOG1	=	{
 	.name = "spicoglcd", 
@@ -435,14 +437,12 @@ const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	NULL, 240, 320};
 //const DevLcd DevLcdtTFT	=	{"spitftlcd", 		"BusLcdVSpi1CH2", 	0x9342, 240, 320};
 /*1.44寸 中景园*/
 //const DevLcd DevSpiLcdtTFT	=	{"spitftlcd",   "BusLcdSpi3", 	0x7735, 128, 128};
-
 /* 1.3寸，IPS，中景园，只有SCL&SDA的SPI接口LCD*/
-const DevLcd DevLcdVSPITFT =	{"vspitftlcd",		"BusLcdVSpi3",	0x7789, 240, 240};
-
+//const DevLcd DevLcdVSPITFT =	{"vspitftlcd",		"BusLcdVSpi3",	0x7789, 240, 240};
 /* spi 接口的三色墨水屏 */
 //const DevLcd DevLcdSPIEPaper =	{"spiE-Paper",		"BusLcdSpi3",	0x9187, 176, 264};
 /* spi 接口 黑白墨水屏 1.54寸 GDEH154D27*/
-const DevLcd DevLcdSPIEPaper =	{"spiE-Paper",		"BusLcdSpi3",	0x3820, 200, 200};
+//const DevLcd DevLcdSPIEPaper =	{"spiE-Paper",		"BusLcdSpi3",	0x3820, 200, 200};
 
 /*
 	系统设备注册
@@ -466,9 +466,9 @@ s32 sys_dev_register(void)
 					dev_spiflash_register(&DevSpiFlashBoard);
 			mcu_spich_register(&DevSpi3CH2);
 					dev_spiflash_register(&DevSpiFlashCore);
-			mcu_spich_register(&DevSpi3CH3);
-					dev_lcdbus_register(&BusLcdSpi3);
-							dev_lcd_register(&DevLcdSPIEPaper);
+			//mcu_spich_register(&DevSpi3CH3);
+					//dev_lcdbus_register(&BusLcdSpi3);
+						//	dev_lcd_register(&DevLcdSPIEPaper);
 							//dev_lcd_register(&DevLcdCOG1);
 			//mcu_spich_register(&DevSpi3CH4);
 	

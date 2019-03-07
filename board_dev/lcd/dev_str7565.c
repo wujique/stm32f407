@@ -287,7 +287,7 @@ static s32 drv_ST7565_drawpoint(DevLcdNode *lcd, u16 x, u16 y, u16 color)
 	else//如果是竖屏，XY轴跟显存的映射要对调
 	{
 		xtmp = y;
-		ytmp = x;
+		ytmp = lcd->width-1-x;
 	}
 	
 	page = ytmp/8; //页地址
@@ -369,7 +369,7 @@ s32 drv_ST7565_color_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 color
 			else//如果是竖屏，XY轴跟显存的映射要对调
 			{
 				xtmp = j;
-				ytmp = lcd->width-i;
+				ytmp = lcd->width-1-i;
 			}
 
 			page = ytmp/8; //页地址
@@ -470,7 +470,7 @@ s32 drv_ST7565_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
 			else//如果是竖屏，XY轴跟显存的映射要对调
 			{
 				xtmp = j;
-				ytmp = lcd->width-i;
+				ytmp = lcd->width-1-i;
 			}
 
 			page = ytmp/8; //页地址
