@@ -18,6 +18,9 @@
 		7 如侵犯你的权利，请联系：code@wujique.com
 		8 一切解释权归屋脊雀工作室所有。
 */
+/*
+	1.44寸 中景园 tft lcd
+*/
 #include "stdlib.h"
 #include "string.h"
 

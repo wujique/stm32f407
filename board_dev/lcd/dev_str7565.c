@@ -19,6 +19,13 @@
 		7 如侵犯你的权利，请联系：code@wujique.com
 		8 一切解释权归屋脊雀工作室所有。
 */
+/*
+
+	COG LCD 的驱动
+
+*/
+
+
 #include <stdarg.h>
 #include <stdio.h>
 #include "stm32f4xx.h"
@@ -30,11 +37,6 @@
 #include "dev_lcd.h"
 #include "dev_str7565.h"
 
-/*
-
-	COG LCD 的驱动
-
-*/
 
 /*
 	驱动使用的数据结构，不对外
@@ -285,7 +287,7 @@ static s32 drv_ST7565_drawpoint(DevLcdNode *lcd, u16 x, u16 y, u16 color)
 	else//如果是竖屏，XY轴跟显存的映射要对调
 	{
 		xtmp = y;
-		ytmp = x;
+		ytmp = lcd->width-1-x;
 	}
 	
 	page = ytmp/8; //页地址
@@ -367,7 +369,7 @@ s32 drv_ST7565_color_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 color
 			else//如果是竖屏，XY轴跟显存的映射要对调
 			{
 				xtmp = j;
-				ytmp = lcd->width-i;
+				ytmp = lcd->width-1-i;
 			}
 
 			page = ytmp/8; //页地址
@@ -468,7 +470,7 @@ s32 drv_ST7565_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
 			else//如果是竖屏，XY轴跟显存的映射要对调
 			{
 				xtmp = j;
-				ytmp = lcd->width-i;
+				ytmp = lcd->width-1-i;
 			}
 
 			page = ytmp/8; //页地址

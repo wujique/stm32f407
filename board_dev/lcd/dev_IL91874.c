@@ -18,6 +18,10 @@
 		7 如侵犯你的权利，请联系：code@wujique.com
 		8 一切解释权归屋脊雀工作室所有。
 */
+
+/*
+	91874 大连佳显 2.7寸电子纸 三色屏
+*/
 #include "stdlib.h"
 #include "string.h"
 
@@ -61,7 +65,7 @@ extern void Delay(__IO uint32_t nTime);
 	例如大连佳显的2.74寸 176*264像素的
 	一个page就是竖屏的一行X轴方向的点。
 	也就是说，一个page有 176/8 个字节，
-	LCD总共有264page
+	LCD总共有264page，竖屏(0,0)是page0第1个字节的bit7。
 
 */
 #define IL91874_PAGE_SIZE ((lcd->dev.width+7)/8)
@@ -352,7 +356,7 @@ static s32 drv_IL91874_display_onoff(DevLcdNode *lcd, u8 sta)
 
 /**
  *@brief:      drv_IL91874_init
- *@details:    初始化FSMC，并且读取IL91874的设备ID
+ *@details:    
  *@param[in]   void  
  *@param[out]  无
  *@retval:     
@@ -558,7 +562,7 @@ s32 drv_IL91874_color_fill(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey, u16 
 				//xtmp = j;
 				//ytmp = lcd->width-i;
 
-				xtmp = lcd->height - j;
+				xtmp = lcd->height - 1 - j;
 				ytmp = i;
 			}
 
@@ -683,7 +687,7 @@ s32 drv_IL91874_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
 			}
 			else
 			{
-				xtmp = lcd->height - j;
+				xtmp = lcd->height - 1 - j;
 				ytmp = i;
 			}
 			
