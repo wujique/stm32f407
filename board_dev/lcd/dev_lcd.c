@@ -209,7 +209,7 @@ s32 dev_lcd_register(const DevLcd *dev)
 		plcdnode->height = plcdnode->dev.height;
 		plcdnode->width = plcdnode->dev.width;
 		
-		dev_lcd_setdir(plcdnode, H_LCD, L2R_U2D);
+		dev_lcd_setdir(plcdnode, W_LCD, L2R_U2D);
 		
 		plcdnode->drv->onoff((plcdnode),1);//打开显示
 		
@@ -350,6 +350,13 @@ s32 dev_lcd_display_onoff(DevLcdNode *lcd, u8 sta)
 	return lcd->drv->onoff(lcd, sta);
 }
 
+s32 dev_lcd_flush(DevLcdNode *lcd, u16 *color, u32 len)
+{
+	if(lcd == NULL)
+		return -1;
+
+	return lcd->drv->flush(lcd, color, len);	
+}
 /**
  *@brief:      dev_lcd_setdir
  *@details:    设置横屏或竖屏，扫描方向

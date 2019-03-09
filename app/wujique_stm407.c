@@ -578,17 +578,24 @@ s32 test_camera(void)
 	lcd = dev_lcd_open("tftlcd");
 	if(lcd == NULL)
 	{
-		wjq_test_showstr("open lcd err!");	
+		wjq_test_showstr("open lcd err!");
+		wjq_wait_key(16);
 	}
 	else
 	{
-		dev_camera_open();
+
+		if(-1 == dev_camera_open())
+		{
+			wjq_log(LOG_DEBUG, "open camera err\r\n");
+			return -1;
+		}
 		dev_camera_show(lcd);
+		
+		wjq_wait_key(16);
+		dev_camera_close();
 			
 	}
-	wjq_wait_key(16);
-
-	dev_camera_close();
+	
 	dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLUE);
 	
 	return 0;
