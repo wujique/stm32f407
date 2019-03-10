@@ -8,6 +8,8 @@
 extern s32 dev_keypad_init(void);
 extern s32 dev_keypad_open(void);
 extern s32 dev_keypad_read(u8 *key, u8 len);
+extern s32 dev_keypad_clear(void);
+
 extern s32 dev_keypad_scan(void);
 
 #endif

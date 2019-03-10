@@ -112,16 +112,16 @@ uint8_t * DEMO_main_menu[] =
 uint8_t * DEMO_HOST_menu[] = 
 {
 	(uint8_t*)"      1 - Explore Flash content",
-	(uint8_t*)"      2 - Write File to disk                                                 ",
-	(uint8_t*)"      3 - Show BMP file                                                      ",
-	(uint8_t*)"      4 - Return                                                             ",
+	(uint8_t*)"      2 - Write File to disk  ",
+	(uint8_t*)"      3 - Show BMP file ",
+	(uint8_t*)"      4 - Return",
 };
 
 uint8_t * DEMO_DEVICE_menu[] = 
 {
-	(uint8_t*)"      1 - Return                                                             ",
-	(uint8_t*)"                                                                             ",
-	(uint8_t*)"                                                                             ",
+	(uint8_t*)"      1 - Return",
+	(uint8_t*)"",
+	(uint8_t*)"",
 };
 
 uint8_t writeTextBuff[] = "STM32 Connectivity line Host Demo application using FAT_FS   ";  
@@ -131,6 +131,7 @@ uint8_t writeTextBuff[] = "STM32 Connectivity line Host Demo application using F
     #pragma data_alignment=4   
   #endif
 #endif /* USB_OTG_HS_INTERNAL_DMA_ENABLED */
+
 __ALIGN_BEGIN USB_OTG_CORE_HANDLE    USB_OTG_Core __ALIGN_END ;
 
 #ifdef USB_OTG_HS_INTERNAL_DMA_ENABLED
@@ -138,6 +139,7 @@ __ALIGN_BEGIN USB_OTG_CORE_HANDLE    USB_OTG_Core __ALIGN_END ;
     #pragma data_alignment=4   
   #endif
 #endif /* USB_OTG_HS_INTERNAL_DMA_ENABLED */
+
 __ALIGN_BEGIN USBH_HOST               USB_Host __ALIGN_END ;
 #ifdef USB_OTG_HS_INTERNAL_DMA_ENABLED
   #if defined ( __ICCARM__ ) /*!< IAR Compiler */

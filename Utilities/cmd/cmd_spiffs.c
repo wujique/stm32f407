@@ -4,6 +4,7 @@
 
 #include <spiffs.h>
 
+/*
 int cmd_spiffs_ls( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	sys_spiffs_ls();
@@ -27,5 +28,5 @@ REGISTER_CMD(
 	"format spiffs",
 	"\t ls spiffs file "
 );
-
+*/
 

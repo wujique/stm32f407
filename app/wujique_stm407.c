@@ -27,11 +27,12 @@ DevLcdNode * WJQTestLcd;
 
 s32 wjq_wait_key(u8 key)
 {
+	u8 keyvalue;
+	s32 res;
+	
+	dev_keypad_clear();
 	while(1)
 	{
-		u8 keyvalue;
-		s32 res;
-		
 		res = dev_keypad_read(&keyvalue, 1);
 		if(res == 1)
 		{
@@ -1342,7 +1343,7 @@ void wujique_stm407_test(void)
 	}
 }
 
-#define Wujique407_TASK_STK_SIZE (4096)
+#define Wujique407_TASK_STK_SIZE (1024+512)
 #define Wujique407_TASK_PRIO	1
 TaskHandle_t  Wujique407TaskHandle;
 

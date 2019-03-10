@@ -55,7 +55,7 @@
 /** @defgroup USBH_USR_Private_Defines
 * @{
 */ 
-#define IMAGE_BUFFER_SIZE    512
+#define IMAGE_BUFFER_SIZE    1//512 need fix
 /**
 * @}
 */ 

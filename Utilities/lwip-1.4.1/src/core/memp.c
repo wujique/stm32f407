@@ -165,12 +165,19 @@ static u8_t *const memp_bases[] = {
 };
 
 #else /* MEMP_SEPARATE_POOLS */
+#if 1
+/* ²âÊÔ¶þÎ¬Âë½âÂë£¬°ÑLWIPÆÁ±Î*/
+static u8_t memp_memory[1];
 
+
+#else
 /** This is the actual memory used by the pools (all pools in one big block). */
 static u8_t memp_memory[MEM_ALIGNMENT - 1 
 #define LWIP_MEMPOOL(name,num,size,desc) + ( (num) * (MEMP_SIZE + MEMP_ALIGN_SIZE(size) ) )
 #include "lwip/memp_std.h"
+
 ];
+#endif
 
 #endif /* MEMP_SEPARATE_POOLS */
 

@@ -35,7 +35,7 @@ _ALLOC_FIRST_FIT_ 首次适应法
 #endif
 
 #ifdef ALLOC_USE_ARRAY
-#define AllocArraySize (76*1024)
+#define AllocArraySize (114*1024)
 
 __align(4) //保证内存池四字节对齐
 
@@ -67,7 +67,6 @@ typedef struct ALLOC_HDR
 		unsigned int size;									/*本快内存容量*/
 	} s;
 
-
 unsigned int align;
 unsigned int pad;
 } ALLOC_HDR;
@@ -85,15 +84,22 @@ void wjq_free_t(void*ap)
 	ALLOC_HDR*bp, *p;
 
 	/* 最好的判断是不是应该判断在堆范围内？*/
+	#if 0
 	if(ap==NULL)
 		return;
-
+	#else
+	if(ap==NULL 
+		||(ap<&AllocArray[0])
+		||(ap>(&AllocArray[AllocArraySize]-sizeof(ALLOC_HDR))))
+		return;
+	
+	#endif
 	/* 函数传入的ap是可使用内存的指针，往前退一个结构体位置，
 		也就是下面的bp，才是记录内存信息的位置*/
 	bp = (ALLOC_HDR*)ap-1;											/* point to block header */
 
 	AllocCnt -= bp->s.size;
-
+	wjq_log(LOG_DEBUG, ">>>>freeCnt:%d, %08x\r\n", AllocCnt*sizeof(ALLOC_HDR), ap);
 	/*
 	  找到需要释放的内存的前后空闲块
 	  其实就是比较内存块位置的地址大小
@@ -165,7 +171,7 @@ void*wjq_malloc_t(unsigned nbytes)
 	nunits = ((nbytes+sizeof(ALLOC_HDR)-1) / sizeof(ALLOC_HDR))+1;
 
 	AllocCnt += nunits;
-	//wjq_log(LOG_DEBUG, "AllocCnt:%d\r\n", AllocCnt*sizeof(ALLOC_HDR));
+	wjq_log(LOG_DEBUG, ">>>>AllocCnt:%d\r\n", AllocCnt*sizeof(ALLOC_HDR));
 
 	/*第一次使用malloc，内存链表没有建立
 	  初始化链表*/
@@ -241,7 +247,8 @@ void*wjq_malloc_t(unsigned nbytes)
 			while(1)
 			{
 				/*对于嵌入式来说，没有机制整理内存，因此，不允许内存分配失败*/
-				wjq_log(LOG_ERR, "wujique malloc err!!\r\n");
+				wjq_log(LOG_ERR, "\r\n\r\n-----wujique malloc err!!----\r\n");
+				while(1);
 			}
 			return NULL;
 		}
@@ -276,7 +283,7 @@ void*wjq_calloc(size_t n, size_t size)
 {
 	void *p;
 
-	//wjq_log(LOG_DEBUG, "wjq_calloc\r\n");
+	wjq_log(LOG_DEBUG, "wjq_calloc\r\n");
 
 	p = wjq_malloc_t(n*size);
 
@@ -293,7 +300,7 @@ void *wjq_realloc(void *ap, unsigned int newsize)
 	
 	unsigned nunits;
 	unsigned aunits;
-
+	unsigned int oldsize;
 	
 	//wjq_log(LOG_DEBUG, "wjq_realloc: %d\r\n", newsize);
 
@@ -308,7 +315,7 @@ void *wjq_realloc(void *ap, unsigned int newsize)
 		wjq_free(ap);
 		return NULL;
 	}
-	/*计算要申请的内存块数*/
+	/*计算要申请的内存块数, +1块，作为记录，也即是内存管理的开销*/
 	nunits = ((newsize + sizeof(ALLOC_HDR)-1) / sizeof(ALLOC_HDR))+1;
 
 	/* 函数传入的ap是可使用内存的指针，往前退一个结构体位置，
@@ -324,9 +331,10 @@ void *wjq_realloc(void *ap, unsigned int newsize)
 	}
 	
 	#if 1
+	oldsize = (bp->s.size - 1)*sizeof(ALLOC_HDR);
 	/*无论如何都直接申请内存然后拷贝数据*/
 	bp = wjq_malloc_t(newsize);
-	memcpy(bp, ap, newsize);
+	memcpy(bp, ap, oldsize);
 	wjq_free(ap);
 	
 	return bp;

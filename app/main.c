@@ -73,7 +73,7 @@ void Delay(__IO uint32_t nTime);
 /*
 	尽快启动RTOS任务
 */
-#define START_TASK_STK_SIZE 4096
+#define START_TASK_STK_SIZE (512)
 #define START_TASK_PRIO	3//中间优先级
 TaskHandle_t  StartTaskHandle;
 void start_task(void *pvParameters);
@@ -118,6 +118,7 @@ int main(void)
 	mcu_uart_open(PC_PORT);
 	wjq_log(LOG_INFO,"\r\n---hello world!--20180424 10:41---\r\n");
 
+	
   /* Infinite loop */
 	#ifdef SYS_USE_RTOS
 	wjq_log(LOG_INFO,"create start task!\r\n");
@@ -217,19 +218,19 @@ void start_task(void *pvParameters)
 	//eth_app_init();
 
 	//fun_cmd_init();
-	
+
 	while (1)
 	{
 		/*驱动轮询*/
 		//wjq_log(LOG_DEBUG, "CORE TASK ");
-		dev_key_scan();
+		//dev_key_scan();
 		dev_keypad_scan();
-		eth_loop_task();
-		fun_sound_task();
-		fun_rec_task();
+		//eth_loop_task();
+		//fun_sound_task();
+		//fun_rec_task();
 		vTaskDelay(2);
-		dev_touchkey_task();
-		tastk_led_flash();
+		//dev_touchkey_task();
+		//tastk_led_flash();
 	}
 }
 

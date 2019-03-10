@@ -211,17 +211,59 @@ s32 dev_camera_close(void)
 u16 *camera_buf0;
 u16 *camera_buf1;
 
-#define LCD_BUF_SIZE 320*2*2//一次传输2行数据，一个像素2个字节
+#define LCD_BUF_SIZE 320*4*2//一次传输4行数据，一个像素2个字节
 u16 DmaCnt;
 
 #define CAMERA_USE_RAM2LCD	1
 
+u32 image_buf_index = 0;
+u8 image_buf[240*240];
+
+s32 zbar_fill_image_buf(u16 *data, u32 slen)
+{
+	u32 len = 0;;
+	u16 rgb565;
+	
+	while(1)
+	{
+		if(len>=slen)
+			break;
+
+		rgb565 = *(data+len);
+		len++;
+		if((len%320) >= 240)
+		{
+			len = (len/320+1)*320;	
+		}
+		
+		image_buf[image_buf_index]=(((rgb565&0xF800)>> 8)*38+((rgb565&0x7E0)>>3)*75+((rgb565&0x001F)<<3)*15)>>7;
+
+		/*
+		二值化测试
+		if(image_buf[image_buf_index] < 0x50)
+		{
+			image_buf[image_buf_index] = 0x00;
+		}
+		else
+			image_buf[image_buf_index] = 0xff;
+		*/
+		image_buf_index++;
+		if(image_buf_index >= (240*240))
+		{
+			image_buf_index = 0;
+			return 1;
+		}
+	}
+}
+
+
 s32 dev_camera_show(DevLcdNode *lcd)
 {
-	uint8_t abuffer[40];
   	s32 ret;
 	volatile u8 sta;
-
+	u16 color;
+	u32 i;
+	
 	/* 选择图片格式 */
 	ImageFormat = (ImageFormat_TypeDef)BMP_QVGA;
 	wjq_log(LOG_DEBUG, " Image selected: %s", ImageForematArray[ImageFormat]);
@@ -264,20 +306,61 @@ s32 dev_camera_show(DevLcdNode *lcd)
 		#ifdef CAMERA_USE_RAM2LCD
 		if(DCMI_FLAG_BUF0 == (sta&DCMI_FLAG_BUF0))
 		{
+			/*将数据发送到LCD*/
 			dev_lcd_flush(lcd, camera_buf0, LCD_BUF_SIZE/2);
+			/*填充灰度图片缓冲*/
+			zbar_fill_image_buf(camera_buf0, LCD_BUF_SIZE/2);
+			
 			DmaCnt++;
 		}
+
 		if(DCMI_FLAG_BUF1 == (sta&DCMI_FLAG_BUF1))
 		{	
 			dev_lcd_flush(lcd, camera_buf1, LCD_BUF_SIZE/2);
+			
+			zbar_fill_image_buf(camera_buf1, LCD_BUF_SIZE/2);
+			
 			DmaCnt++;
 		}
 		#endif
-		/*一定要先检测数据再检测帧完成，最有一次两个中断差不多同时来*/
+		/*一定要先检测数据再检测帧完成，最后一次两个中断差不多同时来*/
 		if(DCMI_FLAG_FRAME == (sta&DCMI_FLAG_FRAME))
 		{
-			wjq_log(LOG_DEBUG, "-f-%d- ", DmaCnt);
+			
+			wjq_log(LOG_DEBUG, "-f-%d- ", DmaCnt);			
+			//PrintFormat(image_buf, 240*240);
+			/*二维码解码测试*/
+			Zbar_Test((void* )image_buf, 240, 240);	
+			
+			wjq_wait_key();
+			
+			#if 1
+			/*
+				将图片二值化后显示到LCD，以便确认解码图片是否正确
+			*/
+			dev_lcd_prepare_display(lcd, 1, 240, 1, 240);
+			i = 0;
+			while(1)
+			{
+				if(image_buf[i] < 0x50)
+				{
+					color = BLACK;
+				}
+				else
+					color = WHITE;
+				
+				dev_lcd_flush(lcd, &color, 1);	
+				i++;
+				if(i >=240*240)
+					break;
+				
+			}
+			wjq_wait_key();
+			dev_lcd_prepare_display(lcd, 1, 320, 1, 240);
+			#endif
+			
 			DmaCnt = 0;
+			image_buf_index = 0;
 			dev_camera_fresh();
 		}
 	}

@@ -60,7 +60,7 @@ extern int vsprintf(char * s, const char * format, __va_list arg);
  *@param[out]  нч
  *@retval:     
  */
-static void uart_printf(s8 *fmt,...)
+void uart_printf(s8 *fmt,...)
 {
     s32 length = 0;
     va_list ap;

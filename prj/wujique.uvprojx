@@ -337,7 +337,7 @@
               <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>..\app;..\StLib\core;..\StLib\STM32F4xx_StdPeriph_Driver\inc;..\mcu_dev;..\board_dev;..\Utilities\font;..\Utilities\tslib\src;..\Utilities\tslib\tests;..\app\usb\inc;..\StLib\STM32_USB_OTG_Driver\inc;..\StLib\STM32_USB_HOST_Library\Core\inc;..\StLib\STM32_USB_HOST_Library\Class\MSC\inc;..\StLib\STM32_USB_Device_Library\Core\inc;..\StLib\STM32_USB_Device_Library\Class\msc\inc;..\Utilities\fat_fs\src;..\app\eth\inc;..\StLib\STM32F4x7_ETH_Driver\inc;..\Utilities\lwip-1.4.1\port\STM32F4x7\Standalone;..\Utilities\lwip-1.4.1\src\include\ipv4;..\Utilities\lwip-1.4.1\src\include;..\Utilities\lwip-1.4.1\src\include\netif;..\Utilities\lwip-1.4.1\port\STM32F4x7;..\Utilities\lwip-1.4.1\src\include\lwip;..\Utilities\alloc;..\function;..\Utilities\FreeRTOS\Source\include;..\Utilities\FreeRTOS\Source\portable\RVDS\ARM_CM4F;..\Utilities\cmd;..\Utilities\spiffs-0.3.7\src;..\Utilities\littlefs-master;..\board_dev\lcd</IncludePath>
+              <IncludePath>..\app;..\StLib\core;..\StLib\STM32F4xx_StdPeriph_Driver\inc;..\mcu_dev;..\board_dev;..\Utilities\font;..\Utilities\tslib\src;..\Utilities\tslib\tests;..\app\usb\inc;..\StLib\STM32_USB_OTG_Driver\inc;..\StLib\STM32_USB_HOST_Library\Core\inc;..\StLib\STM32_USB_HOST_Library\Class\MSC\inc;..\StLib\STM32_USB_Device_Library\Core\inc;..\StLib\STM32_USB_Device_Library\Class\msc\inc;..\Utilities\fat_fs\src;..\app\eth\inc;..\StLib\STM32F4x7_ETH_Driver\inc;..\Utilities\lwip-1.4.1\port\STM32F4x7\Standalone;..\Utilities\lwip-1.4.1\src\include\ipv4;..\Utilities\lwip-1.4.1\src\include;..\Utilities\lwip-1.4.1\src\include\netif;..\Utilities\lwip-1.4.1\port\STM32F4x7;..\Utilities\lwip-1.4.1\src\include\lwip;..\Utilities\alloc;..\function;..\Utilities\FreeRTOS\Source\include;..\Utilities\FreeRTOS\Source\portable\RVDS\ARM_CM4F;..\Utilities\cmd;..\Utilities\spiffs-0.3.7\src;..\Utilities\littlefs-master;..\board_dev\lcd;..\Utilities\zbar;..\Utilities\zbar\decoder;..\Utilities\zbar\qrcode</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -1525,6 +1525,131 @@
               <FileName>lfs_util.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Utilities\littlefs-master\lfs_util.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>zbar</GroupName>
+          <Files>
+            <File>
+              <FileName>config.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\zbar\config.c</FilePath>
+            </File>
+            <File>
+              <FileName>decoder.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\zbar\decoder.c</FilePath>
+            </File>
+            <File>
+              <FileName>error.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\zbar\error.c</FilePath>
+            </File>
+            <File>
+              <FileName>image.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\zbar\image.c</FilePath>
+            </File>
+            <File>
+              <FileName>img_scanner.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\zbar\img_scanner.c</FilePath>
+            </File>
+            <File>
+              <FileName>refcnt.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\zbar\refcnt.c</FilePath>
+            </File>
+            <File>
+              <FileName>scanner.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\zbar\scanner.c</FilePath>
+            </File>
+            <File>
+              <FileName>symbol.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\zbar\symbol.c</FilePath>
+            </File>
+            <File>
+              <FileName>zbartest.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\zbar\zbartest.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>zbar/decode</GroupName>
+          <Files>
+            <File>
+              <FileName>code39.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\zbar\decoder\code39.c</FilePath>
+            </File>
+            <File>
+              <FileName>code128.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\zbar\decoder\code128.c</FilePath>
+            </File>
+            <File>
+              <FileName>ean.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\zbar\decoder\ean.c</FilePath>
+            </File>
+            <File>
+              <FileName>i25.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\zbar\decoder\i25.c</FilePath>
+            </File>
+            <File>
+              <FileName>pdf417.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\zbar\decoder\pdf417.c</FilePath>
+            </File>
+            <File>
+              <FileName>qr_finder.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\zbar\decoder\qr_finder.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>zbar/qrcode</GroupName>
+          <Files>
+            <File>
+              <FileName>bch15_5.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\zbar\qrcode\bch15_5.c</FilePath>
+            </File>
+            <File>
+              <FileName>binarize.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\zbar\qrcode\binarize.c</FilePath>
+            </File>
+            <File>
+              <FileName>isaac.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\zbar\qrcode\isaac.c</FilePath>
+            </File>
+            <File>
+              <FileName>qrdec.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\zbar\qrcode\qrdec.c</FilePath>
+            </File>
+            <File>
+              <FileName>qrdectxt.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\zbar\qrcode\qrdectxt.c</FilePath>
+            </File>
+            <File>
+              <FileName>rs.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\zbar\qrcode\rs.c</FilePath>
+            </File>
+            <File>
+              <FileName>util.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\zbar\qrcode\util.c</FilePath>
             </File>
           </Files>
         </Group>

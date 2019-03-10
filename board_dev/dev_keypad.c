@@ -183,6 +183,11 @@ s32 dev_keypad_read(u8 *key, u8 len)
 	return i;
 }
 
+s32 dev_keypad_clear(void)
+{
+	KeyPadBuffR = KeyPadBuffW = 0;
+	return 0;
+}
 /**
  *@brief:      dev_keypad_scan
  *@details:    按键扫描，在定时器或者任务中定时执行

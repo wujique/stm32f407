@@ -4,6 +4,7 @@
 #include "wujique_sysconf.h"
 #include <spiffs.h>
 
+#ifdef SYS_USE_SPIFFS
 
 static s32_t core_spiflash_spiffs_read(u32_t addr, u32_t size, u8_t *dst);
 static s32_t core_spiflash_spiffs_write(u32_t addr, u32_t size, u8_t *src);
@@ -239,4 +240,6 @@ void test_spiffs(void)
   // check it
   wjq_log(LOG_INFO, "--> %s <--\n", buf);
 }
+
+#endif
 

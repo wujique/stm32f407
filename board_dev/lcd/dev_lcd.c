@@ -816,7 +816,7 @@ s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpF
     BITMAPINFOHEADER    bi;
 	
 	FRESULT res;
-	FIL bmpfile;
+	FIL *bmpfile;
 	
 	u32 rlen;
     u16 LineBytes;
@@ -836,15 +836,17 @@ s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpF
 	u8 l;
 	
 	wjq_log(LOG_DEBUG, "bmp open file:%s\r\n", BmpFileName);
-	
-	res = f_open(&bmpfile, BmpFileName, FA_READ);
+
+	bmpfile = wjq_malloc(sizeof(FIL));
+	res = f_open(bmpfile, BmpFileName, FA_READ);
 	if(res != FR_OK)
 	{
 		wjq_log(LOG_DEBUG, "bmp open file err:%d\r\n", res);
+		wjq_free(bmpfile);
 		return -1;
 	}
 
-    res = f_read(&bmpfile, (void *)buf, 14, &rlen);
+    res = f_read(bmpfile, (void *)buf, 14, &rlen);
 
 	bf.bfType      = buf[0];
     bf.bfSize      = buf[2];
@@ -858,7 +860,7 @@ s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpF
 	wjq_log(LOG_DEBUG, "bf.bfSize:%d\r\n", bf.bfSize);
 	wjq_log(LOG_DEBUG, "bf.bfOffBits:%d\r\n", bf.bfOffBits);
 
-	res = f_read(&bmpfile, (void *)buf, 40, &rlen);
+	res = f_read(bmpfile, (void *)buf, 40, &rlen);
 
 	bi.biSize           = (unsigned long) buf[0];
     bi.biWidth          = (long) buf[2];
@@ -914,7 +916,8 @@ s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpF
 	        break;
 	        
 	    default:
-	        f_close(&bmpfile);
+	        f_close(bmpfile);
+			wjq_free(bmpfile);
 	        return 2;
 	    }
 	}
@@ -923,7 +926,7 @@ s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpF
 	if(NumColors != 0)
 	{
 		palatte = wjq_malloc(4*NumColors);
-		f_read(&bmpfile, (void *)palatte, 4*NumColors, &rlen);
+		f_read(bmpfile, (void *)palatte, 4*NumColors, &rlen);
 	}
 
 	if(xlen > bi.biWidth)
@@ -948,7 +951,7 @@ s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpF
         	if(j+linecnt >= ylen)
 				linecnt = ylen-j;
 						
-			f_read(&bmpfile, (void *)pdata, LineBytes*linecnt, &rlen);
+			f_read(bmpfile, (void *)pdata, LineBytes*linecnt, &rlen);
 			if(rlen != LineBytes*linecnt)
 			{
 				wjq_log(LOG_DEBUG, "bmp read data err!\r\n");
@@ -1021,7 +1024,7 @@ s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpF
         	if(j+linecnt >= ylen)
 				linecnt = ylen-j;
 						
-			f_read(&bmpfile, (void *)pdata, LineBytes*linecnt, &rlen);
+			f_read(bmpfile, (void *)pdata, LineBytes*linecnt, &rlen);
 			if(rlen != LineBytes*linecnt)
 			{
 				wjq_log(LOG_DEBUG, "bmp read data err!\r\n");
@@ -1111,7 +1114,7 @@ s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpF
         	if(j+linecnt >= ylen)
 				linecnt = ylen-j;
 						
-			f_read(&bmpfile, (void *)pdata, LineBytes*linecnt, &rlen);
+			f_read(bmpfile, (void *)pdata, LineBytes*linecnt, &rlen);
 			if(rlen != LineBytes*linecnt)
 			{
 				wjq_log(LOG_DEBUG, "bmp read data err!\r\n");
@@ -1165,7 +1168,7 @@ s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpF
 			if(j+linecnt >= ylen)
 				linecnt = ylen-j;
 			
-			res = f_read(&bmpfile, (void *)pdata, LineBytes*linecnt, &rlen);
+			res = f_read(bmpfile, (void *)pdata, LineBytes*linecnt, &rlen);
 			if(res != FR_OK)
 			{
 				wjq_log(LOG_DEBUG, "bmp read data err!\r\n");	
@@ -1224,7 +1227,9 @@ s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpF
 		wjq_free(palatte);
 	}
 	
-	f_close(&bmpfile);
+	f_close(bmpfile);
+
+	wjq_free(bmpfile)
     return 0;
 }
 #endif
