@@ -591,7 +591,7 @@ s32 drv_ST7735R_flush(DevLcdNode *lcd, u16 *color, u32 len)
 			break;
 	}
 
-	bus_lcd_flush_data(lcd->busnode, tmp,  len*2);	
+	bus_lcd_write_data(lcd->busnode, tmp,  len*2);	
 	bus_lcd_close(node);
 	
 	wjq_free(tmp);
