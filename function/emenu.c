@@ -367,6 +367,8 @@ s32 emenu_display(DevLcdNode *lcd)
 		default:
 			break;
 	}
+
+	dev_lcd_update(lcd);
 	return 0;
 }
 /**

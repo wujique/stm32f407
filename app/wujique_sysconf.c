@@ -446,7 +446,7 @@ const DevLcd DevLcdtTFT	=	{"tftlcd", 		"BusLcd8080", 	NULL, 240, 320};
 /* spi 接口的三色墨水屏 */
 //const DevLcd DevLcdSPIEPaper =	{"spiE-Paper",		"BusLcdSpi3",	0x9187, 176, 264};
 /* spi 接口 黑白墨水屏 1.54寸 GDEH154D27*/
-//const DevLcd DevLcdSPIEPaper =	{"spiE-Paper",		"BusLcdSpi3",	0x3820, 200, 200};
+const DevLcd DevLcdSPIEPaper =	{"spiE-Paper",		"BusLcdSpi3",	0x3820, 200, 200};
 
 /*
 	系统设备注册
@@ -471,8 +471,8 @@ s32 sys_dev_register(void)
 			mcu_spich_register(&DevSpi3CH2);
 					dev_spiflash_register(&DevSpiFlashCore);
 			mcu_spich_register(&DevSpi3CH3);
-					//dev_lcdbus_register(&BusLcdSpi3);
-						//	dev_lcd_register(&DevLcdSPIEPaper);
+					dev_lcdbus_register(&BusLcdSpi3);
+						dev_lcd_register(&DevLcdSPIEPaper);
 							//dev_lcd_register(&DevLcdCOG1);
 			//mcu_spich_register(&DevSpi3CH4);
 	

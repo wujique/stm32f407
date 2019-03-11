@@ -53,6 +53,7 @@ s32 drv_ST7789_prepare_display(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey);
 static void drv_ST7789_scan_dir(DevLcdNode *lcd, u8 dir);
 void drv_ST7789_lcd_bl(DevLcdNode *lcd, u8 sta);
 s32 drv_ST7789_flush(DevLcdNode *lcd, u16 *color, u32 len);
+s32 drv_ST7789_update(DevLcdNode *lcd);
 
 _lcd_drv TftLcdST7789_Drv = {
 							.id = 0X7789,
@@ -65,7 +66,8 @@ _lcd_drv TftLcdST7789_Drv = {
 							.prepare_display = drv_ST7789_prepare_display,
 							.flush = drv_ST7789_flush,
 							.set_dir = drv_ST7789_scan_dir,
-							.backlight = drv_ST7789_lcd_bl
+							.backlight = drv_ST7789_lcd_bl,
+							.update = drv_ST7789_update,
 							};
 
 void drv_ST7789_lcd_bl(DevLcdNode *lcd, u8 sta)
@@ -554,6 +556,10 @@ s32 drv_ST7789_flush(DevLcdNode *lcd, u16 *color, u32 len)
 	
 	return 0;
 } 
+s32 drv_ST7789_update(DevLcdNode *lcd)
+{
+	return 0;	
+}
 
 #endif
 

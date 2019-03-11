@@ -62,6 +62,7 @@ s32 drv_ILI9341_prepare_display(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey)
 static void drv_ILI9341_scan_dir(DevLcdNode *lcd, u8 dir);
 void drv_ILI9341_lcd_bl(DevLcdNode *lcd, u8 sta);
 s32 drv_ILI9341_flush(DevLcdNode *lcd, u16 *color, u32 len);
+s32 drv_ILI9341_update(DevLcdNode *lcd);
 
 
 /*
@@ -80,7 +81,8 @@ _lcd_drv TftLcdILI9341Drv = {
 							.prepare_display = drv_ILI9341_prepare_display,
 							.flush = drv_ILI9341_flush,
 							.set_dir = drv_ILI9341_scan_dir,
-							.backlight = drv_ILI9341_lcd_bl
+							.backlight = drv_ILI9341_lcd_bl,
+							.update = drv_ILI9341_update,
 							};
 
 void drv_ILI9341_lcd_bl(DevLcdNode *lcd, u8 sta)
@@ -567,6 +569,11 @@ s32 drv_ILI9341_flush(DevLcdNode *lcd, u16 *color, u32 len)
 	bus_lcd_close(lcd->busnode);
 	return 0;
 } 
+s32 drv_ILI9341_update(DevLcdNode *lcd)
+{
+	return 0;	
+}
+
 #endif
 
 #ifdef TFT_LCD_DRIVER_9341_8BIT
@@ -587,6 +594,7 @@ s32 drv_ILI9341_8_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color);
 s32 drv_ILI9341_8_prepare_display(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey);
 static void drv_ILI9341_8_scan_dir(DevLcdNode *lcd, u8 dir);
 s32 drv_ILI9341_8_flush(DevLcdNode *lcd, u16 *color, u32 len);
+s32 drv_ILI9341_8_update(DevLcdNode *lcd);
 
 _lcd_drv TftLcdILI9341_8_Drv = {
 							.id = 0X9342,
@@ -599,7 +607,8 @@ _lcd_drv TftLcdILI9341_8_Drv = {
 							.prepare_display = drv_ILI9341_8_prepare_display,
 							.flush = drv_ILI9341_8_flush,
 							.set_dir = drv_ILI9341_8_scan_dir,
-							.backlight = drv_ILI9341_lcd_bl
+							.backlight = drv_ILI9341_lcd_bl,
+							.update = drv_ILI9341_8_update,
 							};
 
 	
@@ -1025,6 +1034,10 @@ s32 drv_ILI9341_8_flush(DevLcdNode *lcd, u16 *color, u32 len)
 	
 	return 0;
 } 
+s32 drv_ILI9341_8_update(DevLcdNode *lcd)
+{
+	return 0;	
+}
 
 #endif
 

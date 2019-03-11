@@ -214,7 +214,7 @@ s32 dev_lcd_register(const DevLcd *dev)
 		plcdnode->drv->onoff((plcdnode),1);//打开显示
 		
 		plcdnode->drv->color_fill(plcdnode, 0, plcdnode->width, 0, plcdnode->height, BLUE);
-		
+		plcdnode->drv->update(plcdnode);
 		plcdnode->drv->backlight(plcdnode, 1);
 
 		wjq_log(LOG_INFO, "lcd init OK\r\n");
@@ -356,6 +356,13 @@ s32 dev_lcd_flush(DevLcdNode *lcd, u16 *color, u32 len)
 		return -1;
 
 	return lcd->drv->flush(lcd, color, len);	
+}
+s32 dev_lcd_update(DevLcdNode *lcd)
+{
+	if(lcd == NULL)
+		return -1;
+
+	return lcd->drv->update(lcd);
 }
 /**
  *@brief:      dev_lcd_setdir
@@ -1002,7 +1009,7 @@ s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpF
 		        }
 				#endif
 				
-				lcd->drv->flush(lcd, pcc, xlen);
+				dev_lcd_flush(lcd, pcc, xlen);
 				l++;
 			}
 
@@ -1093,7 +1100,7 @@ s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpF
 				}
 				#endif
 				
-				lcd->drv->flush(lcd, pcc, xlen);
+				dev_lcd_flush(lcd, pcc, xlen);
 				l++;
 			}
 
@@ -1141,7 +1148,7 @@ s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpF
 	                *(pcc+i)  = (r<<11)|(g<<5)|(b<<0);
 	            }
 				
-				lcd->drv->flush(lcd, pcc, xlen);
+				dev_lcd_flush(lcd, pcc, xlen);
 				
 				l++;
 			}
@@ -1200,7 +1207,7 @@ s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpF
 
 	            }
 				
-				lcd->drv->flush(lcd, pcc, xlen);
+				dev_lcd_flush(lcd, pcc, xlen);
 				l++;
 			}
 
@@ -1218,6 +1225,8 @@ s32 dev_lcd_show_bmp(DevLcdNode *lcd, u16 x, u16 y, u16 xlen, u16 ylen, s8 *BmpF
         break;
     } 
 
+	dev_lcd_update(lcd);
+	
 	wjq_free(pdata);
 	if(NumColors != 0)
 	{
@@ -1277,21 +1286,22 @@ void dev_lcd_test(void)
 	dev_lcd_put_string(LcdOled, FONT_SIYUAN_1616, 1, 13, "这是oled lcd", BLACK);
 	dev_lcd_put_string(LcdOled, FONT_SONGTI_1212, 10,30, "www.wujique.com", BLACK);
 	dev_lcd_put_string(LcdOled, FONT_SIYUAN_1616, 1, 47, "屋脊雀工作室", BLACK);
-
+	dev_lcd_update(LcdOled);
 	dev_lcd_put_string(LcdCog, FONT_SONGTI_1212, 10,1, "ABC-abc，", BLACK);
 	dev_lcd_put_string(LcdCog, FONT_SIYUAN_1616, 1, 13, "这是cog lcd", BLACK);
 	dev_lcd_put_string(LcdCog, FONT_SONGTI_1212, 10,30, "www.wujique.com", BLACK);
 	dev_lcd_put_string(LcdCog, FONT_SIYUAN_1616, 1, 47, "屋脊雀工作室", BLACK);
-
+	dev_lcd_update(LcdCog);
 	dev_lcd_put_string(LcdTft, FONT_SONGTI_1212, 20,30, "ABC-abc，", RED);
 	dev_lcd_put_string(LcdTft, FONT_SIYUAN_1616, 20,60, "这是tft lcd", RED);
 	dev_lcd_put_string(LcdTft, FONT_SONGTI_1212, 20,100, "www.wujique.com", RED);
 	dev_lcd_put_string(LcdTft, FONT_SIYUAN_1616, 20,150, "屋脊雀工作室", RED);
-
+	dev_lcd_update(LcdTft);
 	dev_lcd_put_string(LcdOledI2C, FONT_SONGTI_1212, 10,1, "ABC-abc，", BLACK);
 	dev_lcd_put_string(LcdOledI2C, FONT_SIYUAN_1616, 1,13, "这是LcdOledI2C", BLACK);
 	dev_lcd_put_string(LcdOledI2C, FONT_SONGTI_1212, 10,30, "www.wujique.com", BLACK);
 	dev_lcd_put_string(LcdOledI2C, FONT_SIYUAN_1616, 1,47, "屋脊雀工作室", BLACK);
+	dev_lcd_update(LcdOledI2C);
 	#endif
 	
 	while(1);
@@ -1315,7 +1325,7 @@ void dev_i2coledlcd_test(void)
 	dev_lcd_put_string(LcdOledI2C, FONT_SIYUAN_1616, 1,13, "这是LcdOledI2C", BLACK);
 	dev_lcd_put_string(LcdOledI2C, FONT_SONGTI_1212, 10,30, "www.wujique.com", BLACK);
 	dev_lcd_put_string(LcdOledI2C, FONT_SIYUAN_1616, 1,47, "屋脊雀工作室", BLACK);
-
+	dev_lcd_update(LcdOledI2C);
 
 	LcdOledI2C = dev_lcd_open("i2coledlcd2");
 	if(LcdOledI2C==NULL)
@@ -1329,8 +1339,10 @@ void dev_i2coledlcd_test(void)
 		dev_lcd_put_string(LcdOledI2C, FONT_SIYUAN_1616, 1,13, "这是LcdOledI2C", BLACK);
 		dev_lcd_put_string(LcdOledI2C, FONT_SONGTI_1212, 10,30, "www.wujique.com", BLACK);
 		dev_lcd_put_string(LcdOledI2C, FONT_SIYUAN_1616, 1,47, "屋脊雀工作室", BLACK);
+		dev_lcd_update(LcdOledI2C);
 		Delay(1000);
 		dev_lcd_color_fill(LcdOledI2C, 1, 1000, 1, 1000, WHITE);
+		dev_lcd_update(LcdOledI2C);
 		Delay(1000);
 	}
 

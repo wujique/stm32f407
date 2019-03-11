@@ -36,6 +36,7 @@ s32 emenu_test_fun(char *s)
 	dev_lcd_color_fill(emenulcd, 1, 1000, 1, 1000, WHITE);
 	/*顶行居中显示父菜单*/
 	dev_lcd_put_string(emenulcd, FONT_SONGTI_1212, 1, 32, s, BLACK);
+	dev_lcd_update(emenulcd);
 	
 	test_wait_key(0);
 	

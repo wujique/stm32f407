@@ -99,6 +99,7 @@ s32 drv_IL91874_prepare_display(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey)
 static void drv_IL91874_scan_dir(DevLcdNode *lcd, u8 dir);
 void drv_IL91874_lcd_bl(DevLcdNode *lcd, u8 sta);
 s32 drv_IL91874_flush(DevLcdNode *lcd, u16 *color, u32 len);
+s32 drv_IL91874_update(DevLcdNode *lcd);
 
 
 /*
@@ -117,7 +118,8 @@ _lcd_drv TftLcdIL91874Drv = {
 							.prepare_display = drv_IL91874_prepare_display,
 							.flush = drv_IL91874_flush,
 							.set_dir = drv_IL91874_scan_dir,
-							.backlight = drv_IL91874_lcd_bl
+							.backlight = drv_IL91874_lcd_bl,
+							.update = drv_IL91874_update,
 							};
 
 void SPI_Delay(unsigned char xrate)
@@ -368,8 +370,6 @@ s32 drv_IL91874_init(DevLcdNode *lcd)
 	u8 tmp[16];
 	u8 testbuf[2];
 	
-	
-  
 	node = bus_lcd_open(lcd->dev.buslcd);
 
 	mcu_io_config_in(node->dev.staport, node->dev.stapin);
@@ -595,7 +595,7 @@ s32 drv_IL91874_color_fill(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey, u16 
 		只刷新需要刷新的区域
 		坐标范围是横屏模式
 	*/
-	drv_IL91874_refresh_gram(lcd, sc, ec, sp, ep);
+	//drv_IL91874_refresh_gram(lcd, sc, ec, sp, ep);
 	wjq_log(LOG_DEBUG, " drv_IL91874_color_fill finish\r\n ");
 
 	return 0;
@@ -721,7 +721,7 @@ s32 drv_IL91874_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
 		只刷新需要刷新的区域
 		坐标范围是横屏模式
 	*/
-	drv_IL91874_refresh_gram(lcd, sc,ec,sp,ep);
+	//drv_IL91874_refresh_gram(lcd, sc,ec,sp,ep);
 	//uart_printf("refresh ok\r\n");		
 	return 0;
 }
@@ -738,6 +738,13 @@ s32 drv_IL91874_flush(DevLcdNode *lcd, u16 *color, u32 len)
 	wjq_log(LOG_DEBUG, " drv_IL91874_flush\r\n ");
 	return 0;
 } 
+
+s32 drv_IL91874_update(DevLcdNode *lcd)
+{
+	drv_IL91874_refresh_gram(lcd, 0, 0, 0, 0);	
+	return 0;
+}
+
 #endif
 
 

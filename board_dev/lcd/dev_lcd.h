@@ -11,19 +11,26 @@ typedef struct _strDevLcdNode DevLcdNode;
 typedef struct  
 {	
 	u16 id;
-	
+	/*初始化*/
 	s32 (*init)(DevLcdNode *lcd);
-	
+	/*
+		draw_point、color_fill、fill
+	*/
 	s32 (*draw_point)(DevLcdNode *lcd, u16 x, u16 y, u16 color);
 	s32 (*color_fill)(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey, u16 color);
 	s32 (*fill)(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color);
-	
+	/*prepare_display指定显示区域后，用flush将数据持续更新到LCD*/
 	s32 (*prepare_display)(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey);
 	s32 (*flush)(DevLcdNode *lcd, u16 *color, u32 len);
 	
 	s32 (*onoff)(DevLcdNode *lcd, u8 sta);
 	void (*set_dir)(DevLcdNode *lcd, u8 scan_dir);
 	void (*backlight)(DevLcdNode *lcd, u8 sta);
+
+	/*
+		update配合draw_point/color_fill/fill使用，如果是没有gram的，相当于空操作。
+	*/
+	s32 (*update)(DevLcdNode *lcd);
 }_lcd_drv; 
 
 
@@ -142,6 +149,7 @@ extern s32 dev_lcd_put_string(DevLcdNode *lcd, FontType font, int x, int y, char
 
 extern void put_string_center(DevLcdNode *lcd, int x, int y, char *s, unsigned colidx);
 extern s32 dev_lcd_setdir(DevLcdNode *lcd, u8 dir, u8 scan_dir);
+extern s32 dev_lcd_update(DevLcdNode *lcd);
 
 #endif
 

@@ -80,6 +80,7 @@ s32 drv_ILI9325_prepare_display(DevLcdNode *lcd, u16 sc, u16 ec, u16 sp, u16 ep)
 static void drv_ILI9325_scan_dir(DevLcdNode *lcd, u8 dir);
 void drv_ILI9325_lcd_bl(DevLcdNode *lcd, u8 sta);
 s32 drv_ILI9325_flush(DevLcdNode *lcd, u16 *color, u32 len);
+s32 drv_ILI9325_update(DevLcdNode *lcd);
 
 /*
 
@@ -98,7 +99,8 @@ _lcd_drv TftLcdILI9325Drv = {
 							
 							.onoff = drv_ILI9325_display_onoff,
 							.set_dir = drv_ILI9325_scan_dir,
-							.backlight = drv_ILI9325_lcd_bl
+							.backlight = drv_ILI9325_lcd_bl,
+							.update = drv_ILI9325_update,
 							};
 void drv_ILI9325_lcd_bl(DevLcdNode *lcd, u8 sta)
 {
@@ -717,6 +719,11 @@ s32 drv_ILI9325_flush(DevLcdNode *lcd, u16 *color, u32 len)
 	bus_lcd_close(lcd->busnode);
 	return 0;
 } 
+
+s32 drv_ILI9325_update(DevLcdNode *lcd)
+{
+	return 0;	
+}
 
 #endif
 

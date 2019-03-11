@@ -48,8 +48,10 @@ s32 wjq_test_showstr(char *s)
 {
 	wjq_log(LOG_DEBUG, "test:%s", s);
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, BackColor);
+	
 	/*顶行居中显示父菜单*/
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, s, PenColor);
+	dev_lcd_update(WJQTestLcd);
 	wjq_wait_key(0);
 	
 	return 0;
@@ -68,8 +70,10 @@ s32 test_tft_display(void)
 	u8 dis = 1;
 	
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
+	
 	/*顶行居中显示父菜单*/
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
+	dev_lcd_update(WJQTestLcd);
 	
 	lcd = dev_lcd_open("tftlcd");
 	if(lcd == NULL)
@@ -87,14 +91,16 @@ s32 test_tft_display(void)
 				{
 					case 0:
 						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, YELLOW);
+						dev_lcd_update(lcd);
 						break;
 					case 1:
 						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, RED);
+						dev_lcd_update(lcd);
 						break;
 					case 2:
 						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLUE);
-
 						dev_lcd_put_string(lcd, FONT_SONGTI_1616, 1, 120, "abc屋脊雀ADC123工作室12345678901234屋脊雀工作室", RED);
+						dev_lcd_update(lcd);
 
 						break;
 					default:
@@ -147,12 +153,15 @@ s32 test_cogoled_lcd_display(char *name)
 				{
 					case 0:
 						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLACK);
+						dev_lcd_update(lcd);
 						break;
 					case 1:
 						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, WHITE);
+						dev_lcd_update(lcd);
 						break;
 					case 2:
 						dev_lcd_put_string(lcd, FONT_SONGTI_1616, 1, 56, "abc屋脊雀ADC123工作室", BLACK);
+						dev_lcd_update(lcd);
 						break;
 						
 					default:
@@ -188,6 +197,7 @@ s32 test_i2c_oled_display(void)
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	/*顶行居中显示父菜单*/
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
+	dev_lcd_update(WJQTestLcd);
 	return 	test_cogoled_lcd_display("i2coledlcd");
 }
 s32 test_vspi_oled_display(void)
@@ -195,7 +205,7 @@ s32 test_vspi_oled_display(void)
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	/*顶行居中显示父菜单*/
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
-	
+	dev_lcd_update(WJQTestLcd);
 	return 	test_cogoled_lcd_display("vspioledlcd");
 }
 
@@ -204,7 +214,7 @@ s32 test_spi_cog_display(void)
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	/*顶行居中显示父菜单*/
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
-	
+	dev_lcd_update(WJQTestLcd);
 	return 	test_cogoled_lcd_display("spicoglcd");
 }
 /*
@@ -219,6 +229,7 @@ s32 test_lcd_spi_128128(void)
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	/*顶行居中显示父菜单*/
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
+	dev_lcd_update(WJQTestLcd);
 	
 	lcd = dev_lcd_open("spitftlcd");
 	if(lcd == NULL)
@@ -238,13 +249,16 @@ s32 test_lcd_spi_128128(void)
 				{
 					case 0:
 						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, YELLOW);
+						dev_lcd_update(lcd);
 						break;
 					case 1:
 						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, RED);
+						dev_lcd_update(lcd);
 						break;
 					case 2:
 						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLUE);
 						dev_lcd_put_string(lcd, FONT_SONGTI_1616, 1, 120, "abc屋脊雀ADC123工作室12345678901234屋脊雀工作室", RED);
+						dev_lcd_update(lcd);
 						break;
 					case 3:
 						dev_lcd_show_bmp(lcd, 1, 1, 240, 240, "1:/pic/pic128.bmp");
@@ -286,7 +300,7 @@ s32 test_lcd_pic(void)
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	/*顶行居中显示父菜单*/
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
-	
+	dev_lcd_update(WJQTestLcd);
 	lcd = dev_lcd_open("tftlcd");
 	if(lcd == NULL)
 	{
@@ -329,7 +343,7 @@ s32 test_sound_buzzer(void)
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	/*顶行居中显示父菜单*/
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
-
+	dev_lcd_update(WJQTestLcd);
 	while(1)
 	{
 		u8 keyvalue;
@@ -360,7 +374,7 @@ s32 test_sound_fm(void)
 {
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
-
+	dev_lcd_update(WJQTestLcd);
 	dev_wm8978_inout(WM8978_INPUT_DAC|WM8978_INPUT_AUX|WM8978_INPUT_ADC,
 					WM8978_OUTPUT_PHONE|WM8978_OUTPUT_SPK);
 	
@@ -375,7 +389,7 @@ s32 test_sound_wm8978(void)
 {
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
-	
+	dev_lcd_update(WJQTestLcd);
 	fun_sound_play("2:/stereo_16bit_32k.wav", "wm8978");
 	wjq_wait_key(16);
 	fun_sound_stop();
@@ -387,7 +401,7 @@ s32 test_sound_dac(void)
 {
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
-	
+	dev_lcd_update(WJQTestLcd);
 	fun_sound_play("1:/mono_16bit_8k.wav", "dacsound");
 	wjq_wait_key(16);
 	fun_sound_stop();
@@ -398,7 +412,7 @@ s32 test_sound_rec(void)
 {
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
-
+	dev_lcd_update(WJQTestLcd);
 	fun_sound_rec("1:/rec8.wav");
 	wjq_wait_key(16);
 	fun_rec_stop();
@@ -434,7 +448,7 @@ s32 test_tp_calibrate(void)
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	/*顶行居中显示父菜单*/
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
-
+	dev_lcd_update(WJQTestLcd);
 	lcd = dev_lcd_open("tftlcd");
 	if(lcd == NULL)
 	{
@@ -449,6 +463,7 @@ s32 test_tp_calibrate(void)
 	}
 	
 	dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLUE);
+	dev_lcd_update(lcd);
 	dev_lcd_close(lcd);
 	
 	return 0;
@@ -462,7 +477,7 @@ s32 test_tp_test(void)
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	/*顶行居中显示父菜单*/
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
-	
+	dev_lcd_update(WJQTestLcd);
 	lcd = dev_lcd_open("tftlcd");
 	if(lcd == NULL)
 	{
@@ -511,6 +526,7 @@ s32 test_tp_test(void)
 				if(keyvalue == 8)
 				{
 					dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLUE);
+					dev_lcd_update(lcd);
 				}
 				else if(keyvalue == 12)
 				{
@@ -533,7 +549,7 @@ s32 test_key(void)
 		
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
-	
+	dev_lcd_update(WJQTestLcd);
 	dev_key_open();
 
 	while(1)
@@ -544,10 +560,12 @@ s32 test_key(void)
 			if(tmp == DEV_KEY_PRESS)
 			{
 				dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 10, "	   press	", BLACK);
+				dev_lcd_update(WJQTestLcd);
 			}
 			else if(tmp == DEV_KEY_REL)
 			{
 				dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 10, "	 release	  ", BLACK);
+				dev_lcd_update(WJQTestLcd);
 			}
 		}
 
@@ -574,7 +592,7 @@ s32 test_camera(void)
 	//dev_lcd_color_fill(emenulcd, 1, 1000, 1, 1000, WHITE);
 	/*顶行居中显示父菜单*/
 	//dev_lcd_put_string(emenulcd, FONT_SONGTI_1212, 1, 32, __FUNCTION__, BLACK);
-	
+	//dev_lcd_update(emenulcd);
 	lcd = dev_lcd_open("tftlcd");
 	if(lcd == NULL)
 	{
@@ -597,7 +615,7 @@ s32 test_camera(void)
 	}
 	
 	dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLUE);
-	
+	dev_lcd_update(lcd);
 	return 0;
 }
 s32 test_rs485_rec(void)
@@ -609,7 +627,7 @@ s32 test_rs485_rec(void)
 	
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
-
+	dev_lcd_update(WJQTestLcd);
 	dev_rs485_open();
 
 	while(1)
@@ -643,7 +661,7 @@ s32 test_rs485_snd(void)
 	
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
-	
+	dev_lcd_update(WJQTestLcd);
 	dev_rs485_open();
 
 	while(1)
@@ -684,7 +702,7 @@ s32 test_uart(void)
 	
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
-	
+	dev_lcd_update(WJQTestLcd);
 	while(1)
 	{
 		
@@ -720,7 +738,7 @@ s32 test_esp8266(void)
 	
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
-		
+	dev_lcd_update(WJQTestLcd);
 	dev_8266_open();
 
 	while(1)
@@ -771,6 +789,8 @@ s32 test_spiflash_board(void)
 {
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
+	dev_lcd_update(WJQTestLcd);
+	
 	dev_spiflash_test_chipcheck("board_spiflash");
 	wjq_wait_key(12);
 	return 0;
@@ -780,6 +800,8 @@ s32 test_spiflash_core(void)
 {
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
+	dev_lcd_update(WJQTestLcd);
+	
 	dev_spiflash_test_chiperase("core_spiflash");
 	wjq_wait_key(12);
 	return 0;
@@ -793,6 +815,8 @@ s32 test_touchkey(void)
 		
 	dev_lcd_color_fill(WJQTestLcd, 1, 1000, 1, 1000, WHITE);
 	dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 32, (char *)__FUNCTION__, BLACK);
+	dev_lcd_update(WJQTestLcd);
+	
 	dev_touchkey_open();
 
 	while(1)
@@ -804,11 +828,13 @@ s32 test_touchkey(void)
 			{
 				wjq_log(LOG_FUN, "touch key test get a touch event!\r\n");
 				dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 10, "      touch    ", BLACK);
+				dev_lcd_update(WJQTestLcd);
 			}
 			else if(tmp == DEV_TOUCHKEY_RELEASE)
 			{
 				wjq_log(LOG_FUN, "touch key test get a release event!\r\n");
 				dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 10, "      release    ", BLACK);
+				dev_lcd_update(WJQTestLcd);
 			}
 		}
 
@@ -852,6 +878,7 @@ s32 test_keypad(void)
 			dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 26, testkeypad2, BLACK);
 			dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 39, testkeypad3, BLACK);
 			dev_lcd_put_string(WJQTestLcd, FONT_SONGTI_1212, 1, 52, testkeypad4, BLACK);
+			dev_lcd_update(WJQTestLcd);
 			dis_flag = 0;
 		}
 		
@@ -1327,7 +1354,7 @@ void wujique_stm407_test(void)
 	wjq_log(LOG_DEBUG,"run app\r\n");
 
 	
-	WJQTestLcd = dev_lcd_open("i2coledlcd");
+	WJQTestLcd = dev_lcd_open("spiE-Paper");
 	if(WJQTestLcd == NULL)
 	{
 		wjq_log(LOG_DEBUG, "open oled lcd err\r\n");
@@ -1387,15 +1414,18 @@ s32 test_tft_lcd(void)
 				{
 					case 0:
 						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, YELLOW);
+						dev_lcd_update(lcd);
 						break;
 					
 					case 1:
 						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, RED);
+						dev_lcd_update(lcd);
 						break;
 					
 					case 2:
 						dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLUE);
 						dev_lcd_put_string(lcd, FONT_SONGTI_1616, 20, 20, "abc屋脊雀工作室ADC", RED);
+						dev_lcd_update(lcd);
 						break;
 
 					case 3:
@@ -1456,10 +1486,13 @@ s32 test_cog_lcd(void)
 	while(1)
 	{
 		dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLACK);
+		dev_lcd_update(lcd);
 		wjq_wait_key(16);
 		dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, WHITE);
+		dev_lcd_update(lcd);
 		wjq_wait_key(16);
 		dev_lcd_put_string(lcd, FONT_SONGTI_1212, 1, 32, "cog LCD测试程序", BLACK);
+		dev_lcd_update(lcd);
 		wjq_wait_key(16);
 		dev_lcd_backlight(lcd, 0);
 		wjq_wait_key(16);
@@ -1485,6 +1518,7 @@ s32 test_tft_tp(void)
 		dev_lcd_backlight(lcd, 1);
 		
 		dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLUE);
+		dev_lcd_update(lcd);
 		dev_lcd_setdir(lcd, H_LCD, L2R_U2D);
 		dev_touchscreen_open();
 		ts_calibrate(lcd);
@@ -1492,7 +1526,7 @@ s32 test_tft_tp(void)
 	}
 	
 	dev_lcd_color_fill(lcd, 1, 1000, 1, 1000, BLUE);
-
+	dev_lcd_update(lcd);
 	{
 		dev_touchscreen_open();	
 	

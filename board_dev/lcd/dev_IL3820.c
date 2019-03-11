@@ -91,11 +91,12 @@ s32 drv_IL3820_prepare_display(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey);
 static void drv_IL3820_scan_dir(DevLcdNode *lcd, u8 dir);
 void drv_IL3820_lcd_bl(DevLcdNode *lcd, u8 sta);
 s32 drv_IL3820_flush(DevLcdNode *lcd, u16 *color, u32 len);
+s32 drv_IL3820_update(DevLcdNode *lcd);
 
 
 /*
 
-	定义一个TFT LCD，使用IL91874驱动IC的设备
+	定义一个TFT LCD，使用IL3820驱动IC的设备
 
 */
 _lcd_drv TftLcdIL3820Drv = {
@@ -109,7 +110,8 @@ _lcd_drv TftLcdIL3820Drv = {
 							.prepare_display = drv_IL3820_prepare_display,
 							.flush = drv_IL3820_flush,
 							.set_dir = drv_IL3820_scan_dir,
-							.backlight = drv_IL3820_lcd_bl
+							.backlight = drv_IL3820_lcd_bl,
+							.update = drv_IL3820_update,
 							};
 
 
@@ -246,70 +248,17 @@ static s32 drv_IL3820_display_onoff(DevLcdNode *lcd, u8 sta)
 
 
 const unsigned char LUT_DATA[]= {    //30 bytes
-0x66,   
-0x66,
-0x44,
-0x66,
-0xAA,
-0x11,
-0x80,
-0x08,
-0x11,
-0x18,
-0x81,
-0x18,
-0x11,
-0x88,
-0x11,
-0x88,
-0x11,
-0x88,
-0x00,
-0x00,
-0xFF,
-0xFF,
-0xFF,
-0xFF,
-0x5F,
-0xAF,
-0xFF,
-0xFF,
-0x2F,
-0x00
+0x66, 0x66, 0x44, 0x66, 0xAA, 0x11, 0x80, 0x08,
+0x11, 0x18, 0x81, 0x18, 0x11, 0x88, 0x11, 0x88,
+0x11, 0x88, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF,
+0x5F, 0xAF, 0xFF, 0xFF, 0x2F, 0x00
 };	
 
 const unsigned char LUT_DATA_part[]={  //30 bytes
-
-0x10,
-0x18,
-0x18,
-0x28,
-0x18,
-0x18,
-0x18,
-0x18,
-0x08,
-0x00,
-0x00,
-0x00,
-0x00,
-0x00,
-0x00,
-0x00,
-0x00,
-0x00,
-0x00,
-0x00,
-0x13,
-0x11,
-0x22,
-0x63,
-0x11,
-0x00,
-0x00,
-0x00,
-0x00,
-0x00
+0x10, 0x18, 0x18, 0x28, 0x18, 0x18, 0x18, 0x18,
+0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x13, 0x11, 0x22, 0x63,
+0x11, 0x00, 0x00, 0x00, 0x00, 0x00
 };				
 
 void EPD_select_LUT(DevLcdBusNode *node, const unsigned char * wave_data)
@@ -579,7 +528,7 @@ s32 drv_IL3820_color_fill(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey, u16 c
 		只刷新需要刷新的区域
 		坐标范围是横屏模式
 	*/
-	drv_IL3820_refresh_gram(lcd, sc, ec, sp, ep);
+	//drv_IL3820_refresh_gram(lcd, sc, ec, sp, ep);
 	wjq_log(LOG_DEBUG, " drv_IL91874_color_fill finish\r\n ");
 	return 0;
 }
@@ -699,8 +648,8 @@ s32 drv_IL3820_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
 		只刷新需要刷新的区域
 		坐标范围是横屏模式
 	*/
-	drv_IL3820_refresh_gram(lcd, sc,ec,sp,ep);
-	//uart_printf("refresh ok\r\n");		
+	//drv_IL3820_refresh_gram(lcd, sc,ec,sp,ep);
+			
 	return 0;
 }
 
@@ -716,6 +665,13 @@ s32 drv_IL3820_flush(DevLcdNode *lcd, u16 *color, u32 len)
 	wjq_log(LOG_DEBUG, " drv_IL91874_flush\r\n ");
 	return 0;
 } 
+
+s32 drv_IL3820_update(DevLcdNode *lcd)
+{
+	drv_IL3820_refresh_gram(lcd, 0, 0, 0, 0);	
+	return 0;
+}
+
 #endif
 
 

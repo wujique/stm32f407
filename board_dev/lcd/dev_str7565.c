@@ -50,6 +50,7 @@ struct _cog_drv_data
 	u16 ex;
 	u16 sy;
 	u16 ey;
+	
 	u16 disx;
 	u16 disy;
 
@@ -67,6 +68,7 @@ s32 drv_ST7565_prepare_display(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey);
 static void drv_ST7565_scan_dir(DevLcdNode *lcd, u8 dir);
 void drv_ST7565_lcd_bl(DevLcdNode *lcd, u8 sta);
 s32 drv_ST7565_flush(DevLcdNode *lcd, u16 *color, u32 len);
+s32 drv_ST7565_update(DevLcdNode *lcd);
 
 
 /*
@@ -85,7 +87,8 @@ _lcd_drv CogLcdST7565Drv = {
 							.prepare_display = drv_ST7565_prepare_display,
 							.set_dir = drv_ST7565_scan_dir,
 							.backlight = drv_ST7565_lcd_bl,
-							.flush = drv_ST7565_flush
+							.flush = drv_ST7565_flush,
+							.update = drv_ST7565_update,
 							};
 
 void drv_ST7565_lcd_bl(DevLcdNode *lcd, u8 sta)
@@ -388,6 +391,7 @@ s32 drv_ST7565_color_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 color
 		}
 	}
 
+	#if 0
 	/*
 		只刷新需要刷新的区域
 		坐标范围是横屏模式
@@ -398,9 +402,10 @@ s32 drv_ST7565_color_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 color
 	}
 	else
 	{
+
 		drv_ST7565_refresh_gram(lcd, sy, ey, lcd->width-ex-1, lcd->width-sx-1); 	
 	}
-		
+	#endif
 	return 0;
 }
 
@@ -488,7 +493,7 @@ s32 drv_ST7565_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
 			}
 		}
 	}
-
+	#if 0
 	/*
 		只刷新需要刷新的区域
 		坐标范围是横屏模式
@@ -502,6 +507,7 @@ s32 drv_ST7565_fill(DevLcdNode *lcd, u16 sx,u16 ex,u16 sy,u16 ey,u16 *color)
 
 		drv_ST7565_refresh_gram(lcd, sy, ey, lcd->width-ex-1, lcd->width-sx-1); 	
 	}
+	#endif
 	//uart_printf("refresh ok\r\n");		
 	return 0;
 }
@@ -604,6 +610,7 @@ s32 drv_ST7565_flush(DevLcdNode *lcd, u16 *color, u32 len)
 		
 	}
 
+	#if 0
 	/*
 		只刷新需要刷新的区域
 		坐标范围是横屏模式
@@ -617,9 +624,17 @@ s32 drv_ST7565_flush(DevLcdNode *lcd, u16 *color, u32 len)
 
 		drv_ST7565_refresh_gram(lcd, sy, ey, lcd->width-ex-1, lcd->width-sx-1); 	
 	}
+	#endif
 	//uart_printf("refresh ok\r\n");		
 	return 0;
 } 
+
+s32 drv_ST7565_update(DevLcdNode *lcd)
+{
+	/*刷全屏*/
+	drv_ST7565_refresh_gram(lcd, 0, lcd->dev.height-1, 0, lcd->dev.width-1);
+	return 0;	
+}
 
 #endif
 
@@ -736,7 +751,8 @@ _lcd_drv OledLcdSSD1615rv = {
 							.prepare_display = drv_ST7565_prepare_display,
 							.set_dir = drv_ST7565_scan_dir,
 							.backlight = drv_ST7565_lcd_bl,
-							.flush = drv_ST7565_flush
+							.flush = drv_ST7565_flush,
+							.update = drv_ST7565_update,
 							};
 #endif
 

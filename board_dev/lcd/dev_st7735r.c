@@ -51,6 +51,7 @@ s32 drv_ST7735R_prepare_display(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey)
 static void drv_ST7735R_scan_dir(DevLcdNode *lcd, u8 dir);
 void drv_ST7735R_lcd_bl(DevLcdNode *lcd, u8 sta);
 s32 drv_ST7735R_flush(DevLcdNode *lcd, u16 *color, u32 len);
+s32 drv_ST7735R_update(DevLcdNode *lcd);
 
 _lcd_drv TftLcdST7735R_Drv = {
 							.id = 0X7735,
@@ -63,7 +64,8 @@ _lcd_drv TftLcdST7735R_Drv = {
 							.prepare_display = drv_ST7735R_prepare_display,
 							.flush = drv_ST7735R_flush,
 							.set_dir = drv_ST7735R_scan_dir,
-							.backlight = drv_ST7735R_lcd_bl
+							.backlight = drv_ST7735R_lcd_bl,
+							.update = drv_ST7735R_update,
 							};
 
 void drv_ST7735R_lcd_bl(DevLcdNode *lcd, u8 sta)
@@ -598,6 +600,10 @@ s32 drv_ST7735R_flush(DevLcdNode *lcd, u16 *color, u32 len)
 	
 	return 0;
 } 
+s32 drv_ST7735R_update(DevLcdNode *lcd)
+{
+	return 0;	
+}
 
 #endif
 
