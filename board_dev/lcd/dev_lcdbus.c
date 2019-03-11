@@ -269,7 +269,7 @@ s32 bus_lcd_write_data(DevLcdBusNode *node, u8 *data, u32 len)
 	
 	return 0;
 }
-#if 1//FSMC≥¢ ‘DMA
+#if 0//FSMC≥¢ ‘DMA
 #define FSMC_LCD_ADDRESS      0x6C010000
 
 void bus_lcd_fsmc_dma_init(u32 MemoryAddr,	u32 len)

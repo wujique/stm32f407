@@ -1037,59 +1037,35 @@ void OV2640_ReadID(OV2640_IDTypeDef *OV2640ID)
   */
 void OV2640_Init(ImageFormat_TypeDef ImageFormat)
 {
-  DCMI_InitTypeDef DCMI_InitStructure;
+	switch (ImageFormat)
+	{
+		case BMP_QVGA:
+		{
+			BUS_DCMI_Config(DCMI_PCKPolarity_Rising, DCMI_VSPolarity_Low, DCMI_HSPolarity_Low);
+			OV2640_QVGAConfig();
+			break;
+		}
 
-  /*** Configures the DCMI to interface with the OV2640 camera module ***/
-  /* Enable DCMI clock */
-  RCC_AHB2PeriphClockCmd(RCC_AHB2Periph_DCMI, ENABLE);
+		case JPEG_160x120:
+		case JPEG_176x144:
+		case JPEG_320x240:
+		case JPEG_352x288:
+		{
+			BUS_DCMI_Config(DCMI_PCKPolarity_Rising, DCMI_VSPolarity_High, DCMI_HSPolarity_Low);
+			OV2640_JPEGConfig(ImageFormat);
+			break;
+		}
+		
+		case BMP_QQVGA:
+		default:
+		{
+			BUS_DCMI_Config(DCMI_PCKPolarity_Rising, DCMI_VSPolarity_High, DCMI_HSPolarity_Low);
+			OV2640_QQVGAConfig();
+			break; 
+		}
+	}
 
-  /* DCMI configuration */ 
-  DCMI_InitStructure.DCMI_CaptureMode = DCMI_CaptureMode_Continuous;
-  DCMI_InitStructure.DCMI_SynchroMode = DCMI_SynchroMode_Hardware;
-  DCMI_InitStructure.DCMI_PCKPolarity = DCMI_PCKPolarity_Rising;
-  DCMI_InitStructure.DCMI_VSPolarity = DCMI_VSPolarity_Low;
-  DCMI_InitStructure.DCMI_HSPolarity = DCMI_HSPolarity_Low;
-  DCMI_InitStructure.DCMI_CaptureRate = DCMI_CaptureRate_All_Frame;
-  DCMI_InitStructure.DCMI_ExtendedDataMode = DCMI_ExtendedDataMode_8b;
-
-	//用中断可以统计帧率
-/* DCMI Interrupts config ***************************************************/
-  //DCMI_ITConfig(DCMI_IT_FRAME, ENABLE);
- // sys_NVIC_set(DCMI_IRQn, 1, 1);
-
-  switch(ImageFormat)
-  {
-    case BMP_QQVGA:
-    {
-      /* DCMI configuration */ 
-      DCMI_InitStructure.DCMI_VSPolarity = DCMI_VSPolarity_High;
-      DCMI_Init(&DCMI_InitStructure);
-
-      /* DMA2 IRQ channel Configuration */
-      BUS_DCMI_DMA_Init(FSMC_LCD_ADDRESS, 1, DMA_MemoryInc_Disable, DMA_MemoryDataSize_HalfWord);
-      break;
-    }
-    case BMP_QVGA:
-    {
-      /* DCMI configuration */
-      DCMI_Init(&DCMI_InitStructure);
-
-      /* DMA2 IRQ channel Configuration */
-      BUS_DCMI_DMA_Init(FSMC_LCD_ADDRESS, 1, DMA_MemoryInc_Disable, DMA_MemoryDataSize_HalfWord);
-      break;
-    }
-
-     default:
-    {
-      /* DCMI configuration */ 
-      DCMI_InitStructure.DCMI_VSPolarity = DCMI_VSPolarity_High;
-      DCMI_Init(&DCMI_InitStructure);
-
-      /* DMA2 IRQ channel Configuration */
-      BUS_DCMI_DMA_Init(FSMC_LCD_ADDRESS, 1, DMA_MemoryInc_Disable, DMA_MemoryDataSize_HalfWord);
-      break;
-    }
-  }
+	
 }
 
 /**
@@ -1296,6 +1272,67 @@ void OV2640_ContrastConfig(uint8_t value1, uint8_t value2)
   OV2640_WriteReg(0x7d, 0x06);
 }
 
+/**
+  * @brief  OV2640 camera special effects.
+* @param  index: 
+  * @retval None
+  */
+void OV2640_SpecialEffects(uint8_t index)
+{
+  switch (index)
+  {
+    case 1:
+    {
+      //LCD_DisplayStringLine(LINE(16), (uint8_t*)" Antique               ");
+      OV2640_ColorEffectsConfig(0x40, 0xa6);/* Antique */ 
+      break;
+    }
+    case 2:
+    {
+      //LCD_DisplayStringLine(LINE(16), (uint8_t*)" Bluish                ");
+      OV2640_ColorEffectsConfig(0xa0, 0x40);/* Bluish */
+      break;
+    }
+    case 3:
+    {
+      //LCD_DisplayStringLine(LINE(16), (uint8_t*)" Greenish              ");
+      OV2640_ColorEffectsConfig(0x40, 0x40);/* Greenish */
+      break;
+    }
+    case 4:
+    {
+      //LCD_DisplayStringLine(LINE(16), (uint8_t*)" Reddish               ");
+      OV2640_ColorEffectsConfig(0x40, 0xc0);/* Reddish */
+      break;
+    }
+    case 5:
+    {
+      //LCD_DisplayStringLine(LINE(16), (uint8_t*)" Black & White         ");
+      OV2640_BandWConfig(0x18);/* Black & White */
+      break;
+    }
+    case 6:
+    {
+      //LCD_DisplayStringLine(LINE(16), (uint8_t*)" Negative              ");
+      OV2640_BandWConfig(0x40);/* Negative */
+      break;
+    }
+    case 7:
+    {
+      //LCD_DisplayStringLine(LINE(16), (uint8_t*)" Black & White negative");
+      OV2640_BandWConfig(0x58);/* B&W negative */
+      break;
+    }
+    case 8:
+    {
+      //LCD_DisplayStringLine(LINE(16), (uint8_t*)" Normal                ");
+      OV2640_BandWConfig(0x00);/* Normal */
+      break;
+    }
+    default:
+      break;
+  }
+}
 
 
 

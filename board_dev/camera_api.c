@@ -54,19 +54,6 @@ extern void Delay(__IO uint32_t nTime);
 /* Private variables ---------------------------------------------------------*/
 /* Image Formats */
 
-u8 CameraFlag = 0;
-
-s32 dev_carema_dcmi_process(void)
-{
-	DMA_Cmd(DMA2_Stream1, DISABLE); 
-	DCMI_Cmd(DISABLE); 
-	DCMI_CaptureCmd(DISABLE); 
-	CameraFlag = 1;
-	return 0;
-}
-
-
-
 const uint8_t *ImageForematArray[] =
 {
   (uint8_t*)"BMP QQVGA Format    ",
@@ -78,152 +65,74 @@ const uint8_t *ImageForematArray[] =
 };
 
 
-uint8_t ValueMin = 0, ValueMax = 0;
 Camera_TypeDef Camera;
 ImageFormat_TypeDef ImageFormat;
+OV9655_IDTypeDef  OV9655_Camera_ID;
+OV2640_IDTypeDef  OV2640_Camera_ID;
+s32 CameraGd = -2;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
 /**
-  * @brief  Configures OV9655 or OV2640 Camera module mounted on STM324xG-EVAL board.
-  * @param  ImageBuffer: Pointer to the camera configuration structure
-  * @retval None
-  */
-void Camera_Config(void)
-{
-  if(Camera == OV9655_CAMERA)
-  {
-    switch (ImageFormat)
-    {
-      case BMP_QQVGA:
-      {
-        /* Configure the OV9655 camera and set the QQVGA mode */
-        OV9655_Init(BMP_QQVGA);
-        OV9655_QQVGAConfig();
-        break;
-      }
-      case BMP_QVGA:
-      {
-        /* Configure the OV9655 camera and set set the QVGA mode */
-        OV9655_Init(BMP_QVGA);
-        OV9655_QVGAConfig();
-        break;
-      }
-      default:
-      {
-        /* Configure the OV9655 camera and set the QQVGA mode */
-        OV9655_Init(BMP_QQVGA);
-        OV9655_QQVGAConfig();
-        break;
-      } 
-    }
-  }
-  else if(Camera == OV2640_CAMERA)
-  {
-    switch (ImageFormat)
-    {
-      case BMP_QQVGA:
-      {
-        /* Configure the OV2640 camera and set the QQVGA mode */
-        OV2640_Init(BMP_QQVGA);
-        OV2640_QQVGAConfig();
-        break;
-      }
-	  
-      case BMP_QVGA:
-      {
-        /* Configure the OV2640 camera and set the QQVGA mode */
-        OV2640_Init(BMP_QVGA);
-        OV2640_QVGAConfig();
-        break;
-      }
-	  
-	  case JPEG_160x120:
-	  case JPEG_176x144:
-	  case JPEG_320x240:
-	  case JPEG_352x288:
-      {
-        /* Configure the OV2640 camera and set the JPEG mode */
-        OV2640_Init(ImageFormat);
-        OV2640_JPEGConfig(ImageFormat);
-        break;
-      }
-	  
-      default:
-      {
-        /* Configure the OV2640 camera and set the QQVGA mode */
-        OV2640_Init(BMP_QQVGA);
-        OV2640_QQVGAConfig();
-        break; 
-      }
-    }
-  }
+ *@brief:	   dev_camera_config
+ *@details:    配置摄像头
+ *@param[in]   Format 图像格式
+			   Dst0 数据目标地址0
+			   Dst1 数据目标地址1，如果是直接发送到LCD，地址1为null
+		       size buff长度，单位word(u32)
+ *@param[out]  无
+ *@retval:	   
+ */
+
+void dev_camera_config(ImageFormat_TypeDef Format, u32 Dst0, u32 Dst1, u32 size)
+{	
+	if(Camera == OV9655_CAMERA)
+	{
+		OV9655_Init(Format);	
+	}
+	else if(Camera == OV2640_CAMERA)
+	{
+		OV2640_Init(Format);	
+	}
+
+	BUS_DCMI_DMA_Init(Dst0, Dst1, size);
+
 }
 /**
-  * @brief  OV2640 camera special effects.
-* @param  index: 
-  * @retval None
-  */
-void OV2640_SpecialEffects(uint8_t index)
+ *@brief:	   dev_camera_fresh
+ *@details:    启动摄像头数据传输
+ *@param[in]   
+ *@param[out]  无
+ *@retval:	   
+ */
+s32 dev_camera_fresh(void)
 {
-  switch (index)
-  {
-    case 1:
-    {
-      //LCD_DisplayStringLine(LINE(16), (uint8_t*)" Antique               ");
-      OV2640_ColorEffectsConfig(0x40, 0xa6);/* Antique */ 
-      break;
-    }
-    case 2:
-    {
-      //LCD_DisplayStringLine(LINE(16), (uint8_t*)" Bluish                ");
-      OV2640_ColorEffectsConfig(0xa0, 0x40);/* Bluish */
-      break;
-    }
-    case 3:
-    {
-      //LCD_DisplayStringLine(LINE(16), (uint8_t*)" Greenish              ");
-      OV2640_ColorEffectsConfig(0x40, 0x40);/* Greenish */
-      break;
-    }
-    case 4:
-    {
-      //LCD_DisplayStringLine(LINE(16), (uint8_t*)" Reddish               ");
-      OV2640_ColorEffectsConfig(0x40, 0xc0);/* Reddish */
-      break;
-    }
-    case 5:
-    {
-      //LCD_DisplayStringLine(LINE(16), (uint8_t*)" Black & White         ");
-      OV2640_BandWConfig(0x18);/* Black & White */
-      break;
-    }
-    case 6:
-    {
-      //LCD_DisplayStringLine(LINE(16), (uint8_t*)" Negative              ");
-      OV2640_BandWConfig(0x40);/* Negative */
-      break;
-    }
-    case 7:
-    {
-      //LCD_DisplayStringLine(LINE(16), (uint8_t*)" Black & White negative");
-      OV2640_BandWConfig(0x58);/* B&W negative */
-      break;
-    }
-    case 8:
-    {
-      //LCD_DisplayStringLine(LINE(16), (uint8_t*)" Normal                ");
-      OV2640_BandWConfig(0x00);/* Normal */
-      break;
-    }
-    default:
-      break;
-  }
+	/* Enable DMA2 stream 1 and DCMI interface then start image capture */
+	DMA_Cmd(DMA2_Stream1, ENABLE); 
+	DCMI_Cmd(ENABLE); 
+	DCMI_CaptureCmd(ENABLE);	
 }
-
-s32 CameraGd = -2;
-
+/**
+ *@brief:	   dev_camera_stop
+ *@details:    停止摄像头数据传输
+ *@param[in]   
+ *@param[out]  无
+ *@retval:	   
+ */
+s32 dev_camera_stop(void)
+{
+	DMA_Cmd(DMA2_Stream1, DISABLE); 
+	DCMI_Cmd(DISABLE); 
+	DCMI_CaptureCmd(DISABLE); 	
+}
+/**
+ *@brief:	   dev_camera_init
+ *@details:    初始化摄像头
+ *@param[in]   
+ *@param[out]  无
+ *@retval:	   
+ */
 s32 dev_camera_init(void)
 {
 	#ifdef SYS_USE_CAMERA
@@ -233,14 +142,41 @@ s32 dev_camera_init(void)
 	
 	/* Initializes the DCMI interface (I2C and GPIO) used to configure the camera */
 	BUS_DCMI_HW_Init();
-	
 	SCCB_GPIO_Config();
+
+	/* Read the OV9655/OV2640 Manufacturer identifier */
+	OV9655_ReadID(&OV9655_Camera_ID);
+	OV2640_ReadID(&OV2640_Camera_ID);
+
+	if(OV9655_Camera_ID.PID  == 0x96)
+	{
+		Camera = OV9655_CAMERA;
+		wjq_log(LOG_DEBUG, "OV9655 Camera ID 0x%x\r\n", OV9655_Camera_ID.PID);
+	}
+	else if(OV2640_Camera_ID.PIDH  == 0x26)
+	{
+		Camera = OV2640_CAMERA;
+		wjq_log(LOG_DEBUG, "OV2640 Camera ID 0x%x\r\n", OV2640_Camera_ID.PIDH);
+	}
+	else
+	{
+		wjq_log(LOG_DEBUG, "Check the Camera HW and try again\r\n");
+		return -1;  
+	}
+	
 	CameraGd = -1;
 	#else
 	wjq_log(LOG_INFO, ">---------sys no use camera\r\n");
 	#endif
 	return 0;
 }
+/**
+ *@brief:	   dev_camera_open
+ *@details:    打开摄像头
+ *@param[in]   
+ *@param[out]  无
+ *@retval:	   
+ */
 s32 dev_camera_open(void)
 {
 	if(CameraGd!= -1)
@@ -249,78 +185,58 @@ s32 dev_camera_open(void)
 	CameraGd = 0;
 	return 0;	
 }
+/**
+ *@brief:	   dev_camera_close
+ *@details:    关闭摄像头
+ *@param[in]   
+ *@param[out]  无
+ *@retval:	   
+ */
 s32 dev_camera_close(void)
 {
 	if(CameraGd!= 0)
 		return -1;
 
 	CameraGd = -1;
-	DMA_Cmd(DMA2_Stream1, DISABLE); 
-	DCMI_Cmd(DISABLE); 
-	/* Insert 100ms delay: wait 100ms */ 
-	DCMI_CaptureCmd(DISABLE); 
+	dev_camera_stop(); 
 	return 0;
 }
+
 /**
   * @}
 
 	ST官方例程的main函数，移植作为一个测试函数。
   
   */ 
+u16 *camera_buf0;
+u16 *camera_buf1;
 
-OV9655_IDTypeDef  OV9655_Camera_ID;
-OV2640_IDTypeDef  OV2640_Camera_ID;
+#define LCD_BUF_SIZE 320*2*2//一次传输2行数据，一个像素2个字节
+u16 DmaCnt;
 
-u16 *ov2640_data;
+#define CAMERA_USE_RAM2LCD	1
 
 s32 dev_camera_show(DevLcdNode *lcd)
 {
 	uint8_t abuffer[40];
-  
-	if(CameraGd!= 0)
-		return -1;
+  	s32 ret;
+	volatile u8 sta;
 
-	wjq_log(LOG_FUN, "camera test....\r\n");
-	/* Read the OV9655/OV2640 Manufacturer identifier */
-	OV9655_ReadID(&OV9655_Camera_ID);
-	OV2640_ReadID(&OV2640_Camera_ID);
-
-	if(OV9655_Camera_ID.PID  == 0x96)
-	{
-		Camera = OV9655_CAMERA;
-		sprintf((char*)abuffer, "OV9655 Camera ID 0x%x", OV9655_Camera_ID.PID);
-		ValueMax = 2;
-	}
-	else if(OV2640_Camera_ID.PIDH  == 0x26)
-	{
-		Camera = OV2640_CAMERA;
-		sprintf((char*)abuffer, "OV2640 Camera ID 0x%x", OV2640_Camera_ID.PIDH);
-		ValueMax = 2;
-	}
-	else
-	{
-		put_string_center(lcd, 160, 120, (char *)"Check the Camera HW and try again", 0xf880);
-		wjq_log(LOG_FUN, "Check the Camera HW and try again\r\n");
-		Delay(1000);
-		return -1;  
-	}
-
-	put_string_center(lcd, 160, 120, (char *)abuffer, 0xf880);
-	wjq_log(LOG_FUN, "%s\r\n", abuffer);
-	Delay(200);
-	
-	/* Initialize demo */
+	/* 选择图片格式 */
 	ImageFormat = (ImageFormat_TypeDef)BMP_QVGA;
+	wjq_log(LOG_DEBUG, " Image selected: %s", ImageForematArray[ImageFormat]);
 
-	/* Configure the Camera module mounted on STM324xG-EVAL/STM324x7I-EVAL boards */
-	wjq_log(LOG_FUN, "Camera_Config...\r\n");
-	Camera_Config();
-	
-	sprintf((char*)abuffer, " Image selected: %s", ImageForematArray[ImageFormat]);
-	put_string_center(lcd, 160, 160, (char *)abuffer, 0xf880);
+	#ifndef CAMERA_USE_RAM2LCD
+	/*直接投到LCD*/
+	dev_camera_config(ImageFormat, FSMC_LCD_ADDRESS, NULL, 1);
+	#else
+	/*放到buf*/
+	camera_buf0 = wjq_malloc(LCD_BUF_SIZE);
+	camera_buf1 = wjq_malloc(LCD_BUF_SIZE);
+	/*除4的原因：LCD_BUF_SIZE是u8，DMA数据源是u32，目标数据是u16*/
+	dev_camera_config(ImageFormat, (u32)camera_buf0, (u32)camera_buf1, LCD_BUF_SIZE/4);
+	#endif
 
-	CameraFlag = 0;
-	
 	if(ImageFormat == BMP_QQVGA)
 	{
 		/*  
@@ -337,15 +253,36 @@ s32 dev_camera_show(DevLcdNode *lcd)
 		dev_lcd_setdir(lcd, W_LCD, L2R_U2D);
 		dev_lcd_prepare_display(lcd, 1, 320, 1, 240);
 	}	
+	DmaCnt = 0;
+	 dev_camera_fresh();
 
-	/* Enable DMA2 stream 1 and DCMI interface then start image capture */
-	DMA_Cmd(DMA2_Stream1, ENABLE); 
-	DCMI_Cmd(ENABLE); 
-	/* Insert 100ms delay: wait 100ms */
-	Delay(100); 
-	DCMI_CaptureCmd(ENABLE); 
+	while(1)
+	{
+		
+		mcu_dcmi_get_sta(&sta);
 
-		return 0;
+		#ifdef CAMERA_USE_RAM2LCD
+		if(DCMI_FLAG_BUF0 == (sta&DCMI_FLAG_BUF0))
+		{
+			dev_lcd_flush(lcd, camera_buf0, LCD_BUF_SIZE/2);
+			DmaCnt++;
+		}
+		if(DCMI_FLAG_BUF1 == (sta&DCMI_FLAG_BUF1))
+		{	
+			dev_lcd_flush(lcd, camera_buf1, LCD_BUF_SIZE/2);
+			DmaCnt++;
+		}
+		#endif
+		/*一定要先检测数据再检测帧完成，最有一次两个中断差不多同时来*/
+		if(DCMI_FLAG_FRAME == (sta&DCMI_FLAG_FRAME))
+		{
+			wjq_log(LOG_DEBUG, "-f-%d- ", DmaCnt);
+			DmaCnt = 0;
+			dev_camera_fresh();
+		}
+	}
+	return 0;
 }
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+

@@ -713,7 +713,7 @@ s32 drv_ILI9325_prepare_display(DevLcdNode *lcd, u16 sx, u16 ex, u16 sy, u16 ey)
 s32 drv_ILI9325_flush(DevLcdNode *lcd, u16 *color, u32 len)
 {
 	lcd->busnode = bus_lcd_open(lcd->dev.buslcd);
-	bus_lcd_flush_data(lcd->busnode, (u8 *)color,  len);	
+	bus_lcd_write_data(lcd->busnode, (u8 *)color,  len);	
 	bus_lcd_close(lcd->busnode);
 	return 0;
 } 

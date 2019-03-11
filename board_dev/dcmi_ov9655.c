@@ -392,56 +392,35 @@ void OV9655_ReadID(OV9655_IDTypeDef* OV9655ID)
   */
 void OV9655_Init(ImageFormat_TypeDef ImageFormat)
 {
-  DCMI_InitTypeDef DCMI_InitStructure;
+	DCMI_InitTypeDef DCMI_InitStructure;
+	
+	/* DCMI configuration */ 
+	BUS_DCMI_Config(DCMI_PCKPolarity_Falling, DCMI_VSPolarity_High, DCMI_HSPolarity_High);
+	
+	switch (ImageFormat)
+	{
+		case BMP_QQVGA:
+		{
+			/* Configure the OV9655 camera and set the QQVGA mode */
 
-	 
-  /*** Configures the DCMI to interface with the OV9655 camera module ***/
-  /* Enable DCMI clock */
-  RCC_AHB2PeriphClockCmd(RCC_AHB2Periph_DCMI, ENABLE);
+			OV9655_QQVGAConfig();
+			break;
+		}
+		case BMP_QVGA:
+		{
+			/* Configure the OV9655 camera and set set the QVGA mode */
 
-  /* DCMI configuration */ 
-  DCMI_InitStructure.DCMI_CaptureMode = DCMI_CaptureMode_Continuous;
-  DCMI_InitStructure.DCMI_SynchroMode = DCMI_SynchroMode_Hardware;
-  DCMI_InitStructure.DCMI_PCKPolarity = DCMI_PCKPolarity_Falling;
-  DCMI_InitStructure.DCMI_VSPolarity = DCMI_VSPolarity_High;
-  DCMI_InitStructure.DCMI_HSPolarity = DCMI_HSPolarity_High;
-  DCMI_InitStructure.DCMI_CaptureRate = DCMI_CaptureRate_All_Frame;
-  DCMI_InitStructure.DCMI_ExtendedDataMode = DCMI_ExtendedDataMode_8b;
-  
-//用中断可以统计帧率
-/* DCMI Interrupts config ***************************************************/
-  //DCMI_ITConfig(DCMI_IT_FRAME, ENABLE);
-  //sys_NVIC_set(DCMI_IRQn, 1, 1);
-  
-  switch(ImageFormat)
-  {
-    case BMP_QQVGA:
-    {
-      /* DCMI configuration */
-      DCMI_Init(&DCMI_InitStructure);
+			OV9655_QVGAConfig();
+			break;
+		}
+		default:
+		{
+			/* Configure the OV9655 camera and set the QQVGA mode */
 
-      BUS_DCMI_DMA_Init(FSMC_LCD_ADDRESS, 1, DMA_MemoryInc_Disable, DMA_MemoryDataSize_HalfWord);
-      break;
-    }
-    case BMP_QVGA:
-    {
-      /* DCMI configuration */ 
-      DCMI_Init(&DCMI_InitStructure);
-
-      /* DMA2 IRQ channel Configuration */
-      BUS_DCMI_DMA_Init(FSMC_LCD_ADDRESS, 1, DMA_MemoryInc_Disable, DMA_MemoryDataSize_HalfWord); 
-      break;
-    }
-    default:
-    {
-      /* DCMI configuration */ 
-      DCMI_Init(&DCMI_InitStructure);
-
-      /* DMA2 IRQ channel Configuration */
-      BUS_DCMI_DMA_Init(FSMC_LCD_ADDRESS, 1, DMA_MemoryInc_Disable, DMA_MemoryDataSize_HalfWord);
-      break;
-    }
-  }    
+			OV9655_QQVGAConfig();
+			break;
+		} 
+	}
 }
 
 /**

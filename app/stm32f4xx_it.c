@@ -405,4 +405,25 @@ void CAN1_RX0_IRQHandler(void)
 
 	mcu_can1_rx0_IRQ();
 }
+/*
+	…„œÒÕ∑÷°÷–∂œ
+*/
+void DCMI_IRQHandler(void)
+{
+	if(DCMI_GetITStatus(DCMI_IT_FRAME)==SET)
+	{
+		DCMI_ClearITPendingBit(DCMI_IT_FRAME);
+		mcu_dcmi_frame_process();
+	}
+} 
+
+void DMA2_Stream1_IRQHandler(void)
+{        
+	if(DMA_GetFlagStatus(DMA2_Stream1,DMA_FLAG_TCIF1)==SET)
+	{  
+		 DMA_ClearFlag(DMA2_Stream1, DMA_FLAG_TCIF1);
+		 mcu_dcmi_dma_process();
+	}    											 
+}  
+
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
