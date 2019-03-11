@@ -229,6 +229,7 @@ s32 emenu_display(DevLcdNode *lcd)
 	disx = (menu_ctrl.lcdw - strlen(menu_ctrl.fa->cha)*menu_ctrl.fontw)/2;//居中显示
 	dev_lcd_put_string(lcd, menu_ctrl.font, disx, disy, menu_ctrl.fa->cha + lang, PenColor);
 	
+	
 	/* 显示子菜单*/
 	switch(menu_ctrl.fa->type)
 	{
@@ -503,6 +504,7 @@ s32 emenu_deal_key_list(u8 key)
 			}
 			break;
 		default:
+			return -1;
 			break;
 	}
 	return 0;
@@ -624,10 +626,10 @@ s32 emenu_deal_key_2col(u8 key)
 			break;
 		
 		default:
+			return -1;
 			break;
 	}
 
-	
 	return 0;
 }
 
@@ -643,7 +645,7 @@ s32 emenu_deal_key_2col(u8 key)
 s32 emenu_run(DevLcdNode *lcd, MENU *p, u16 len, FontType font, u8 spaced)
 {
 	u8 disflag = 1;
-	
+	s32 ret;
 
 	#if 0
 	MENU *menup = p;
@@ -691,14 +693,15 @@ s32 emenu_run(DevLcdNode *lcd, MENU *p, u16 len, FontType font, u8 spaced)
 			
 			if(menu_ctrl.fa->type == MENU_TYPE_LIST)
 			{
-				emenu_deal_key_list(key);
+				ret = emenu_deal_key_list(key);
 			}
 			else if(menu_ctrl.fa->type == MENU_TYPE_KEY_2COL)
 			{
-				emenu_deal_key_2col(key);
+				ret = emenu_deal_key_2col(key);
 			}
 			//wjq_log(LOG_DEBUG,"get a key:%02x\r\n", key);
-			disflag = 1;
+			if(ret == 0)
+				disflag = 1;
 
 		}
 	}
