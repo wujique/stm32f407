@@ -1,3 +1,8 @@
+
+### This code repository stops updating and moves to the PetiteDrv code repository
+### 本代码仓库停止更新，转移到PetiteDrv代码仓库
+
+---
 # stm32f407
 some device driver base on stm32f407
 在STM32F407的基础上做一些驱动设计：
